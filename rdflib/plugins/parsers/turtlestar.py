@@ -27,6 +27,7 @@ Modified to work with rdflib by Gunnar Aastrand Grimnes
 Copyright 2010, Gunnar A. Grimnes
 
 """
+# notation3.py turtle
 import codecs
 import os
 import re
