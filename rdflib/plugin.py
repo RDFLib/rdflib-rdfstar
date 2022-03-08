@@ -397,6 +397,14 @@ register(
     "rdflib.plugins.parsers.notation3",
     "TurtleParser",
 )
+
+register(
+    "ttls",
+    Parser,
+    "rdflib.plugins.parsers.turtlestar",
+    "TurtlestarParser",
+)
+
 register(
     "application/n-triples",
     Parser,
