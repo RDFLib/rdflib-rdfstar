@@ -1946,6 +1946,28 @@ class TurtleParser(Parser):
         for prefix, namespace in p._bindings.items():
             graph.bind(prefix, namespace)
 
+class TurtlestarParser(TurtleParser):
+
+    def __init__(self):
+        pass
+
+    def parse(self, source, graph, encoding="utf-8"):
+        # we're currently being handed a Graph, not a ConjunctiveGraph
+        # context-aware is this implied by formula_aware
+        ca = getattr(graph.store, "context_aware", False)
+        fa = getattr(graph.store, "formula_aware", False)
+        if not ca:
+            raise ParserError("Cannot parse N3 into non-context-aware store.")
+        elif not fa:
+            raise ParserError("Cannot parse N3 into non-formula-aware store.")
+
+        conj_graph = ConjunctiveGraph(store=graph.store)
+        conj_graph.default_context = graph  # TODO: CG __init__ should have a
+        # default_context arg
+        # TODO: update N3Processor so that it can use conj_graph as the sink
+        conj_graph.namespace_manager = graph.namespace_manager
+
+        TurtleParser.parse(self, source, conj_graph, encoding, turtle=False)
 
 class N3Parser(TurtleParser):
 
