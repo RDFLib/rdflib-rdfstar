@@ -439,8 +439,16 @@ GraphOrDefault = ParamList("graph", Keyword("DEFAULT")) | Optional(
     Keyword("GRAPH")
 ) + ParamList("graph", iri)
 
+# Inside a values clause the EmbeddedTriple must be fully resolvable.
+KnownEmbTP = Forward()
+KnownEmbTP <<= Suppress('<<') + (iri | KnownEmbTP) + (iri | A) + (iri | RDFLiteral | NumericLiteral | BooleanLiteral | KnownEmbTP) + Suppress('>>')
+KnownEmbTP.setParseAction(lambda x:
+                          rdflib.EmbeddedTriple(subject=x[0],
+                                                predicate=x[1],
+                                                object=x[2]))
+
 # [65] DataBlockValue ::= iri | RDFLiteral | NumericLiteral | BooleanLiteral | 'UNDEF'
-DataBlockValue = iri | RDFLiteral | NumericLiteral | BooleanLiteral | Keyword("UNDEF")
+DataBlockValue = iri | RDFLiteral | NumericLiteral | BooleanLiteral | Keyword('UNDEF') | KnownEmbTP
 
 # [78] Verb ::= VarOrIri | A
 Verb = VarOrIri | A
@@ -459,8 +467,22 @@ TriplesNodePath = Forward()
 # [104] GraphNode ::= VarOrTerm | TriplesNode
 GraphNode = VarOrTerm | TriplesNode
 
+#Should be recursive but it is not yet so
+# VarOrBlankNodeOrIriOrLitOrEmbTP = Forward()
+# VarOrBlankNodeOrIriOrLitOrEmbTP <<= Var | BlankNode | iri | RDFLiteral | NumericLiteral | BooleanLiteral | VarOrBlankNodeOrIriOrLitOrEmbTP
+VarOrBlankNodeOrIriOrLitOrEmbTP = Var | BlankNode | iri | RDFLiteral | NumericLiteral | BooleanLiteral
+
+EmbTP = Forward()
+EmbTP <<= Suppress('<<') + (VarOrBlankNodeOrIriOrLitOrEmbTP|EmbTP) + Verb + (VarOrBlankNodeOrIriOrLitOrEmbTP|EmbTP) + Suppress('>>')
+EmbTP.setParseAction(lambda x:
+                     rdflib.EmbeddedTriple(subject=x[0],
+                                           predicate=x[1],
+                                           object=x[2]))
+
+VarOrTermOrEmbTP = Var | GraphTerm | EmbTP
+
 # [105] GraphNodePath ::= VarOrTerm | TriplesNodePath
-GraphNodePath = VarOrTerm | TriplesNodePath
+GraphNodePath = VarOrTermOrEmbTP | TriplesNodePath
 
 
 # [93] PathMod ::= '?' | '*' | '+'
@@ -523,6 +545,9 @@ Path <<= PathAlternative
 # [84] VerbPath ::= Path
 VerbPath = Path
 
+
+VarOrTermOrEmbTP = Var | GraphTerm | EmbTP
+
 # [87] ObjectPath ::= GraphNodePath
 ObjectPath = GraphNodePath
 
@@ -542,7 +567,7 @@ CollectionPath = Suppress("(") + OneOrMore(GraphNodePath) + Suppress(")")
 CollectionPath.setParseAction(expandCollection)
 
 # [80] Object ::= GraphNode
-Object = GraphNode
+Object = GraphNode | EmbTP
 
 # [79] ObjectList ::= Object ( ',' Object )*
 ObjectList = Object + ZeroOrMore("," + Object)
@@ -581,7 +606,7 @@ TriplesNode <<= Collection | BlankNodePropertyList
 TriplesNodePath <<= CollectionPath | BlankNodePropertyListPath
 
 # [75] TriplesSameSubject ::= VarOrTerm PropertyListNotEmpty | TriplesNode PropertyList
-TriplesSameSubject = VarOrTerm + PropertyListNotEmpty | TriplesNode + PropertyList
+TriplesSameSubject = VarOrTermOrEmbTP + PropertyListNotEmpty | TriplesNode + PropertyList
 TriplesSameSubject.setParseAction(expandTriples)
 
 # [52] TriplesTemplate ::= TriplesSameSubject ( '.' TriplesTemplate? )?
@@ -620,7 +645,7 @@ QuadData = "{" + Param("quads", Quads) + "}"
 
 # [81] TriplesSameSubjectPath ::= VarOrTerm PropertyListPathNotEmpty | TriplesNodePath PropertyListPath
 TriplesSameSubjectPath = (
-    VarOrTerm + PropertyListPathNotEmpty | TriplesNodePath + PropertyListPath
+    VarOrTermOrEmbTP + PropertyListPathNotEmpty | TriplesNodePath + PropertyListPath
 )
 TriplesSameSubjectPath.setParseAction(expandTriples)
 
@@ -1310,12 +1335,14 @@ ServiceGraphPattern = Comp(
     + Param("graph", GroupGraphPattern),
 )
 
+ExpressionOrEmbTP = Expression | EmbTP
+
 # [60] Bind ::= 'BIND' '(' Expression 'AS' Var ')'
 Bind = Comp(
     "Bind",
     Keyword("BIND")
     + "("
-    + Param("expr", Expression)
+    + Param("expr", ExpressionOrEmbTP)
     + Keyword("AS")
     + Param("var", Var)
     + ")",

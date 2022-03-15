@@ -11,7 +11,9 @@ import collections
 
 from functools import reduce
 
-from rdflib import Literal, Variable, URIRef, BNode
+from rdflib import Literal, Variable, URIRef, BNode, EmbeddedTriple
+
+from rdflib.namespace import RDF
 
 from rdflib.plugins.sparql.sparql import Prologue, Query, Update
 from rdflib.plugins.sparql.parserutils import CompValue, Expr
@@ -69,6 +71,8 @@ def Filter(expr, p):
 def Extend(p, expr, var):
     return CompValue("Extend", p=p, expr=expr, var=var)
 
+def EmpTP(p, o):
+    return CompValue('EmpTP', var=o)
 
 def Values(res):
     return CompValue("values", res=res)
@@ -156,6 +160,16 @@ def translatePName(p, prologue):
             )
     elif isinstance(p, URIRef):
         return prologue.absolutize(p)
+    elif isinstance(p, EmbeddedTriple):
+        trSub = translatePName(p.subject(), prologue)
+        trPred = translatePName(p.predicate(), prologue)
+        trObj = translatePName(p.object(), prologue)
+        if trSub is not None:
+            p.setSubject(trSub)
+        if trPred is not None:
+            p.setPredicate(trPred)
+        if trObj is not None:
+            p.setObject(trObj)
 
 
 def translatePath(p):
@@ -288,6 +302,22 @@ def translateGroupGraphPattern(graphPattern):
             if not (g and g[-1].name == "BGP"):
                 g.append(BGP())
             g[-1]["triples"] += triples(p.triples)
+        elif p.name == 'Bind':
+            tpBind = list()
+            if (isinstance(p.expr, EmbeddedTriple)):
+                v = Variable('__' + p.expr.toPython())
+                tpBind.append([v, RDF.type, RDF.Statement])
+                tpBind.append([v, RDF.subject, p.expr.subject()])
+                tpBind.append([v, RDF.predicate, p.expr.predicate()])
+                tpBind.append([v, RDF.object, p.expr.object()])
+
+                p.expr = v
+
+                if not (g and g[-1].name == 'BGP'):
+                    g.append(BGP())
+
+                g[-1]["triples"] += triples(tpBind)
+            g.append(p)
         else:
             g.append(p)
 

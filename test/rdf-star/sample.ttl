@@ -1,0 +1,79 @@
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix netflix: <http://www.example.org/sweb/netflix#> .
+@prefix class: <http://www.example.org/sweb/OwlClass> .
+
+prop:isListedIn  rdfs:domain  class:ShowId ;
+        rdfs:range   class:Genre .
+
+prop:isOfType  rdfs:domain  class:ShowId ;
+        rdfs:range   class:Movie , class:TvShow .
+
+class:TvShow  a  rdfs:Class .
+
+class:Year  a            rdfs:Class ;
+        rdfs:subClassOf  class:Date .
+
+class:Movie  a  rdfs:Class .
+
+prop:hasTitle  rdfs:domain  class:ShowId ;
+        rdfs:range   xsd:String .
+
+prop:hasCast  rdfs:domain  class:ShowId ;
+        rdfs:range   class:Cast .
+
+class:Duration  a  rdfs:Class .
+
+class:ShowId  a  rdfs:Class .
+
+class:Person  a  rdfs:Class .
+
+class:Rating  a  rdfs:Class .
+
+prop:hasDirector  rdfs:domain  class:ShowId ;
+        rdfs:range   class:Director .
+
+class:Director  a        rdfs:Class ;
+        rdfs:subClassOf  class:Person .
+
+class:Genre  a  rdfs:Class .
+
+class:Country  a  rdfs:Class .
+
+class:ReleaseYr  a       rdfs:Class ;
+        rdfs:subClassOf  class:Year .
+
+prop:releasedIn  rdfs:domain  class:ShowId ;
+        rdfs:range   class:ReleaseYr .
+
+class:Cast  a            rdfs:Class ;
+        rdfs:subClassOf  class:Person .
+
+prop:hasDescription  rdfs:domain  class:ShowId ;
+        rdfs:range   xsd:String .
+
+class:Date  a   rdfs:Class .
+
+prop:madeInCountry  rdfs:domain  class:ShowId ;
+        rdfs:range   class:Country .
+
+<1>     prop:hasTitle  <K3G> .
+
+prop:wasAddedOn  rdfs:domain  class:ShowId ;
+        rdfs:range   class:Date .
+
+#Type of recursive refied statetements
+
+owl:Par   rdf:type     rdf:Statement;
+          rdf:subject  <Story> ;
+          rdf:predicate prop:about ;
+          rdf:object <Bob> .
+
+owl:st    rdf:type     rdf:Statement;
+          rdf:subject  owl:Par ;
+          rdf:predicate prop:livesInCountry ;
+          rdf:object <Japan> .
+
+owl:st    prop:releasedIn  <2016> .
