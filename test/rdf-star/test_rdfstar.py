@@ -4,10 +4,10 @@ import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from shutil import copyfile
-from typing import Callable, Dict, Iterable, Tuple
+from typing import Callable, Dict, Iterable, List, NamedTuple, Optional, Tuple, Union, cast
 from rdflib import Graph, logger
-from rdflib.namespace import RDF, RDFS
-from rdflib.term import BNode, Node, URIRef
+from rdflib.namespace import Namespace, RDF, RDFS
+from rdflib.term import BNode, Node, URIRef, Identifier
 from rdflib.exceptions import ParserError
 from rdflib.parser import Parser
 from rdflib.plugin import register
@@ -17,6 +17,13 @@ from test import TEST_DIR
 import pytest
 
 verbose = True
+
+ResultType = Union[Identifier, Tuple[Identifier, List[Tuple[Identifier, Identifier]]]]
+GraphDataType = Union[List[Identifier], List[Tuple[Identifier, Identifier]]]
+
+MF = Namespace("http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#")
+QT = Namespace("http://www.w3.org/2001/sw/DataAccess/tests/test-query#")
+UP = Namespace("http://www.w3.org/2009/sparql/tests/test-update#")
 
 
 def read_manifest(f, base=None, legacy=False) -> Iterable[Tuple[Node, URIRef, RDFTest]]:
