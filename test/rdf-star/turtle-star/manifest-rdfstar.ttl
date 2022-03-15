@@ -1,0 +1,275 @@
+## RDF Dataset Normalization tests
+## Distributed under both the W3C Test Suite License[1] and the W3C 3-
+## clause BSD License[2]. To contribute to a W3C Test Suite, see the
+## policies and contribution forms [3]
+##
+## 1. http://www.w3.org/Consortium/Legal/2008/04-testsuite-license
+## 2. http://www.w3.org/Consortium/Legal/2008/03-bsd-license
+## 3. http://www.w3.org/2004/10/27-testcases
+##
+## Test types
+## * rdfn:Urgna2012EvalTest  - Normalization using URGNA2012
+## * rdfn:RDFStarTest  - Normalization using URDNA2015
+
+@prefix : <manifest-rdfstar#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix mf:   <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix rdft: <http://www.w3.org/ns/rdftest#> .
+@prefix rdfn: <http://rdflib.github.io/test-vocab#> .
+
+<manifest-rdfstar>  a mf:Manifest ;
+
+  rdfs:label "RDFStar ";
+  rdfs:comment "Tests the RDFLib implementation of the RDFStar Turtle parser.";
+  mf:entries (
+    :test001 :test002 :test003 :test004 :test005 :test006 :test007 :test008 :test009 :test010
+    :test011 :test012 :test013 :test014 :test015 :test016 :test017 :test018 :test019 :test020
+    :test021 :test022 :test023 :test024 :test025 :test026 :test027 :test028 :test029 :test030
+    :test031 :test032 :test033 :test034 :test035
+  ) .
+
+:test001 a rdfn:RDFStarTest;
+  mf:name "nt ttl star bad syntax 1";
+  rdft:approval rdft:Proposed;
+  mf:action <nt-ttl-star-bad-syntax-1.ttl>;
+  mf:result <test001-rdfstar.ttl>;
+  .
+
+:test002 a rdfn:RDFStarTest;
+  mf:name "nt ttl star bad syntax 2";
+  rdft:approval rdft:Proposed;
+  mf:action <nt-ttl-star-bad-syntax-2.ttl>;
+  mf:result <test002-rdfstar.ttl>;
+  .
+
+:test003 a rdfn:RDFStarTest;
+  mf:name "nt ttl star bad syntax 3";
+  rdft:approval rdft:Proposed;
+  mf:action <nt-ttl-star-bad-syntax-3.ttl>;
+  mf:result <test003-rdfstar.ttl>;
+  .
+
+:test004 a rdfn:RDFStarTest;
+  mf:name "nt ttl star bad syntax 4";
+  rdft:approval rdft:Proposed;
+  mf:action <nt-ttl-star-bad-syntax-4.ttl>;
+  mf:result <test004-rdfstar.ttl>;
+  .
+
+:test005 a rdfn:RDFStarTest;
+  mf:name "nt ttl star bnode 1";
+  rdft:approval rdft:Proposed;
+  mf:action <nt-ttl-star-bnode-1.ttl>;
+  mf:result <test005-rdfstar.ttl>;
+  .
+
+:test006 a rdfn:RDFStarTest;
+  mf:name "nt ttl star bnode 2";
+  rdft:approval rdft:Proposed;
+  mf:action <nt-ttl-star-bnode-2.ttl>;
+  mf:result <test006-rdfstar.ttl>;
+  .
+
+:test007 a rdfn:RDFStarTest;
+  mf:name "nt ttl star nested 1";
+  rdft:approval rdft:Proposed;
+  mf:action <nt-ttl-star-nested-1.ttl>;
+  mf:result <test007-rdfstar.ttl>;
+  .
+
+:test008 a rdfn:RDFStarTest;
+  mf:name "nt ttl star nested-2";
+  rdft:approval rdft:Proposed;
+  mf:action <nt-ttl-star-nested-2.ttl>;
+  mf:result <test008-rdfstar.ttl>;
+  .
+
+:test009 a rdfn:RDFStarTest;
+  mf:name "nt ttl star syntax-1";
+  rdft:approval rdft:Proposed;
+  mf:action <nt-ttl-star-syntax-1.ttl>;
+  mf:result <test009-rdfstar.ttl>;
+  .
+
+:test010 a rdfn:RDFStarTest;
+  mf:name "nt ttl star syntax 2";
+  rdft:approval rdft:Proposed;
+  mf:action <nt-ttl-star-syntax-2.ttl>;
+  mf:result <test010-rdfstar.ttl>;
+  .
+
+:test011 a rdfn:RDFStarTest;
+  mf:name "nt ttl star syntax 3";
+  rdft:approval rdft:Proposed;
+  mf:action <nt-ttl-star-syntax-3.ttl>;
+  mf:result <test011-rdfstar.ttl>;
+  .
+
+:test012 a rdfn:RDFStarTest;
+  mf:name "nt ttl star syntax 4";
+  rdft:approval rdft:Proposed;
+  mf:action <nt-ttl-star-syntax-4.ttl>;
+  mf:result <test012-rdfstar.ttl>;
+  .
+
+:test013 a rdfn:RDFStarTest;
+  mf:name "nt ttl star syntax 5";
+  rdft:approval rdft:Proposed;
+  mf:action <nt-ttl-star-syntax-5.ttl>;
+  mf:result <test013-rdfstar.ttl>;
+  .
+
+:test014 a rdfn:RDFStarTest;
+  mf:name "turtle star annotation 1";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-annotation-1.ttl>;
+  mf:result <test014-rdfstar.ttl>;
+  .
+
+:test015 a rdfn:RDFStarTest;
+  mf:name "turtle star annotation 2";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-annotation-2.ttl>;
+  mf:result <test015-rdfstar.ttl>;
+  .
+
+:test016 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax bad 01";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-bad-01.ttl>;
+  mf:result <test016-rdfstar.ttl>;
+  .
+
+:test017 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax bad 02";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-bad-02.ttl>;
+  mf:result <test017-rdfstar.ttl>;
+  .
+
+:test018 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax bad 03";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-bad-03.ttl>;
+  mf:result <test018-rdfstar.ttl>;
+  .
+
+:test019 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax bad 04";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-bad-04.ttl>;
+  mf:result <test019-rdfstar.ttl>;
+  .
+
+:test020 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax bad 05";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-bad-05.ttl>;
+  mf:result <test020-rdfstar.ttl>;
+  .
+
+:test021 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax bad 06";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-bad-06.ttl>;
+  mf:result <test021-rdfstar.ttl>;
+  .
+
+:test022 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax bad 07";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-bad-07.ttl>;
+  mf:result <test022-rdfstar.ttl>;
+  .
+
+:test023 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax bad 08";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-bad-08.ttl>;
+  mf:result <test023-rdfstar.ttl>;
+  .
+
+:test024 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax bad ann 1";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-bad-ann-1.ttl>;
+  mf:result <test024-rdfstar.ttl>;
+  .
+
+:test025 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax bad ann 2";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-bad-ann-2.ttl>;
+  mf:result <test025-rdfstar.ttl>;
+  .
+
+:test026 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax basic 01";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-basic-01.ttl>;
+  mf:result <test026-rdfstar.ttl>;
+  .
+
+:test027 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax basic 02";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-basic-02.ttl>;
+  mf:result <test027-rdfstar.ttl>;
+  .
+
+:test028 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax bnode 01";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-bnode-01.ttl>;
+  mf:result <test028-rdfstar.ttl>;
+  .
+
+:test029 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax bnode 02";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-bnode-02.ttl>;
+  mf:result <test029-rdfstar.ttl>;
+  .
+
+:test030 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax bnode 03";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-bnode-03.ttl>;
+  mf:result <test030-rdfstar.ttl>;
+  .
+
+:test031 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax compound";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-compound.ttl>;
+  mf:result <test031-rdfstar.ttl>;
+  .
+
+:test032 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax inside 01";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-inside-01.ttl>;
+  mf:result <test032-rdfstar.ttl>;
+  .
+
+:test033 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax inside 02";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-inside-02.ttl>;
+  mf:result <test033-rdfstar.ttl>;
+  .
+
+:test034 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax nested 01";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-nested-01.ttl>;
+  mf:result <test034-rdfstar.ttl>;
+  .
+
+:test035 a rdfn:RDFStarTest;
+  mf:name "turtle star syntax nested 02";
+  rdft:approval rdft:Proposed;
+  mf:action <turtle-star-syntax-nested-02.ttl>;
+  mf:result <test035-rdfstar.ttl>;
+  .
