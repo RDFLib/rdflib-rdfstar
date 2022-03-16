@@ -27,7 +27,6 @@ Modified to work with rdflib by Gunnar Aastrand Grimnes
 Copyright 2010, Gunnar A. Grimnes
 
 """
-# notation3.py turtle
 import codecs
 import os
 import re
@@ -36,7 +35,17 @@ import sys
 # importing typing for `typing.List` because `List`` is used for something else
 import typing
 from decimal import Decimal
-from typing import IO, TYPE_CHECKING, Any, Callable, Dict, Optional, TypeVar, Union
+from typing import (
+    IO,
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Optional,
+    TypeVar,
+    Union,
+    Tuple,
+)
 from uuid import uuid4
 
 from rdflib.compat import long_type
@@ -372,6 +381,14 @@ class SinkParser:
         the  # will get added during qname processing"""
 
         self._bindings = {}
+
+        self.bnode_counter = (
+            0  # Counter to keep track of number of Blank nodes used for reification
+        )
+        self.embedded_triples = (  # type: ignore[var-annotated]
+            {}
+        )  # dictionary to keep track of embedded triples and what BlankNode they are mapped to
+
         if thisDoc != "":
             assert ":" in thisDoc, "Document URI not absolute: <%s>" % thisDoc
             self._bindings[""] = thisDoc + "#"  # default
@@ -484,12 +501,12 @@ class SinkParser:
             if j < 0:
                 return
 
-            i = self.directiveOrStatement(s, j)
+            s, i = self.directiveOrStatement(s, j)
             if i < 0:
                 # print("# next char: %s" % s[j])
                 self.BadSyntax(s, j, "expected directive or statement")
 
-    def directiveOrStatement(self, argstr: str, h: int) -> int:
+    def directiveOrStatement(self, argstr: str, h: int) -> Tuple[str, int]:
 
         i = self.skipSpace(argstr, h)
         if i < 0:
@@ -498,17 +515,25 @@ class SinkParser:
         if self.turtle:
             j = self.sparqlDirective(argstr, i)
             if j >= 0:
-                return j
+                return argstr, j
 
         j = self.directive(argstr, i)
         if j >= 0:
-            return self.checkDot(argstr, j)
+            res = self.checkDot(argstr, j)
+            return argstr, res
+
+        # Check whether the format is rdf* or not
+        # If it is then change the input string to
+        # replace star statement with reification
+
+        argstr = self.change_star_to_reification(argstr, i)
 
         j = self.statement(argstr, i)
         if j >= 0:
-            return self.checkDot(argstr, j)
+            res = self.checkDot(argstr, j)
+            return argstr, res
 
-        return j
+        return argstr, j
 
     # @@I18N
     # _namechars = string.lowercase + string.uppercase + string.digits + '_-'
@@ -744,6 +769,101 @@ class SinkParser:
         # $$$$$$$$$$$$$$$$$$$$$
         # print "# Parser output: ", `quadruple`
         self._store.makeStatement(quadruple, why=self._reason2)
+
+    def get_embedded_tuple(self, argstr, i):
+        i = i + 2
+        j = i
+        while argstr[j + 1 : j + 3] != ">>":
+            j += 1
+
+        substr = argstr[i : j + 1] + " ."
+        return i, j, substr
+
+    def change_star_to_reification(self, argstr, i):
+        # Check if the Star statement is present anywhere in the given statement
+        # Find the position and extract this embedded tuple
+        # The star statement could also be present as a subject or an object, check for that
+        if "<<" in argstr and ">>" in argstr:
+            while i <= len(argstr):
+                if (
+                    argstr[i : i + 2] == "<<"
+                ):  # We have found rdf* syntax with reification of subject
+                    # Converting into rdf reification statement
+                    posStart, posEnd, substr = self.get_embedded_tuple(
+                        argstr, i
+                    )  # Retrieve the Embedded Triple
+                    # logger.debug(f"substr {substr}")
+
+                    # If recursive star statements present
+                    while "<<" in substr:
+                        argstr = self.change_star_to_reification(argstr, posStart)
+                        posStart, posEnd, substr = self.get_embedded_tuple(
+                            argstr, i
+                        )  # Retrieve the Embedded Triple
+                        # logger.debug(f"substr {substr}")
+
+                    # Replace this embeddedTriple with a empty node
+                    # assign a number to this blank node for multiple reifications possible
+                    if substr not in self.embedded_triples.keys():
+                        self.bnode_counter += 1
+                        bnode_num = self.bnode_counter
+                        self.embedded_triples[substr] = bnode_num
+                    else:
+                        # This embedded triple has already been re-ified once, use the same BNode number again
+                        bnode_num = self.embedded_triples[substr]
+
+                    argstr = (
+                        argstr[: posStart - 2]
+                        + "_:s"
+                        + str(bnode_num)
+                        + argstr[posEnd + 3 :]
+                    )
+                    # argstr = argstr[:posStart - 2] + "_:s" + argstr[posEnd + 3:]
+
+                    # Add the reification triples
+                    argstr = argstr + "\n" + substr + "\n"
+
+                    # Get the subject, predicate and object of the embedded triple
+                    ptr = 0
+                    _er = []
+                    ptr = self.object(substr, 0, _er)
+
+                    # _esub = _er[0]
+                    _esubj = substr[:ptr]
+                    # logger.debug(f"_esubj {_esubj}")
+
+                    _ev = []
+                    ptr2 = self.verb(substr, ptr, _ev)
+                    _epred = substr[ptr + 1 : ptr2]
+
+                    # _edir, _epred = _ev[0]
+                    # logger.debug(f"_epred {_epred}")
+
+                    objs = []
+                    ptr3 = self.objectList(substr, ptr2, objs)
+                    # _eobj = objs[0]
+                    _eobj = substr[ptr2 + 1 : ptr3 - 1]
+                    # logger.debug(f"_eobj {_eobj}")
+
+                    argstr = (
+                        argstr
+                        + "_:s"
+                        + str(bnode_num)
+                        + " rdf:type rdf:Statement ; rdf:subject "
+                        + str(_esubj)
+                        + " ; rdf:predicate "
+                        + str(_epred)
+                        + " ; rdf:object "
+                        + str(_eobj)
+                        + " .\n"
+                    )
+
+                    # logger.debug(f"Reified graph:\n{argstr}")
+
+                else:
+                    i += 1
+
+        return argstr
 
     def statement(self, argstr: str, i: int) -> int:
         r: typing.List[Any] = []
@@ -1193,7 +1313,12 @@ class SinkParser:
                     if not self.turtle and pfx == "":
                         ns = join(self._baseURI or "", "#")
                     else:
-                        self.BadSyntax(argstr, i, 'Prefix "%s:" not bound' % (pfx))
+                        try:
+                            ns = self._store.graph.store.namespace(pfx)
+                            if ns is None:
+                                raise KeyError
+                        except KeyError:
+                            self.BadSyntax(argstr, i, 'Prefix "%s:" not bound' % (pfx))
             symb = self._store.newSymbol(ns + ln)
             res.append(self._variables.get(symb, symb))
             return j
@@ -1946,33 +2071,11 @@ class TurtleParser(Parser):
         for prefix, namespace in p._bindings.items():
             graph.bind(prefix, namespace)
 
-class TurtlestarParser(TurtleParser):
 
-    def __init__(self):
-        pass
-
-    def parse(self, source, graph, encoding="utf-8"):
-        # we're currently being handed a Graph, not a ConjunctiveGraph
-        # context-aware is this implied by formula_aware
-        ca = getattr(graph.store, "context_aware", False)
-        fa = getattr(graph.store, "formula_aware", False)
-        if not ca:
-            raise ParserError("Cannot parse N3 into non-context-aware store.")
-        elif not fa:
-            raise ParserError("Cannot parse N3 into non-formula-aware store.")
-
-        conj_graph = ConjunctiveGraph(store=graph.store)
-        conj_graph.default_context = graph  # TODO: CG __init__ should have a
-        # default_context arg
-        # TODO: update N3Processor so that it can use conj_graph as the sink
-        conj_graph.namespace_manager = graph.namespace_manager
-
-        TurtleParser.parse(self, source, conj_graph, encoding, turtle=False)
-
-class N3Parser(TurtleParser):
+class TurtleStarParser(TurtleParser):
 
     """
-    An RDFLib parser for Notation3
+    An RDFLib parser for TurtleStar
 
     See http://www.w3.org/DesignIssues/Notation3.html
 
@@ -1997,7 +2100,7 @@ class N3Parser(TurtleParser):
         # TODO: update N3Processor so that it can use conj_graph as the sink
         conj_graph.namespace_manager = graph.namespace_manager
 
-        TurtleParser.parse(self, source, conj_graph, encoding, turtle=False)
+        TurtleParser.parse(self, source, conj_graph, encoding, turtle=True)
 
 
 def _test():  # pragma: no cover
