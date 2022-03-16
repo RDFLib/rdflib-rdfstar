@@ -317,10 +317,11 @@ def evalPart(ctx: QueryContext, part: CompValue):
         if len(set_of_embeded_triples) != 0:
             for embTp in set_of_embeded_triples:
                 reifyEmbTP(ctx, embTp, triples)
-        part.triples = triples
+        part.triples = triples  # type: ignore[attr-defined]
         triples = sorted(
             part.triples, key=lambda t: len([n for n in t if ctx[n] is None])
         )
+
         return evalBGP(ctx, triples)
     elif part.name == "Filter":
         return evalFilter(ctx, part)
