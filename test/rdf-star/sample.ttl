@@ -4,6 +4,7 @@
 @prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix netflix: <http://www.example.org/sweb/netflix#> .
 @prefix class: <http://www.example.org/sweb/OwlClass> .
+@prefix prop:  <http://www.example.org/sweb/OwlProperty/> .
 
 prop:isListedIn  rdfs:domain  class:ShowId ;
         rdfs:range   class:Genre .
