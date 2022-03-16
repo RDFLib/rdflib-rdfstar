@@ -35,7 +35,17 @@ import sys
 # importing typing for `typing.List` because `List`` is used for something else
 import typing
 from decimal import Decimal
-from typing import IO, TYPE_CHECKING, Any, Callable, Dict, Optional, TypeVar, Union
+from typing import (
+    IO,
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Optional,
+    TypeVar,
+    Union,
+    Tuple,
+)
 from uuid import uuid4
 
 from rdflib.compat import long_type
@@ -372,8 +382,12 @@ class SinkParser:
 
         self._bindings = {}
 
-        self.bnode_counter = 0  # Counter to keep track of number of Blank nodes used for reification
-        self.embedded_triples = {}  # dictionary to keep track of embedded triples and what BlankNode they are mapped to
+        self.bnode_counter = (
+            0  # Counter to keep track of number of Blank nodes used for reification
+        )
+        self.embedded_triples = (  # type: ignore[var-annotated]
+            {}
+        )  # dictionary to keep track of embedded triples and what BlankNode they are mapped to
 
         if thisDoc != "":
             assert ":" in thisDoc, "Document URI not absolute: <%s>" % thisDoc
@@ -492,7 +506,7 @@ class SinkParser:
                 # print("# next char: %s" % s[j])
                 self.BadSyntax(s, j, "expected directive or statement")
 
-    def directiveOrStatement(self, argstr: str, h: int) -> int:
+    def directiveOrStatement(self, argstr: str, h: int) -> Tuple[str, int]:
 
         i = self.skipSpace(argstr, h)
         if i < 0:
@@ -759,27 +773,33 @@ class SinkParser:
     def get_embedded_tuple(self, argstr, i):
         i = i + 2
         j = i
-        while argstr[j + 1:j + 3] != ">>":
+        while argstr[j + 1 : j + 3] != ">>":
             j += 1
 
-        substr = argstr[i:j + 1] + " ."
+        substr = argstr[i : j + 1] + " ."
         return i, j, substr
 
     def change_star_to_reification(self, argstr, i):
         # Check if the Star statement is present anywhere in the given statement
         # Find the position and extract this embedded tuple
         # The star statement could also be present as a subject or an object, check for that
-        if ("<<" in argstr and ">>" in argstr):
-            while (i <= len(argstr)):
-                if (argstr[i:i + 2] == "<<"):  # We have found rdf* syntax with reification of subject
+        if "<<" in argstr and ">>" in argstr:
+            while i <= len(argstr):
+                if (
+                    argstr[i : i + 2] == "<<"
+                ):  # We have found rdf* syntax with reification of subject
                     # Converting into rdf reification statement
-                    posStart, posEnd, substr = self.get_embedded_tuple(argstr, i)  # Retrieve the Embedded Triple
+                    posStart, posEnd, substr = self.get_embedded_tuple(
+                        argstr, i
+                    )  # Retrieve the Embedded Triple
                     # logger.debug(f"substr {substr}")
 
                     # If recursive star statements present
                     while "<<" in substr:
                         argstr = self.change_star_to_reification(argstr, posStart)
-                        posStart, posEnd, substr = self.get_embedded_tuple(argstr, i)  # Retrieve the Embedded Triple
+                        posStart, posEnd, substr = self.get_embedded_tuple(
+                            argstr, i
+                        )  # Retrieve the Embedded Triple
                         # logger.debug(f"substr {substr}")
 
                     # Replace this embeddedTriple with a empty node
@@ -792,7 +812,12 @@ class SinkParser:
                         # This embedded triple has already been re-ified once, use the same BNode number again
                         bnode_num = self.embedded_triples[substr]
 
-                    argstr = argstr[:posStart - 2] + "_:s" + str(bnode_num) + argstr[posEnd + 3:]
+                    argstr = (
+                        argstr[: posStart - 2]
+                        + "_:s"
+                        + str(bnode_num)
+                        + argstr[posEnd + 3 :]
+                    )
                     # argstr = argstr[:posStart - 2] + "_:s" + argstr[posEnd + 3:]
 
                     # Add the reification triples
@@ -809,7 +834,7 @@ class SinkParser:
 
                     _ev = []
                     ptr2 = self.verb(substr, ptr, _ev)
-                    _epred = substr[ptr + 1:ptr2]
+                    _epred = substr[ptr + 1 : ptr2]
 
                     # _edir, _epred = _ev[0]
                     # logger.debug(f"_epred {_epred}")
@@ -817,11 +842,21 @@ class SinkParser:
                     objs = []
                     ptr3 = self.objectList(substr, ptr2, objs)
                     # _eobj = objs[0]
-                    _eobj = substr[ptr2 + 1:ptr3 - 1]
+                    _eobj = substr[ptr2 + 1 : ptr3 - 1]
                     # logger.debug(f"_eobj {_eobj}")
 
-                    argstr = argstr + "_:s" + str(bnode_num) + " rdf:type rdf:Statement ; rdf:subject " + str(
-                        _esubj) + " ; rdf:predicate " + str(_epred) + " ; rdf:object " + str(_eobj) + " .\n"
+                    argstr = (
+                        argstr
+                        + "_:s"
+                        + str(bnode_num)
+                        + " rdf:type rdf:Statement ; rdf:subject "
+                        + str(_esubj)
+                        + " ; rdf:predicate "
+                        + str(_epred)
+                        + " ; rdf:object "
+                        + str(_eobj)
+                        + " .\n"
+                    )
 
                     # logger.debug(f"Reified graph:\n{argstr}")
 

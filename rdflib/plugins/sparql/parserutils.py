@@ -143,6 +143,7 @@ class CompValue(OrderedDict):
         OrderedDict.__init__(self)
         self.name = name
         self.update(values)
+        self.triples = []
 
     def clone(self):
         return CompValue(self.name, **self)

@@ -71,8 +71,10 @@ def Filter(expr, p):
 def Extend(p, expr, var):
     return CompValue("Extend", p=p, expr=expr, var=var)
 
+
 def EmpTP(p, o):
     return CompValue('EmpTP', var=o)
+
 
 def Values(res):
     return CompValue("values", res=res)
@@ -304,7 +306,7 @@ def translateGroupGraphPattern(graphPattern):
             g[-1]["triples"] += triples(p.triples)
         elif p.name == 'Bind':
             tpBind = list()
-            if (isinstance(p.expr, EmbeddedTriple)):
+            if isinstance(p.expr, EmbeddedTriple):
                 v = Variable('__' + p.expr.toPython())
                 tpBind.append([v, RDF.type, RDF.Statement])
                 tpBind.append([v, RDF.subject, p.expr.subject()])

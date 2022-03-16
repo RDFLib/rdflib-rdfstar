@@ -441,14 +441,21 @@ GraphOrDefault = ParamList("graph", Keyword("DEFAULT")) | Optional(
 
 # Inside a values clause the EmbeddedTriple must be fully resolvable.
 KnownEmbTP = Forward()
-KnownEmbTP <<= Suppress('<<') + (iri | KnownEmbTP) + (iri | A) + (iri | RDFLiteral | NumericLiteral | BooleanLiteral | KnownEmbTP) + Suppress('>>')
-KnownEmbTP.setParseAction(lambda x:
-                          rdflib.EmbeddedTriple(subject=x[0],
-                                                predicate=x[1],
-                                                object=x[2]))
+KnownEmbTP <<= (
+    Suppress('<<')
+    + (iri | KnownEmbTP)
+    + (iri | A)
+    + (iri | RDFLiteral | NumericLiteral | BooleanLiteral | KnownEmbTP)
+    + Suppress('>>')
+)
+KnownEmbTP.setParseAction(
+    lambda x: rdflib.EmbeddedTriple(subject=x[0], predicate=x[1], object=x[2])
+)
 
 # [65] DataBlockValue ::= iri | RDFLiteral | NumericLiteral | BooleanLiteral | 'UNDEF'
-DataBlockValue = iri | RDFLiteral | NumericLiteral | BooleanLiteral | Keyword('UNDEF') | KnownEmbTP
+DataBlockValue = (
+    iri | RDFLiteral | NumericLiteral | BooleanLiteral | Keyword('UNDEF') | KnownEmbTP
+)
 
 # [78] Verb ::= VarOrIri | A
 Verb = VarOrIri | A
@@ -467,17 +474,24 @@ TriplesNodePath = Forward()
 # [104] GraphNode ::= VarOrTerm | TriplesNode
 GraphNode = VarOrTerm | TriplesNode
 
-#Should be recursive but it is not yet so
+# Should be recursive but it is not yet so
 # VarOrBlankNodeOrIriOrLitOrEmbTP = Forward()
 # VarOrBlankNodeOrIriOrLitOrEmbTP <<= Var | BlankNode | iri | RDFLiteral | NumericLiteral | BooleanLiteral | VarOrBlankNodeOrIriOrLitOrEmbTP
-VarOrBlankNodeOrIriOrLitOrEmbTP = Var | BlankNode | iri | RDFLiteral | NumericLiteral | BooleanLiteral
+VarOrBlankNodeOrIriOrLitOrEmbTP = (
+    Var | BlankNode | iri | RDFLiteral | NumericLiteral | BooleanLiteral
+)
 
 EmbTP = Forward()
-EmbTP <<= Suppress('<<') + (VarOrBlankNodeOrIriOrLitOrEmbTP|EmbTP) + Verb + (VarOrBlankNodeOrIriOrLitOrEmbTP|EmbTP) + Suppress('>>')
-EmbTP.setParseAction(lambda x:
-                     rdflib.EmbeddedTriple(subject=x[0],
-                                           predicate=x[1],
-                                           object=x[2]))
+EmbTP <<= (
+    Suppress('<<')
+    + (VarOrBlankNodeOrIriOrLitOrEmbTP | EmbTP)
+    + Verb
+    + (VarOrBlankNodeOrIriOrLitOrEmbTP | EmbTP)
+    + Suppress('>>')
+)
+EmbTP.setParseAction(
+    lambda x: rdflib.EmbeddedTriple(subject=x[0], predicate=x[1], object=x[2])
+)
 
 VarOrTermOrEmbTP = Var | GraphTerm | EmbTP
 
@@ -606,7 +620,9 @@ TriplesNode <<= Collection | BlankNodePropertyList
 TriplesNodePath <<= CollectionPath | BlankNodePropertyListPath
 
 # [75] TriplesSameSubject ::= VarOrTerm PropertyListNotEmpty | TriplesNode PropertyList
-TriplesSameSubject = VarOrTermOrEmbTP + PropertyListNotEmpty | TriplesNode + PropertyList
+TriplesSameSubject = (
+    VarOrTermOrEmbTP + PropertyListNotEmpty | TriplesNode + PropertyList
+)
 TriplesSameSubject.setParseAction(expandTriples)
 
 # [52] TriplesTemplate ::= TriplesSameSubject ( '.' TriplesTemplate? )?

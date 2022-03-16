@@ -480,20 +480,24 @@ class EmbeddedTriple:
     Triple: Needed for RDF*
 
     """
+
     _subject = None
     _predicate = None
     _object = None
     _sid = None
 
-    def __init__(self, sid=None,
-                 subject=None, predicate=None, object=None):
+    def __init__(self, sid=None, subject=None, predicate=None, object=None):
         self._subject = subject
         self._predicate = predicate
         self._object = object
-        self._sid = sid #Statement Identifier
+        self._sid = sid  # Statement Identifier
 
     def toPython(self):
-        return self._subject.toPython() + self._predicate.toPython() + self._object.toPython()
+        return (
+            self._subject.toPython()
+            + self._predicate.toPython()
+            + self._object.toPython()
+        )
 
     def n3(self, namespace_manager=None):
         return "triple:%s" % self
@@ -503,19 +507,26 @@ class EmbeddedTriple:
             clsName = "rdflib.term.EmbeddedTriple"
         else:
             clsName = self.__class__.__name__
-        return """%s('%s','%s','%s')""" % (clsName, str(self._subject),str(self._predicate),str(self._object))
+        return """%s('%s','%s','%s')""" % (
+            clsName,
+            str(self._subject),
+            str(self._predicate),
+            str(self._object),
+        )
 
     def asQuad(self):
-        _rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
-        _type = URIRef('type',base=_rdf)
+        _rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        _type = URIRef('type', base=_rdf)
         _rdf_object = URIRef('object', base=_rdf)
         _rdf_predicate = URIRef('predicate', base=_rdf)
         _rdf_subject = URIRef('subject', base=_rdf)
         _rdf_statement = URIRef('Statement', base=_rdf)
-        return [[self._sid, _type , _rdf_statement],
-                [self._sid , _rdf_object, self. object],
-                [self._sid, _rdf_predicate, self._predicate],
-                [self._sid, _rdf_subject, self._subject]]
+        return [
+            [self._sid, _type, _rdf_statement],
+            [self._sid, _rdf_object, self.object],
+            [self._sid, _rdf_predicate, self._predicate],
+            [self._sid, _rdf_subject, self._subject],
+        ]
 
     def subject(self):
         return self._subject
@@ -526,8 +537,11 @@ class EmbeddedTriple:
     def object(self):
         return self._object
 
-    def sid(self):
-        return self._sid
+    def sid(self, sid=None):
+        if sid is not None:
+            self._sid = sid
+        else:
+            return self._sid
 
     def setSubject(self, subject):
         self._subject = subject
@@ -538,22 +552,24 @@ class EmbeddedTriple:
     def setObject(self, object):
         self._object = object
 
-    def sid(self, sid):
-        self._sid = sid
-
+    # def setsid(self, sid):
+    #     self._sid = sid
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __eq__(self, other):
-        if (not isinstance(other, self.__class__)):
+        if not isinstance(other, self.__class__):
             return False
-        return self._subject == other._subject and  \
-               self._predicate == other._predicate and \
-               self._object == other._object
+        return (
+            self._subject == other._subject
+            and self._predicate == other._predicate
+            and self._object == other._object
+        )
 
     def __hash__(self):
         return hash(self._subject) | hash(self._predicate) | hash(self._object)
+
 
 class Literal(Identifier):
     __doc__ = """
