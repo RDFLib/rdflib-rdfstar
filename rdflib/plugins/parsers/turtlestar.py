@@ -1315,6 +1315,8 @@ class SinkParser:
                     else:
                         try:
                             ns = self._store.graph.store.namespace(pfx)
+                            if ns is None:
+                                raise KeyError
                         except KeyError:
                             self.BadSyntax(argstr, i, 'Prefix "%s:" not bound' % (pfx))
             symb = self._store.newSymbol(ns + ln)
