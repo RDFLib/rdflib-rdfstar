@@ -85,28 +85,28 @@ def test_TurtlePositiveSyntax_Blanknodeobject():
     g = Graph()
     g.parse(location=os.path.join(TEST_DIR + "/rdf-star", "turtle-star/nt-ttl-star-bnode-2.ttl"), format = "ttls")
 
-def test_TurtlePositiveSyntax_Nestedsubjectterm():
+def test_TurtlePositiveSyntax_Nestedsubjectterm1():
     g = Graph()
     g.parse(location=os.path.join(TEST_DIR + "/rdf-star", "turtle-star/nt-ttl-star-nested-1.ttl"), format = "ttls")
 
-def test_TurtlePositiveSyntax_Nestedsubjectterm():
+def test_TurtlePositiveSyntax_Nestedsubjectterm2():
     g = Graph()
     g.parse(location=os.path.join(TEST_DIR + "/rdf-star", "turtle-star/nt-ttl-star-nested-2.ttl"), format = "ttls")
 
 # tests should be broken
 
 @pytest.mark.xfail(reason="Bad quoted triple literal subject")
-def test_TurtleNegativeSyntax_Badquotedtripleliteralsubject():
+def test_TurtleNegativeSyntax_Badquotedtripleliteralsubject1():
     g = Graph()
     g.parse(location=os.path.join(TEST_DIR + "/rdf-star", "turtle-star/nt-ttl-star-bad-syntax-1.ttl"), format = "ttls")
 
 @pytest.mark.xfail(reason="Bad quoted triple literal subject")
-def test_TurtleNegativeSyntax_Badquotedtripleliteralsubject():
+def test_TurtleNegativeSyntax_Badquotedtripleliteralsubject2():
     g = Graph()
     g.parse(location=os.path.join(TEST_DIR + "/rdf-star", "turtle-star/nt-ttl-star-bad-syntax-2.ttl"), format = "ttls")
 
 @pytest.mark.xfail(reason="Badquotedtripleliteralpredicate")
-def test_TurtleNegativeSyntax_Badquotedtripleliteralpredicate():
+def test_TurtleNegativeSyntax_Badquotedtripleliteralpredicate3():
     g = Graph()
     g.parse(location=os.path.join(TEST_DIR + "/rdf-star", "turtle-star/nt-ttl-star-bad-syntax-3.ttl"), format = "ttls")
 
