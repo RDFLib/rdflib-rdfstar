@@ -160,7 +160,7 @@ def RDFstarParsings(rdbytes_p):
             # process(current_processing)
             current_processing = ""
 
-            print(rdf_resultspp)
+    print(rdf_resultspp)
 
     rdbytes_2 = bytes(rdf_resultspp, 'utf-8')
     print(rdbytes_2)
