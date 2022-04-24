@@ -7,6 +7,7 @@ from lark import (
     Tree,
 )
 from lark.visitors import Visitor
+from lark.reconstruct import Reconstructor
 
 from lark.lexer import (
     Token,
@@ -41,6 +42,7 @@ triples: subject predicate_object_list
        | blank_node_property_list predicate_object_list?
        | quotation predicate_object_list
        | subject verb quotation
+       | quotation verb quotation
 predicate_object_list: verb object_list (";" (verb object_list)?)*
 ?object_list: object ("," object)*
 ?verb: predicate | /a/
@@ -100,7 +102,7 @@ COMMENT: "#" /[^\n]/*
 
 turtle_lark = Lark(grammar, start="turtle_doc", parser="lalr")
 
-f = open("turtle-star/turtle-star-syntax-nested-01.ttl", "rb")
+f = open("turtle-star/turtle-star-syntax-nested-02.ttl", "rb")
 rdbytes = f.read()
 f.close()
 rdbytes_processing = rdbytes.decode("utf-8")
@@ -126,20 +128,72 @@ print("\n")
 # print(rdbytes_2)
 
 from lark import Visitor, v_args
+quotation_list = []
+quotation_dict = dict()
+vblist = []
+# searching_v = []
+# def processing_var(v):
+#     searching_v = [v]
+#     while len(searching_v) > 0:
+#         for v in var:
+#             if v.data == 'quotation'
+
+def myHash(text:str):
+  hash=0
+  for ch in text:
+    hash = ( hash*281  ^ ord(ch)*997) & 0xFFFFFFFF
+  return hash
 
 class FindVariables(Visitor):
     def __init__(self):
         super().__init__()
+        # self.quotation_list = []
         self.variable_list = []
 
     def quotation(self, var):
         # assert tree.data == "quotation"
-        print("quotation")
+        # print("quotation")
         print("\n")
-        print(self)
+        # print(self)
         print("\n")
-        print(var.children)
+        # print(var.children)
         print("\n")
+        qut = Reconstructor(turtle_lark).reconstruct(var) # replace here or replace later
+        print("qut", qut)
+        # processing_var(var)
+        if not (qut in quotation_list):
+            quotation_list.append(qut)
+
+        # vc = var.children
+        # print(vc)
+        # # nested = False
+        # processing = []
+        # for v1 in var.children:
+            # print(v1)
+            # if v1.data == "quotation":
+                # nested = True
+        vr = Reconstructor(turtle_lark).reconstruct(var)
+        # try:
+        id = quotation_dict.get(vr)
+        for x in quotation_dict:
+            if x in vr:
+                # print(quotation_dict.get(x))
+                print("replace", x, quotation_dict.get(x))
+                vr = vr.replace(x, quotation_dict.get(x))
+                vr = vr.replace("<<", "")
+                vr = vr.replace(">>", "")
+                output = vr.split(" ")
+                print(output)
+
+            # else:
+            # processing.append(Reconstructor(turtle_lark).reconstruct(v1))
+        # if not nested:
+        qut = qut.replace("<<", "")
+        qut = qut.replace(">>", "")
+        quotation_dict[qut] = str(myHash(qut))
+
+
+
         # print(a)
         # print("\n")
         # print(v)
@@ -149,8 +203,33 @@ class FindVariables(Visitor):
         #     self.variable_list.append(var)
         # except Exception as e:
         #     raise
+    def triples(self, var):
 
-FindVariables().visit(tree)
+        appends1 = []
+
+        print("triples")
+        print("\n")
+        print(self)
+        print("\n")
+        print(var.children)
+        for x in var.children:
+            print(x.data)
+            if x.data == 'predicate_object_list':
+                xc = x.children
+                for y in xc:
+                    x2 = Reconstructor(turtle_lark).reconstruct(y)
+                    print(x2)
+                    appends1.append(x2) # or push
+            else:
+              x1 = Reconstructor(turtle_lark).reconstruct(x)
+              print(x1)
+              appends1.append(x1)
+
+        if not (appends1 in vblist):
+            vblist.append(appends1)
+
+at = FindVariables().visit(tree)
+print(quotation_list, vblist)
 # fv2 = fv.visit(tree)
 # print(fv)
 # for var in fv.variable_list:
