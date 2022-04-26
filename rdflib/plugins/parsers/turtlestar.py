@@ -93,174 +93,479 @@ def splitFragP(uriref, punct=0):
     else:
         return uriref, ""
 
-
 import re
+import lark
+from lark import (
+    Lark,
+    Transformer,
+    Tree,
+)
+from lark.visitors import Visitor
+from lark.reconstruct import Reconstructor
 
-# f = open("turtle-star/turtle-star-syntax-nested-02.ttl", "rb")
-# rdbytes = f.read()
-# f.close()
-# rdbytes_processing = rdbytes.decode("utf-8")
+from lark.lexer import (
+    Token,
+)
 
- #https://stackoverflow.com/questions/4284991/parsing-nested-parentheses-in-python-grab-content-by-level https://stackoverflow.com/questions/14952113/how-can-i-match-nested-brackets-using-regex https://stackoverflow.com/questions/11404482/recursive-descent-parser-and-nested-parentheses
-current_quotation = []
+from pymantic.compat import (
+    binary_type,
+)
+from pymantic.parsers.base import (
+    BaseParser,
+)
+from pymantic.primitives import (
+    BlankNode,
+    Literal,
+    NamedNode,
+    Triple,
+)
+from pymantic.util import (
+    grouper,
+    smart_urljoin,
+    decode_literal,
+)
+
+grammar = r"""turtle_doc: statement*
+?statement: directive | triples "."
+directive: prefix_id | base | sparql_prefix | sparql_base
+prefix_id: "@prefix" PNAME_NS IRIREF "."
+base: BASE_DIRECTIVE IRIREF "."
+sparql_base: /BASE/i IRIREF
+sparql_prefix: /PREFIX/i PNAME_NS IRIREF
+triples: subject predicate_object_list
+       | blank_node_property_list predicate_object_list?
+       | quotation predicate_object_list
+       | subject verb quotation
+       | quotation verb quotation
+predicate_object_list: verb object_list (";" (verb object_list)?)*
+?object_list: object ("," object)*
+?verb: predicate | /a/
+?subject: iri | blank_node | collection
+?predicate: iri
+?object: iri | blank_node | collection | blank_node_property_list | literal
+?literal: rdf_literal | numeric_literal | boolean_literal
+ANGLEBRACKETL: "<<"
+ANGLEBRACKETR: ">>"
+quotation: ANGLEBRACKETL triples ANGLEBRACKETR
+blank_node_property_list: "[" predicate_object_list "]"
+collection: "(" object* ")"
+numeric_literal: INTEGER | DECIMAL | DOUBLE
+rdf_literal: string (LANGTAG | "^^" iri)?
+boolean_literal: /true|false/
+string: STRING_LITERAL_QUOTE
+      | STRING_LITERAL_SINGLE_QUOTE
+      | STRING_LITERAL_LONG_SINGLE_QUOTE
+      | STRING_LITERAL_LONG_QUOTE
+iri: IRIREF | prefixed_name
+prefixed_name: PNAME_LN | PNAME_NS
+blank_node: BLANK_NODE_LABEL | ANON
+
+BASE_DIRECTIVE: "@base"
+IRIREF: "<" (/[^\x00-\x20<>"{}|^`\\]/ | UCHAR)* ">"
+PNAME_NS: PN_PREFIX? ":"
+PNAME_LN: PNAME_NS PN_LOCAL
+BLANK_NODE_LABEL: "_:" (PN_CHARS_U | /[0-9]/) ((PN_CHARS | ".")* PN_CHARS)?
+LANGTAG: "@" /[a-zA-Z]+/ ("-" /[a-zA-Z0-9]+/)*
+INTEGER: /[+-]?[0-9]+/
+DECIMAL: /[+-]?[0-9]*/ "." /[0-9]+/
+DOUBLE: /[+-]?/ (/[0-9]+/ "." /[0-9]*/ EXPONENT
+      | "." /[0-9]+/ EXPONENT | /[0-9]+/ EXPONENT)
+EXPONENT: /[eE][+-]?[0-9]+/
+STRING_LITERAL_QUOTE: "\"" (/[^\x22\x5C\x0A\x0D]/ | ECHAR | UCHAR)* "\""
+STRING_LITERAL_SINGLE_QUOTE: "'" (/[^\x27\x5C\x0A\x0D]/ | ECHAR | UCHAR)* "'"
+STRING_LITERAL_LONG_SINGLE_QUOTE: "'''" (/'|''/? (/[^'\\]/ | ECHAR | UCHAR))* "'''"
+STRING_LITERAL_LONG_QUOTE: "\"\"\"" (/"|""/? (/[^"\\]/ | ECHAR | UCHAR))* "\"\"\""
+UCHAR: "\\u" HEX~4 | "\\U" HEX~8
+ECHAR: "\\" /[tbnrf"'\\]/
+WS: /[\x20\x09\x0D\x0A]/
+ANON: "[" WS* "]"
+PN_CHARS_BASE: /[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\U00010000-\U000EFFFF]/
+PN_CHARS_U: PN_CHARS_BASE | "_"
+PN_CHARS: PN_CHARS_U | /[\-0-9\u00B7\u0300-\u036F\u203F-\u2040]/
+PN_PREFIX: PN_CHARS_BASE ((PN_CHARS | ".")* PN_CHARS)?
+PN_LOCAL: (PN_CHARS_U | ":" | /[0-9]/ | PLX) ((PN_CHARS | "." | ":" | PLX)* (PN_CHARS | ":" | PLX))?
+PLX: PERCENT | PN_LOCAL_ESC
+PERCENT: "%" HEX~2
+HEX: /[0-9A-Fa-f]/
+PN_LOCAL_ESC: "\\" /[_~\.\-!$&'()*+,;=\/?#@%]/
+
+%ignore WS
+COMMENT: "#" /[^\n]/*
+%ignore COMMENT
+"""
+
+turtle_lark = Lark(grammar, start="turtle_doc", parser="lalr")
+
+class Print_Tree(Visitor):
+    def print_quotation(self, tree):
+        assert tree.data == "quotation"
+        print(tree.children)
+
+from lark import Visitor, v_args
+quotation_list = []
+quotation_dict = dict()
+vblist = []
+quotationreif = []
 def myHash(text:str):
   hash=0
   for ch in text:
     hash = ( hash*281  ^ ord(ch)*997) & 0xFFFFFFFF
   return hash
-  # https://stackoverflow.com/questions/27522626/hash-function-in-python-3-3-returns-different-results-between-sessions
-def ParseNestedParen(string, level):
-    """
-    Generate strings contained in nested (), indexing i = level
-    """
-    if len(re.findall("\(", string)) == len(re.findall("\)", string)):
-        LeftRightIndex = [x for x in zip(
-        [Left.start()+1 for Left in re.finditer('\(', string)],
-        reversed([Right.start() for Right in re.finditer('\)', string)]))]
 
-    elif len(re.findall("\(", string)) > len(re.findall("\)", string)):
-        return ParseNestedParen(string + ')', level)
+class FindVariables(Visitor):
+    def __init__(self):
+        super().__init__()
+        # self.quotation_list = []
+        self.variable_list = []
 
-    elif len(re.findall("\(", string)) < len(re.findall("\)", string)):
-        return ParseNestedParen('(' + string, level)
+    def quotation(self, var):
+        # appends1 = []
+        # assert tree.data == "quotation"
+        # print("quotation")
+        # print("\n")
+        # print(self)
+        # print("\n")
+        # print(var.children)
+        # print("\n")
+        qut = Reconstructor(turtle_lark).reconstruct(var) # replace here or replace later
+        # print("qut", qut)
+        # processing_var(var)
+        qut = qut.replace(";", "") #####################
+        if not (qut in quotation_list):
+            quotation_list.append(qut)
 
-    else:
-        return 'fail'
+        # vc = var.children
+        # print(vc)
+        # # nested = False
+        # processing = []
+        # for v1 in var.children:
+            # print(v1)
+            # if v1.data == "quotation":
+                # nested = True
+        vr = Reconstructor(turtle_lark).reconstruct(var)
+        vr = vr.replace(";","")
+        # try:
+        id = quotation_dict.get(vr)
+        for x in quotation_dict:
+            if x in vr:
+                # print(var)
+                # for y in var.children:
+                #     # print(x.data)
+                #     try:
+                #         print(y.data)
+                #         if y.data == 'predicate_object_list':
+                #             yc = y.children
+                #             for z in yc:
+                #                 y2 = Reconstructor(turtle_lark).reconstruct(z)
+                #                 print("atatattt", y2)
+                #                 appends1.append(y2) # or push
+                #         else:
+                #             y1 = Reconstructor(turtle_lark).reconstruct(y)
+                #             print("asdasdasd", y1)
+                #             appends1.append(y1)
+                #     except:
+                #         print("except", y)
+                # print(appends1)
+                # print(quotation_dict.get(x))
+                # print("replace", x, ":"+quotation_dict.get(x))
+                vr = vr.replace(x, ":"+quotation_dict.get(x))
+                vr = vr.replace("<<", "")
+                vr = vr.replace(">>", "")
+                output = vr.split(":") # what if not :? directly url? if and else?
+                output.pop(0)
+                oa1 = Reconstructor(turtle_lark).reconstruct(var)
+                oa1 = oa1.replace(";","")
+                output.append(oa1)
+                # print(quotationreif)
+                quotationreif.append(output)
 
-    return [string[LeftRightIndex[level][0]:LeftRightIndex[level][1]]]
-
-def parse_to_rdf(string1, current_quotation):
-    string1 = string1.replace("\n","")
-    string1 = string1.replace("\r","")
-    if string1[0] == " ":
-        string1 = string1[1:]
-    if string1[-1] == " ":
-        # print(string1, len(string1)-1)
-        string1 = string1[:-1]
-    # print("now6",string1)
-    if not(len(current_quotation)==0):
-        my_value = myHash(string1)
-        not_in = True
-        for x in current_quotation:
-            if x[0] == string1:
-                pass
-                not_in = False
-        if not_in:
-            current_quotation.insert(0, [string1, myHash(string1)])
-
-        not_in = True
-        for x in current_quotation:
-            # print(x,"wadawdad","okokoko","a","?")
-
-            if x[0] == string1:
-                pass
-                not_in = False
-
-            elif x[0] in string1:
-                # print("ok")
-                if "(" in x[0]:
-                    match ="("+" " + x[0] + ")"
-                else:
-                    match="("+x[0]+" "+")"
-
-                if "(" in x[0]:
-                    string1=string1.replace(match,":" + str(x[1]))
-                else:
-                    string1= string1.replace(match,":" + str(x[1]))
-                # print(string1)
-                break
-
-
-    else:
-        my_value = myHash(string1)
-        # print("ok")
-        current_quotation.insert(0, [string1,myHash(string1)])
-
-
-    splitz = string1.split(" ")
-    # print(current_quotation)
-    subject = splitz[0]
-    predicate = splitz[1]
-    object = splitz[2]
-    # :rei-1
-    #a rdf:Statement ;
-    #rdf:subject :s ;
-    #rdf:predicate :p ;
-    #rdf:object :o ;
-    #.
-
-    next_rdf_object = ":" + str(my_value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
-    return next_rdf_object
-
-start_processing =  False
+            # else:
+            # processing.append(Reconstructor(turtle_lark).reconstruct(v1))
+        # if not nested:
+        # qut = qut.replace("<<", "")
+        # qut = qut.replace(">>", "") ##################################### why no difference?
+        quotation_dict[qut] = str(myHash(qut))
 
 
 
-def RDFstarParsings(rdbytes_p):
-    rdf_resultspp = ""
-    current_processing = ""
-    for x in range(0, len(rdbytes_p)-1):
-        if (not rdbytes_p[x] == '.'):
-            current_processing+=rdbytes_p[x]
-        else:
-            number_brack = current_processing.count("<<")
-            # print(number_brack)
-            ts = current_processing.replace("<<", "(")
-            outcome_s = ts.replace(">>",")")
+        # print(a)
+        # print("\n")
+        # print(v)
+        # print("\n")
 
-            if outcome_s[0] == "P":
-                # print(len(outcome_s)-1)
-                for z in range(0, len(outcome_s)-1):
-                    # print(z)
-                    if outcome_s[z] == '\n':
-                        rdf_resultspp+= outcome_s[0:z+2]
-                        rdf_resultspp+="PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"
-                        outcome_s = outcome_s[z+2:len(outcome_s)        ]
+        # try:
+        #     self.variable_list.append(var)
+        # except Exception as e:
+        #     raise
+    def triples(self, var):
 
+        appends1 = []
 
-                        break
-                # print(outcome_s)
-
-                if number_brack==0:
-                    rdf_resultspp += parse_to_rdf(outcome_s,current_quotation)
-                else:
-                    for y in range(number_brack-1,-1, -1):
-
-                        # print(y)
-                        nested = ParseNestedParen(outcome_s,y)
-                        rdf_resultspp += parse_to_rdf(nested[0],current_quotation)
-                    rdf_resultspp += parse_to_rdf(outcome_s,current_quotation)
-
-
-                # print(parse_to_rdf(outcome_s,current_quotation))
-                pass
+        # print("triples")
+        # print("\n")
+        # print(self)
+        # print("\n")
+        # print(var.children)
+        for x in var.children:
+            # print(x.data)
+            if x.data == 'predicate_object_list':
+                xc = x.children
+                for y in xc:
+                    x2 = Reconstructor(turtle_lark).reconstruct(y)
+                    # print(x2)
+                    x2 = x2.replace(";","")
+                    appends1.append(x2) # or push
             else:
-                # print(parse_parentheses(outcome_s))
-                # outcomet = parse_parentheses(outcome_s)
+              x1 = Reconstructor(turtle_lark).reconstruct(x)
+            #   print(x1)
+              x1 = x1.replace(";","")
+              appends1.append(x1)
 
-                # print(outcome_s)
+        if not (appends1 in vblist):
+            vblist.append(appends1)
 
-                if number_brack==0:
-                    rdf_resultspp += parse_to_rdf(outcome_s,current_quotation)
+def RDFstarParsings(rdfstarstring):
+    constructors = ""
+    tree = turtle_lark.parse(rdfstarstring)
+    at = FindVariables().visit(tree)
 
-                else :
+    for x in quotationreif:
+        if len(x) == 2:
+            myvalue = x[0]
+            px = x[1]
+            px = px.replace("<<", "")
+            px = px.replace(">>", "")
+            px = px.replace(";", "")
+            px = px.split(":")
+            px.pop(0)
+            subject = ":"+px[0]
+            predicate = ":"+px[1]
+            object = ":"+px[2]
 
-                    for y in range(number_brack-1,-1, -1):
+            next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
+            # returnvalue = ""
+            # returnvalue+=next_rdf_object
+            # returnvalue = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" + returnvalue
+            # print(next_rdf_object)
+            constructors+=next_rdf_object
 
-                        # print(y)
-                        nested = ParseNestedParen(outcome_s,y)
-                        rdf_resultspp += parse_to_rdf(nested[0],current_quotation)
-                        rdf_resultspp += parse_to_rdf(outcome_s,current_quotation)
+        elif len(x) == 4:
+            refe= x.pop()
+            # print(refe)
+            # for z in quotation_dict:
+                # print(z)
+            refe1 = quotation_dict.get(refe)
+            myvalue = refe1
+            subject = ":"+x[0]
+            predicate = ":"+x[1]
+            object = ":"+x[2]
 
-            # process(current_processing)
-            current_processing = ""
+            next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
+            # returnvalue = ""
+            # returnvalue+=next_rdf_object
+            # returnvalue = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" + returnvalue
+            # print(next_rdf_object)
+            constructors+=next_rdf_object
+        else:
+            print("exception")
 
-            print(rdf_resultspp)
+    for y in vblist:
+        result = "".join(y)
+        result = "<<"+result+">>"
+        # print(result, quotation_list)
+        # isin -
+        # for q in quotation_list:
+        #     if q == result:
+        #         isin = True
+        if not (result in quotation_list):
+            for z in range(0,len(y)-1):
+                if "<<" in y[z]:
+                    # print("adad", ":"+quotation_dict[y[z]])
+                    y[z] = ":"+quotation_dict[y[z]] #get also ok
+            # print("aaaaaaaagggggg",y)
+            myvalue = str(myHash(result))
+            subject = y[0]
+            predicate = y[1]
+            object = y[2]
+            next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
+            # print(next_rdf_object)
+            constructors+=next_rdf_object
 
-    rdbytes_2 = bytes(rdf_resultspp, 'utf-8')
-    print(rdbytes_2)
 
-    return rdbytes_2
+    constructors = "PREFIX : <http://example/> \n\n"+constructors # prefix
+    constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors
+    print(constructors)
+    constructors = bytes(constructors, 'utf-8')
+    return constructors
+
+
+# import re
+
+# # f = open("turtle-star/turtle-star-syntax-nested-02.ttl", "rb")
+# # rdbytes = f.read()
+# # f.close()
+# # rdbytes_processing = rdbytes.decode("utf-8")
+
+#  #https://stackoverflow.com/questions/4284991/parsing-nested-parentheses-in-python-grab-content-by-level https://stackoverflow.com/questions/14952113/how-can-i-match-nested-brackets-using-regex https://stackoverflow.com/questions/11404482/recursive-descent-parser-and-nested-parentheses
+# current_quotation = []
+# def myHash(text:str):
+#   hash=0
+#   for ch in text:
+#     hash = ( hash*281  ^ ord(ch)*997) & 0xFFFFFFFF
+#   return hash
+#   # https://stackoverflow.com/questions/27522626/hash-function-in-python-3-3-returns-different-results-between-sessions
+# def ParseNestedParen(string, level):
+#     """
+#     Generate strings contained in nested (), indexing i = level
+#     """
+#     if len(re.findall("\(", string)) == len(re.findall("\)", string)):
+#         LeftRightIndex = [x for x in zip(
+#         [Left.start()+1 for Left in re.finditer('\(', string)],
+#         reversed([Right.start() for Right in re.finditer('\)', string)]))]
+
+#     elif len(re.findall("\(", string)) > len(re.findall("\)", string)):
+#         return ParseNestedParen(string + ')', level)
+
+#     elif len(re.findall("\(", string)) < len(re.findall("\)", string)):
+#         return ParseNestedParen('(' + string, level)
+
+#     else:
+#         return 'fail'
+
+#     return [string[LeftRightIndex[level][0]:LeftRightIndex[level][1]]]
+
+# def parse_to_rdf(string1, current_quotation):
+#     string1 = string1.replace("\n","")
+#     string1 = string1.replace("\r","")
+#     if string1[0] == " ":
+#         string1 = string1[1:]
+#     if string1[-1] == " ":
+#         # print(string1, len(string1)-1)
+#         string1 = string1[:-1]
+#     # print("now6",string1)
+#     if not(len(current_quotation)==0):
+#         my_value = myHash(string1)
+#         not_in = True
+#         for x in current_quotation:
+#             if x[0] == string1:
+#                 pass
+#                 not_in = False
+#         if not_in:
+#             current_quotation.insert(0, [string1, myHash(string1)])
+
+#         not_in = True
+#         for x in current_quotation:
+#             # print(x,"wadawdad","okokoko","a","?")
+
+#             if x[0] == string1:
+#                 pass
+#                 not_in = False
+
+#             elif x[0] in string1:
+#                 # print("ok")
+#                 if "(" in x[0]:
+#                     match ="("+" " + x[0] + ")"
+#                 else:
+#                     match="("+x[0]+" "+")"
+
+#                 if "(" in x[0]:
+#                     string1=string1.replace(match,":" + str(x[1]))
+#                 else:
+#                     string1= string1.replace(match,":" + str(x[1]))
+#                 # print(string1)
+#                 break
+
+
+#     else:
+#         my_value = myHash(string1)
+#         # print("ok")
+#         current_quotation.insert(0, [string1,myHash(string1)])
+
+
+#     splitz = string1.split(" ")
+#     # print(current_quotation)
+#     subject = splitz[0]
+#     predicate = splitz[1]
+#     object = splitz[2]
+#     # :rei-1
+#     #a rdf:Statement ;
+#     #rdf:subject :s ;
+#     #rdf:predicate :p ;
+#     #rdf:object :o ;
+#     #.
+
+#     next_rdf_object = ":" + str(my_value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
+#     return next_rdf_object
+
+# start_processing =  False
+
+
+
+# def RDFstarParsings(rdbytes_p):
+#     rdf_resultspp = ""
+#     current_processing = ""
+#     for x in range(0, len(rdbytes_p)-1):
+#         if (not rdbytes_p[x] == '.'):
+#             current_processing+=rdbytes_p[x]
+#         else:
+#             number_brack = current_processing.count("<<")
+#             # print(number_brack)
+#             ts = current_processing.replace("<<", "(")
+#             outcome_s = ts.replace(">>",")")
+
+#             if outcome_s[0] == "P":
+#                 # print(len(outcome_s)-1)
+#                 for z in range(0, len(outcome_s)-1):
+#                     # print(z)
+#                     if outcome_s[z] == '\n':
+#                         rdf_resultspp+= outcome_s[0:z+2]
+#                         rdf_resultspp+="PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"
+#                         outcome_s = outcome_s[z+2:len(outcome_s)        ]
+
+
+#                         break
+#                 # print(outcome_s)
+
+#                 if number_brack==0:
+#                     rdf_resultspp += parse_to_rdf(outcome_s,current_quotation)
+#                 else:
+#                     for y in range(number_brack-1,-1, -1):
+
+#                         # print(y)
+#                         nested = ParseNestedParen(outcome_s,y)
+#                         rdf_resultspp += parse_to_rdf(nested[0],current_quotation)
+#                     rdf_resultspp += parse_to_rdf(outcome_s,current_quotation)
+
+
+#                 # print(parse_to_rdf(outcome_s,current_quotation))
+#                 pass
+#             else:
+#                 # print(parse_parentheses(outcome_s))
+#                 # outcomet = parse_parentheses(outcome_s)
+
+#                 # print(outcome_s)
+
+#                 if number_brack==0:
+#                     rdf_resultspp += parse_to_rdf(outcome_s,current_quotation)
+
+#                 else :
+
+#                     for y in range(number_brack-1,-1, -1):
+
+#                         # print(y)
+#                         nested = ParseNestedParen(outcome_s,y)
+#                         rdf_resultspp += parse_to_rdf(nested[0],current_quotation)
+#                         rdf_resultspp += parse_to_rdf(outcome_s,current_quotation)
+
+#             # process(current_processing)
+#             current_processing = ""
+
+#             print(rdf_resultspp)
+
+#     rdbytes_2 = bytes(rdf_resultspp, 'utf-8')
+#     print(rdbytes_2)
+
+#     return rdbytes_2
 
 def join(here, there):
     """join an absolute URI and URI reference

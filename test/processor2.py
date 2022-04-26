@@ -325,6 +325,9 @@ for y in vblist:
         print(next_rdf_object)
         constructors+=next_rdf_object
 
+
+constructors = "PREFIX : <http://example/> \n"+constructors # prefix
+constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors
 print(constructors)
 # if len x in quotatioinreif ==2 3.................
 # string +=
