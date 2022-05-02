@@ -18,7 +18,7 @@ register(
     "ttls",
     Parser,
     "rdflib.plugins.parsers.turtlestar",
-    "TurtlestarParser",
+    "TurtleParser",
 )
 
 # tests should be past

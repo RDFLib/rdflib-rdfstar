@@ -2,30 +2,22 @@
 """
 notation3.py - Standalone Notation3 Parser
 Derived from CWM, the Closed World Machine
-
 Authors of the original suite:
-
 * Dan Connolly <@@>
 * Tim Berners-Lee <@@>
 * Yosi Scharf <@@>
 * Joseph M. Reagle Jr. <reagle@w3.org>
 * Rich Salz <rsalz@zolera.com>
-
 http://www.w3.org/2000/10/swap/notation3.py
-
 Copyright 2000-2007, World Wide Web Consortium.
 Copyright 2001, MIT.
 Copyright 2001, Zolera Systems Inc.
-
 License: W3C Software License
 http://www.w3.org/Consortium/Legal/copyright-software
-
 Modified by Sean B. Palmer
 Copyright 2007, Sean B. Palmer.
-
 Modified to work with rdflib by Gunnar Aastrand Grimnes
 Copyright 2010, Gunnar A. Grimnes
-
 """
 import codecs
 import os
@@ -74,17 +66,12 @@ AnyT = TypeVar("AnyT")
 
 def splitFragP(uriref, punct=0):
     """split a URI reference before the fragment
-
     Punctuation is kept.
-
     e.g.
-
     >>> splitFragP("abc#def")
     ('abc', '#def')
-
     >>> splitFragP("abcdef")
     ('abcdef', '')
-
     """
 
     i = uriref.rfind("#")
@@ -92,6 +79,168 @@ def splitFragP(uriref, punct=0):
         return uriref[:i], uriref[i:]
     else:
         return uriref, ""
+
+
+def join(here, there):
+    """join an absolute URI and URI reference
+    (non-ascii characters are supported/doctested;
+    haven't checked the details of the IRI spec though)
+    ``here`` is assumed to be absolute.
+    ``there`` is URI reference.
+    >>> join('http://example/x/y/z', '../abc')
+    'http://example/x/abc'
+    Raise ValueError if there uses relative path
+    syntax but here has no hierarchical path.
+    >>> join('mid:foo@example', '../foo') # doctest: +NORMALIZE_WHITESPACE
+    Traceback (most recent call last):
+        raise ValueError(here)
+    ValueError: Base <mid:foo@example> has no slash
+    after colon - with relative '../foo'.
+    >>> join('http://example/x/y/z', '')
+    'http://example/x/y/z'
+    >>> join('mid:foo@example', '#foo')
+    'mid:foo@example#foo'
+    We grok IRIs
+    >>> len(u'Andr\\xe9')
+    5
+    >>> join('http://example.org/', u'#Andr\\xe9')
+    u'http://example.org/#Andr\\xe9'
+    """
+
+    #    assert(here.find("#") < 0), \
+    #        "Base may not contain hash: '%s'" % here  # why must caller splitFrag?
+
+    slashl = there.find("/")
+    colonl = there.find(":")
+
+    # join(base, 'foo:/') -- absolute
+    if colonl >= 0 and (slashl < 0 or colonl < slashl):
+        return there
+
+    bcolonl = here.find(":")
+    assert bcolonl >= 0, (
+        "Base uri '%s' is not absolute" % here
+    )  # else it's not absolute
+
+    path, frag = splitFragP(there)
+    if not path:
+        return here + frag
+
+    # join('mid:foo@example', '../foo') bzzt
+    if here[bcolonl + 1 : bcolonl + 2] != "/":
+        raise ValueError(
+            "Base <%s> has no slash after "
+            "colon - with relative '%s'." % (here, there)
+        )
+
+    if here[bcolonl + 1 : bcolonl + 3] == "//":
+        bpath = here.find("/", bcolonl + 3)
+    else:
+        bpath = bcolonl + 1
+
+    # join('http://xyz', 'foo')
+    if bpath < 0:
+        bpath = len(here)
+        here = here + "/"
+
+    # join('http://xyz/', '//abc') => 'http://abc'
+    if there[:2] == "//":
+        return here[: bcolonl + 1] + there
+
+    # join('http://xyz/', '/abc') => 'http://xyz/abc'
+    if there[:1] == "/":
+        return here[:bpath] + there
+
+    slashr = here.rfind("/")
+
+    while 1:
+        if path[:2] == "./":
+            path = path[2:]
+        if path == ".":
+            path = ""
+        elif path[:3] == "../" or path == "..":
+            path = path[3:]
+            i = here.rfind("/", bpath, slashr)
+            if i >= 0:
+                here = here[: i + 1]
+                slashr = i
+        else:
+            break
+
+    return here[: slashr + 1] + path + frag
+
+
+def base():
+    """The base URI for this process - the Web equiv of cwd
+    Relative or absolute unix-standard filenames parsed relative to
+    this yield the URI of the file.
+    If we had a reliable way of getting a computer name,
+    we should put it in the hostname just to prevent ambiguity
+    """
+    # return "file://" + hostname + os.getcwd() + "/"
+    return "file://" + _fixslash(os.getcwd()) + "/"
+
+
+def _fixslash(s):
+    """Fix windowslike filename to unixlike - (#ifdef WINDOWS)"""
+    s = s.replace("\\", "/")
+    if s[0] != "/" and s[1] == ":":
+        s = s[2:]  # @@@ Hack when drive letter present
+    return s
+
+
+CONTEXT = 0
+PRED = 1
+SUBJ = 2
+OBJ = 3
+
+PARTS = PRED, SUBJ, OBJ
+ALL4 = CONTEXT, PRED, SUBJ, OBJ
+
+SYMBOL = 0
+FORMULA = 1
+LITERAL = 2
+LITERAL_DT = 21
+LITERAL_LANG = 22
+ANONYMOUS = 3
+XMLLITERAL = 25
+
+Logic_NS = "http://www.w3.org/2000/10/swap/log#"
+NODE_MERGE_URI = Logic_NS + "is"  # Pseudo-property indicating node merging
+forSomeSym = Logic_NS + "forSome"
+forAllSym = Logic_NS + "forAll"
+
+RDF_type_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+RDF_NS_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+OWL_NS = "http://www.w3.org/2002/07/owl#"
+DAML_sameAs_URI = OWL_NS + "sameAs"
+parsesTo_URI = Logic_NS + "parsesTo"
+RDF_spec = "http://www.w3.org/TR/REC-rdf-syntax/"
+
+List_NS = RDF_NS_URI  # From 20030808
+_Old_Logic_NS = "http://www.w3.org/2000/10/swap/log.n3#"
+
+N3_first = (SYMBOL, List_NS + "first")
+N3_rest = (SYMBOL, List_NS + "rest")
+N3_li = (SYMBOL, List_NS + "li")
+N3_nil = (SYMBOL, List_NS + "nil")
+N3_List = (SYMBOL, List_NS + "List")
+N3_Empty = (SYMBOL, List_NS + "Empty")
+
+
+runNamespaceValue = None
+
+
+def runNamespace():
+    """Returns a URI suitable as a namespace for run-local objects"""
+    # @@@ include hostname (privacy?) (hash it?)
+    global runNamespaceValue
+    if runNamespaceValue is None:
+        runNamespaceValue = join(base(), _unique_id()) + "#"
+    return runNamespaceValue
+
+
+nextu = 0
 
 import re
 import lark
@@ -107,23 +256,23 @@ from lark.lexer import (
     Token,
 )
 
-from pymantic.compat import (
-    binary_type,
-)
-from pymantic.parsers.base import (
-    BaseParser,
-)
-from pymantic.primitives import (
-    BlankNode,
-    Literal,
-    NamedNode,
-    Triple,
-)
-from pymantic.util import (
-    grouper,
-    smart_urljoin,
-    decode_literal,
-)
+# from pymantic.compat import (
+#     binary_type,
+# )
+# from pymantic.parsers.base import (
+#     BaseParser,
+# )
+# from pymantic.primitives import (
+#     BlankNode,
+#     Literal,
+#     NamedNode,
+#     Triple,
+# )
+# from pymantic.util import (
+#     grouper,
+#     smart_urljoin,
+#     decode_literal,
+# )
 
 grammar = r"""turtle_doc: statement*
 ?statement: directive | triples "."
@@ -194,7 +343,7 @@ COMMENT: "#" /[^\n]/*
 %ignore COMMENT
 """
 
-turtle_lark = Lark(grammar, start="turtle_doc", parser="lalr")
+turtle_lark = Lark(grammar, start="turtle_doc", parser="lalr", maybe_placeholders=False)
 
 class Print_Tree(Visitor):
     def print_quotation(self, tree):
@@ -327,6 +476,8 @@ class FindVariables(Visitor):
 def RDFstarParsings(rdfstarstring):
     constructors = ""
     tree = turtle_lark.parse(rdfstarstring)
+    # t2 = Reconstructor(turtle_lark).reconstruct(tree)
+    # print(tree)
     at = FindVariables().visit(tree)
 
     for x in quotationreif:
@@ -342,7 +493,7 @@ def RDFstarParsings(rdfstarstring):
             predicate = ":"+px[1]
             object = ":"+px[2]
 
-            next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
+            next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
             # returnvalue = ""
             # returnvalue+=next_rdf_object
             # returnvalue = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" + returnvalue
@@ -360,7 +511,7 @@ def RDFstarParsings(rdfstarstring):
             predicate = ":"+x[1]
             object = ":"+x[2]
 
-            next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
+            next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
             # returnvalue = ""
             # returnvalue+=next_rdf_object
             # returnvalue = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" + returnvalue
@@ -387,7 +538,7 @@ def RDFstarParsings(rdfstarstring):
             subject = y[0]
             predicate = y[1]
             object = y[2]
-            next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
+            next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
             # print(next_rdf_object)
             constructors+=next_rdf_object
 
@@ -567,179 +718,6 @@ def RDFstarParsings(rdfstarstring):
 
 #     return rdbytes_2
 
-def join(here, there):
-    """join an absolute URI and URI reference
-    (non-ascii characters are supported/doctested;
-    haven't checked the details of the IRI spec though)
-
-    ``here`` is assumed to be absolute.
-    ``there`` is URI reference.
-
-    >>> join('http://example/x/y/z', '../abc')
-    'http://example/x/abc'
-
-    Raise ValueError if there uses relative path
-    syntax but here has no hierarchical path.
-
-    >>> join('mid:foo@example', '../foo') # doctest: +NORMALIZE_WHITESPACE
-    Traceback (most recent call last):
-        raise ValueError(here)
-    ValueError: Base <mid:foo@example> has no slash
-    after colon - with relative '../foo'.
-
-    >>> join('http://example/x/y/z', '')
-    'http://example/x/y/z'
-
-    >>> join('mid:foo@example', '#foo')
-    'mid:foo@example#foo'
-
-    We grok IRIs
-
-    >>> len(u'Andr\\xe9')
-    5
-
-    >>> join('http://example.org/', u'#Andr\\xe9')
-    u'http://example.org/#Andr\\xe9'
-    """
-
-    #    assert(here.find("#") < 0), \
-    #        "Base may not contain hash: '%s'" % here  # why must caller splitFrag?
-
-    slashl = there.find("/")
-    colonl = there.find(":")
-
-    # join(base, 'foo:/') -- absolute
-    if colonl >= 0 and (slashl < 0 or colonl < slashl):
-        return there
-
-    bcolonl = here.find(":")
-    assert bcolonl >= 0, (
-        "Base uri '%s' is not absolute" % here
-    )  # else it's not absolute
-
-    path, frag = splitFragP(there)
-    if not path:
-        return here + frag
-
-    # join('mid:foo@example', '../foo') bzzt
-    if here[bcolonl + 1 : bcolonl + 2] != "/":
-        raise ValueError(
-            "Base <%s> has no slash after "
-            "colon - with relative '%s'." % (here, there)
-        )
-
-    if here[bcolonl + 1 : bcolonl + 3] == "//":
-        bpath = here.find("/", bcolonl + 3)
-    else:
-        bpath = bcolonl + 1
-
-    # join('http://xyz', 'foo')
-    if bpath < 0:
-        bpath = len(here)
-        here = here + "/"
-
-    # join('http://xyz/', '//abc') => 'http://abc'
-    if there[:2] == "//":
-        return here[: bcolonl + 1] + there
-
-    # join('http://xyz/', '/abc') => 'http://xyz/abc'
-    if there[:1] == "/":
-        return here[:bpath] + there
-
-    slashr = here.rfind("/")
-
-    while 1:
-        if path[:2] == "./":
-            path = path[2:]
-        if path == ".":
-            path = ""
-        elif path[:3] == "../" or path == "..":
-            path = path[3:]
-            i = here.rfind("/", bpath, slashr)
-            if i >= 0:
-                here = here[: i + 1]
-                slashr = i
-        else:
-            break
-
-    return here[: slashr + 1] + path + frag
-
-
-def base():
-    """The base URI for this process - the Web equiv of cwd
-
-    Relative or absolute unix-standard filenames parsed relative to
-    this yield the URI of the file.
-    If we had a reliable way of getting a computer name,
-    we should put it in the hostname just to prevent ambiguity
-
-    """
-    # return "file://" + hostname + os.getcwd() + "/"
-    return "file://" + _fixslash(os.getcwd()) + "/"
-
-
-def _fixslash(s):
-    """Fix windowslike filename to unixlike - (#ifdef WINDOWS)"""
-    s = s.replace("\\", "/")
-    if s[0] != "/" and s[1] == ":":
-        s = s[2:]  # @@@ Hack when drive letter present
-    return s
-
-
-CONTEXT = 0
-PRED = 1
-SUBJ = 2
-OBJ = 3
-
-PARTS = PRED, SUBJ, OBJ
-ALL4 = CONTEXT, PRED, SUBJ, OBJ
-
-SYMBOL = 0
-FORMULA = 1
-LITERAL = 2
-LITERAL_DT = 21
-LITERAL_LANG = 22
-ANONYMOUS = 3
-XMLLITERAL = 25
-
-Logic_NS = "http://www.w3.org/2000/10/swap/log#"
-NODE_MERGE_URI = Logic_NS + "is"  # Pseudo-property indicating node merging
-forSomeSym = Logic_NS + "forSome"
-forAllSym = Logic_NS + "forAll"
-
-RDF_type_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-RDF_NS_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-OWL_NS = "http://www.w3.org/2002/07/owl#"
-DAML_sameAs_URI = OWL_NS + "sameAs"
-parsesTo_URI = Logic_NS + "parsesTo"
-RDF_spec = "http://www.w3.org/TR/REC-rdf-syntax/"
-
-List_NS = RDF_NS_URI  # From 20030808
-_Old_Logic_NS = "http://www.w3.org/2000/10/swap/log.n3#"
-
-N3_first = (SYMBOL, List_NS + "first")
-N3_rest = (SYMBOL, List_NS + "rest")
-N3_li = (SYMBOL, List_NS + "li")
-N3_nil = (SYMBOL, List_NS + "nil")
-N3_List = (SYMBOL, List_NS + "List")
-N3_Empty = (SYMBOL, List_NS + "Empty")
-
-
-runNamespaceValue = None
-
-
-def runNamespace():
-    """Returns a URI suitable as a namespace for run-local objects"""
-    # @@@ include hostname (privacy?) (hash it?)
-    global runNamespaceValue
-    if runNamespaceValue is None:
-        runNamespaceValue = join(base(), _unique_id()) + "#"
-    return runNamespaceValue
-
-
-nextu = 0
-
-
 def uniqueURI():
     """A unique URI"""
     global nextu
@@ -909,7 +887,6 @@ class SinkParser:
 
     def here(self, i: int) -> str:
         """String generated from position in file
-
         This is for repeatability when referring people to bnodes in a document.
         This has diagnostic uses less formally, as it should point one to which
         bnode the arbitrary identifier actually is. It gives the
@@ -935,7 +912,6 @@ class SinkParser:
 
     def feed(self, octets: Union[str, bytes]):
         """Feed an octet stream to the parser
-
         if BadSyntax is raised, the string
         passed in the exception object is the
         remainder after any statements have been parsed.
@@ -958,7 +934,8 @@ class SinkParser:
 
             i = self.directiveOrStatement(s, j)
             if i < 0:
-                # print("# next char: %s" % s[j])
+                # print("# next char: %s" % s[j-5:j+5])
+                print("asdadasd", i, j)
                 self.BadSyntax(s, j, "expected directive or statement")
 
     def directiveOrStatement(self, argstr: str, h: int) -> int:
@@ -988,7 +965,6 @@ class SinkParser:
     def tok(self, tok: str, argstr: str, i: int, colon: bool = False):
         """Check for keyword.  Space must have been stripped on entry and
         we must not be at end of file.
-
         if colon, then keyword followed by colon is ok
         (@prefix:<blah> is ok, rdf:type shortcut a must be followed by ws)
         """
@@ -1643,7 +1619,6 @@ class SinkParser:
 
     def uri_ref2(self, argstr: str, i: int, res):
         """Generate uri from n3 representation.
-
         Note that the RDF convention of directly concatenating
         NS and local name is now used though I prefer inserting a '#'
         to make the namesapces look more like what XML folks expect.
@@ -2366,10 +2341,8 @@ class RDFSink(object):
 def hexify(ustr):
     """Use URL encoding to return an ASCII string
     corresponding to the given UTF8 string
-
     >>> hexify("http://example/a b")
     b'http://example/a%20b'
-
     """
     # s1=ustr.encode('utf-8')
     s = ""
@@ -2386,7 +2359,6 @@ class TurtleParser(Parser):
 
     """
     An RDFLib parser for Turtle
-
     See http://www.w3.org/TR/turtle/
     """
 
@@ -2422,7 +2394,6 @@ class TurtleParser(Parser):
         ou = RDFstarParsings(bp)
         p.feed(ou)
         p.endDoc()
-
         for prefix, namespace in p._bindings.items():
             graph.bind(prefix, namespace)
 
@@ -2431,9 +2402,7 @@ class N3Parser(TurtleParser):
 
     """
     An RDFLib parser for Notation3
-
     See http://www.w3.org/DesignIssues/Notation3.html
-
     """
 
     def __init__(self):
@@ -2456,34 +2425,3 @@ class N3Parser(TurtleParser):
         conj_graph.namespace_manager = graph.namespace_manager
 
         TurtleParser.parse(self, source, conj_graph, encoding, turtle=False)
-
-
-def _test():  # pragma: no cover
-    import doctest
-
-    doctest.testmod()
-
-
-def main():  # pragma: no cover
-    g = ConjunctiveGraph()
-
-    sink = RDFSink(g)
-    base_uri = "file://" + os.path.join(os.getcwd(), sys.argv[1])
-
-    p = SinkParser(sink, baseURI=base_uri)
-    p._bindings[""] = p._baseURI + "#"
-    p.startDoc()
-
-    f = open(sys.argv[1], "rb")
-    rdbytes = f.read()
-    f.close()
-
-    p.feed(rdbytes)
-    p.endDoc()
-    for t in g.quads((None, None, None)):
-
-        print(t)
-
-
-if __name__ == "__main__":
-    main()

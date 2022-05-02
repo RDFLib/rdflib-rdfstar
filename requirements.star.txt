@@ -1,0 +1,3 @@
+lark
+pymantic
+lark_parser==0.11.2

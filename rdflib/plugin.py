@@ -402,7 +402,7 @@ register(
     "ttls",
     Parser,
     "rdflib.plugins.parsers.turtlestar",
-    "TurtlestarParser",
+    "TurtleParser",
 )
 
 register(
