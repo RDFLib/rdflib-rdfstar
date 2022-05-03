@@ -393,6 +393,7 @@ class FindVariables(Visitor):
                 # nested = True
         vr = Reconstructor(turtle_lark).reconstruct(var)
         vr = vr.replace(";","")
+        quotation_dict[qut] = str(myHash(qut))
         # try:
         id = quotation_dict.get(vr)
         for x in quotation_dict:
@@ -426,14 +427,16 @@ class FindVariables(Visitor):
                 oa1 = oa1.replace(";","")
                 output.append(oa1)
                 # print(quotationreif)
-                quotationreif.append(output)
+                # quotationreif.append(output)
+                if (not (output in quotationreif)):
+                    quotationreif.append(output)
 
             # else:
             # processing.append(Reconstructor(turtle_lark).reconstruct(v1))
         # if not nested:
         # qut = qut.replace("<<", "")
         # qut = qut.replace(">>", "") ##################################### why no difference?
-        quotation_dict[qut] = str(myHash(qut))
+        # quotation_dict[qut] = str(myHash(qut))
 
 
 

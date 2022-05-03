@@ -100,9 +100,9 @@ COMMENT: "#" /[^\n]/*
 %ignore COMMENT
 """
 
-turtle_lark = Lark(grammar, start="turtle_doc", parser="lalr")
+turtle_lark = Lark(grammar, start="turtle_doc", parser="lalr", maybe_placeholders = False)
 
-f = open("turtle-star/turtle-star-syntax-nested-02.ttl", "rb")
+f = open("turtle-star/turtle-star-syntax-basic-01.ttl", "rb")
 rdbytes = f.read()
 f.close()
 rdbytes_processing = rdbytes.decode("utf-8")
@@ -155,13 +155,13 @@ class FindVariables(Visitor):
         # appends1 = []
         # assert tree.data == "quotation"
         # print("quotation")
-        print("\n")
+        # print("\n")
         # print(self)
-        print("\n")
+        # print("\n")
         # print(var.children)
-        print("\n")
+        # print("\n")
         qut = Reconstructor(turtle_lark).reconstruct(var) # replace here or replace later
-        print("qut", qut)
+        # print("qut", qut)
         # processing_var(var)
         qut = qut.replace(";", "") #####################
         if not (qut in quotation_list):
@@ -177,6 +177,7 @@ class FindVariables(Visitor):
                 # nested = True
         vr = Reconstructor(turtle_lark).reconstruct(var)
         vr = vr.replace(";","")
+        quotation_dict[qut] = str(myHash(qut))
         # try:
         id = quotation_dict.get(vr)
         for x in quotation_dict:
@@ -210,14 +211,15 @@ class FindVariables(Visitor):
                 oa1 = oa1.replace(";","")
                 output.append(oa1)
                 # print(quotationreif)
-                quotationreif.append(output)
+                if (not (output in quotationreif)):
+                    quotationreif.append(output)
 
             # else:
             # processing.append(Reconstructor(turtle_lark).reconstruct(v1))
         # if not nested:
         # qut = qut.replace("<<", "")
         # qut = qut.replace(">>", "") ##################################### why no difference?
-        quotation_dict[qut] = str(myHash(qut))
+        # quotation_dict[qut] = str(myHash(qut))
 
 
 
@@ -234,23 +236,23 @@ class FindVariables(Visitor):
 
         appends1 = []
 
-        print("triples")
-        print("\n")
-        print(self)
-        print("\n")
-        print(var.children)
+        # print("triples")
+        # print("\n")
+        # print(self)
+        # print("\n")
+        # print(var.children)
         for x in var.children:
-            print(x.data)
+            # print(x.data)
             if x.data == 'predicate_object_list':
                 xc = x.children
                 for y in xc:
                     x2 = Reconstructor(turtle_lark).reconstruct(y)
-                    print(x2)
+                    # print(x2)
                     x2 = x2.replace(";","")
                     appends1.append(x2) # or push
             else:
               x1 = Reconstructor(turtle_lark).reconstruct(x)
-              print(x1)
+            #   print(x1)
               x1 = x1.replace(";","")
               appends1.append(x1)
 
@@ -258,7 +260,7 @@ class FindVariables(Visitor):
             vblist.append(appends1)
 
 at = FindVariables().visit(tree)
-print(quotation_list,quotationreif, vblist)
+print("what is in the quotation: ", quotation_list, "what quotations need to represent: ", quotationreif, "what are the original lists of statements: ", vblist)
 
 constructors = ""
 
@@ -280,7 +282,7 @@ for x in quotationreif:
         # returnvalue = ""
         # returnvalue+=next_rdf_object
         # returnvalue = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" + returnvalue
-        print(next_rdf_object)
+        # print(next_rdf_object)
         constructors+=next_rdf_object
 
     elif len(x) == 4:
@@ -298,7 +300,7 @@ for x in quotationreif:
         # returnvalue = ""
         # returnvalue+=next_rdf_object
         # returnvalue = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" + returnvalue
-        print(next_rdf_object)
+        # print(next_rdf_object)
         constructors+=next_rdf_object
     else:
         print("exception")
@@ -306,7 +308,7 @@ for x in quotationreif:
 for y in vblist:
     result = "".join(y)
     result = "<<"+result+">>"
-    print(result, quotation_list)
+    print("asdadasds", result, quotation_list, result in quotation_list)
     # isin -
     # for q in quotation_list:
     #     if q == result:
@@ -316,13 +318,13 @@ for y in vblist:
             if "<<" in y[z]:
                 print("adad", ":"+quotation_dict[y[z]])
                 y[z] = ":"+quotation_dict[y[z]] #get also ok
-        print("aaaaaaaagggggg",y)
+        # print("aaaaaaaagggggg",y)
         myvalue = str(myHash(result))
         subject = y[0]
         predicate = y[1]
         object = y[2]
         next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
-        print(next_rdf_object)
+        # print(next_rdf_object)
         constructors+=next_rdf_object
 
 
