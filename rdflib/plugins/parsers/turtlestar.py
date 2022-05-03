@@ -474,6 +474,8 @@ class FindVariables(Visitor):
             vblist.append(appends1)
 
 def RDFstarParsings(rdfstarstring):
+    vblist = []
+    quotationreif = []
     constructors = ""
     tree = turtle_lark.parse(rdfstarstring)
     # t2 = Reconstructor(turtle_lark).reconstruct(tree)
