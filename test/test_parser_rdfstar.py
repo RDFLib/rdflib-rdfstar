@@ -22,9 +22,9 @@ register(
 )
 
 # tests should be past
-# def test_TurtlePositiveSyntax_subject():
-#     g = Graph()
-#     assert isinstance(g.parse(data="turtle-star/turtle-star-syntax-basic-01.ttl", format = "ttls"), Graph)
+def test_TurtlePositiveSyntax_subject():
+    g = Graph()
+    assert isinstance(g.parse(data="turtle-star/turtle-star-syntax-basic-01.ttl", format = "ttls"), Graph)
 
 # def test_TurtlePositiveSyntax_object():
 #     g = Graph()
@@ -38,9 +38,10 @@ register(
 #     g = Graph()
 #     assert isinstance(g.parse("turtle-star/turtle-star-syntax-inside-02.ttl", format = "ttls"), Graph)
 
-# def test_TurtlePositiveSyntax_nestedquotedtriplesubjectposition():
-#     g = Graph()
-#     assert isinstance(g.parse("turtle-star/turtle-star-syntax-nested-01.ttl", format = "ttls"), Graph)
+#################################
+def test_TurtlePositiveSyntax_nestedquotedtriplesubjectposition():
+    g = Graph()
+    assert isinstance(g.parse("turtle-star/turtle-star-syntax-nested-01.ttl", format = "ttls"), Graph)
 
 # def test_TurtlePositiveSyntax_nestedquotedtripleobjectposition():
 #     g = Graph()
@@ -98,9 +99,9 @@ register(
 #     g = Graph()
 #     assert isinstance(g.parse("turtle-star/nt-ttl-star-bnode-2.ttl", format = "ttls"), Graph)
 
-def test_TurtlePositiveSyntax_Nestedsubjectterm():
-    g = Graph()
-    assert isinstance(g.parse("turtle-star/turtle-star-syntax-nested-02.ttl", format = "ttls"), Graph)
+# def test_TurtlePositiveSyntax_Nestedsubjectterm():
+#     g = Graph()
+#     assert isinstance(g.parse("turtle-star/turtle-star-syntax-nested-02.ttl", format = "ttls"), Graph)
 
 # def test_TurtlePositiveSyntax_Nestedsubjectterm():
 #     g = Graph()

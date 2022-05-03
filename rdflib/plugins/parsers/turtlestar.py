@@ -2387,9 +2387,17 @@ class TurtleParser(Parser):
         #     stream = source.getByteStream()
         # p.loadStream(stream)
 
-        f = open(source.file.name, "rb")
-        rdbytes = f.read()
-        f.close()
+        # print("tests", source)
+        if hasattr(source, "file"):
+            f = open(source.file.name, "rb")
+            rdbytes = f.read()
+            f.close()
+        elif hasattr(source, "_InputSource__bytefile"):
+            if hasattr(source._InputSource__bytefile, "wrapped"):
+                f = open((source._InputSource__bytefile.wrapped.strip().splitlines())[0], "rb") # what if multiple files
+                rdbytes = f.read()
+                f.close()
+
         bp = rdbytes.decode("utf-8")
         ou = RDFstarParsings(bp)
         p.feed(ou)
