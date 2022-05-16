@@ -959,7 +959,6 @@ class SinkParser:
             i = self.directiveOrStatement(s, j)
             if i < 0:
                 # print("# next char: %s" % s[j])
-                print("asdadasd", i, j)
                 self.BadSyntax(s, j, "expected directive or statement")
 
     def directiveOrStatement(self, argstr: str, h: int) -> int:

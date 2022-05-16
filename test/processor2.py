@@ -102,7 +102,7 @@ COMMENT: "#" /[^\n]/*
 
 turtle_lark = Lark(grammar, start="turtle_doc", parser="lalr", maybe_placeholders = False)
 
-f = open("turtle-star/turtle-star-syntax-basic-01.ttl", "rb")
+f = open("turtle-star/turtle-star-syntax-nested-02.ttl", "rb")
 rdbytes = f.read()
 f.close()
 rdbytes_processing = rdbytes.decode("utf-8")
@@ -260,50 +260,50 @@ class FindVariables(Visitor):
             vblist.append(appends1)
 
 at = FindVariables().visit(tree)
-print("what is in the quotation: ", quotation_list, "what quotations need to represent: ", quotationreif, "what are the original lists of statements: ", vblist)
+print("what is in the quotation: ", quotation_list, "\nwhat quotations need to represent: ", quotationreif, "\nwhat are the original lists of statements: ", vblist, "\nwhat are the quotation_dict: ", quotation_dict)
 
 constructors = ""
 
 
-for x in quotationreif:
-    if len(x) == 2:
-        myvalue = x[0]
-        px = x[1]
-        px = px.replace("<<", "")
-        px = px.replace(">>", "")
-        px = px.replace(";", "")
-        px = px.split(":")
-        px.pop(0)
-        subject = ":"+px[0]
-        predicate = ":"+px[1]
-        object = ":"+px[2]
+# for x in quotationreif:
+#     if len(x) == 2:
+#         myvalue = x[0]
+#         px = x[1]
+#         px = px.replace("<<", "")
+#         px = px.replace(">>", "")
+#         px = px.replace(";", "")
+#         px = px.split(":")
+#         px.pop(0)
+#         subject = ":"+px[0]
+#         predicate = ":"+px[1]
+#         object = ":"+px[2]
 
-        next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
-        # returnvalue = ""
-        # returnvalue+=next_rdf_object
-        # returnvalue = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" + returnvalue
-        # print(next_rdf_object)
-        constructors+=next_rdf_object
+#         next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
+#         # returnvalue = ""
+#         # returnvalue+=next_rdf_object
+#         # returnvalue = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" + returnvalue
+#         # print(next_rdf_object)
+#         constructors+=next_rdf_object
 
-    elif len(x) == 4:
-        refe= x.pop()
-        print(refe)
-        for z in quotation_dict:
-            print(z)
-        refe1 = quotation_dict.get(refe)
-        myvalue = refe1
-        subject = ":"+x[0]
-        predicate = ":"+x[1]
-        object = ":"+x[2]
+#     elif len(x) == 4:
+#         refe= x.pop()
+#         print(refe)
+#         for z in quotation_dict:
+#             print(z)
+#         refe1 = quotation_dict.get(refe)
+#         myvalue = refe1
+#         subject = ":"+x[0]
+#         predicate = ":"+x[1]
+#         object = ":"+x[2]
 
-        next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
-        # returnvalue = ""
-        # returnvalue+=next_rdf_object
-        # returnvalue = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" + returnvalue
-        # print(next_rdf_object)
-        constructors+=next_rdf_object
-    else:
-        print("exception")
+#         next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
+#         # returnvalue = ""
+#         # returnvalue+=next_rdf_object
+#         # returnvalue = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" + returnvalue
+#         # print(next_rdf_object)
+#         constructors+=next_rdf_object
+#     else:
+#         print("exception")
 
 for y in vblist:
     result = "".join(y)
@@ -314,8 +314,10 @@ for y in vblist:
     #     if q == result:
     #         isin = True
     if not (result in quotation_list):
-        for z in range(0,len(y)-1):
+        for z in range(0,len(y)):
+            # print("asjdwatad", y[z], "number", z)
             if "<<" in y[z]:
+                # print("asiodjasoidjay", [z])
                 print("adad", ":"+quotation_dict[y[z]])
                 y[z] = ":"+quotation_dict[y[z]] #get also ok
         # print("aaaaaaaagggggg",y)
@@ -323,10 +325,24 @@ for y in vblist:
         subject = y[0]
         predicate = y[1]
         object = y[2]
+        # print("tytyty", subject)
         next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
         # print(next_rdf_object)
         constructors+=next_rdf_object
-
+    else:
+        print("t3243242352")
+        value = quotation_dict[result]
+        for z in range(0,len(y)):
+            # print("asjdwatad", y[z], "number", z)
+            if "<<" in y[z]:
+                # print("asiodjasoidjay", [z])
+                print("adad", ":"+quotation_dict[y[z]])
+                y[z] = ":"+quotation_dict[y[z]] #get also ok
+        subject = y[0]
+        predicate = y[1]
+        object = y[2]
+        next_rdf_object = ":" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
+        constructors+=next_rdf_object
 
 constructors = "PREFIX : <http://example/> \n"+constructors # prefix
 constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors

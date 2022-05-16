@@ -100,13 +100,13 @@ def test_TurtlePositiveSyntax_nestedquotedtripleobjectposition():
 #     assert isinstance(g.parse("turtle-star/nt-ttl-star-bnode-2.ttl", format = "ttls"), Graph)
 
 ##################################
-# def test_TurtlePositiveSyntax_Nestedsubjectterm():
-#     g = Graph()
-#     assert isinstance(g.parse("turtle-star/turtle-star-syntax-nested-02.ttl", format = "ttls"), Graph)
+def test_TurtlePositiveSyntax_Nestedsubjectterm1():
+    g = Graph()
+    assert isinstance(g.parse("turtle-star/nt-ttl-star-nested-1.ttl", format = "ttls"), Graph)
 
-# def test_TurtlePositiveSyntax_Nestedsubjectterm():
-#     g = Graph()
-#     assert isinstance(g.parse("turtle-star/nt-ttl-star-nested-2.ttl", format = "ttls"), Graph)
+def test_TurtlePositiveSyntax_Nestedsubjectterm2():
+    g = Graph()
+    assert isinstance(g.parse("turtle-star/nt-ttl-star-nested-2.ttl", format = "ttls"), Graph)
 
 # tests should be broken
 
