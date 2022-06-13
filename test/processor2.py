@@ -1,6 +1,8 @@
 
 import re
 import lark
+import hashlib
+
 from lark import (
     Lark,
     Transformer,
@@ -122,28 +124,16 @@ print("\n")
 print("\n")
 print("\n")
 print("\n")
-# Print_Tree().visit(tree)
-
-# rdbytes_2 = bytes(rdf_resultspp, 'utf-8')
-# print(rdbytes_2)
 
 from lark import Visitor, v_args
 quotation_list = []
 quotation_dict = dict()
 vblist = []
 quotationreif = []
-# searching_v = []
-# def processing_var(v):
-#     searching_v = [v]
-#     while len(searching_v) > 0:
-#         for v in var:
-#             if v.data == 'quotation'
+prefix_list = []
 
 def myHash(text:str):
-  hash=0
-  for ch in text:
-    hash = ( hash*281  ^ ord(ch)*997) & 0xFFFFFFFF
-  return hash
+  return str(hashlib.md5(text.encode('utf-8')).hexdigest())
 
 class FindVariables(Visitor):
     def __init__(self):
@@ -152,29 +142,11 @@ class FindVariables(Visitor):
         self.variable_list = []
 
     def quotation(self, var):
-        # appends1 = []
-        # assert tree.data == "quotation"
-        # print("quotation")
-        # print("\n")
-        # print(self)
-        # print("\n")
-        # print(var.children)
-        # print("\n")
         qut = Reconstructor(turtle_lark).reconstruct(var) # replace here or replace later
-        # print("qut", qut)
-        # processing_var(var)
         qut = qut.replace(";", "") #####################
         if not (qut in quotation_list):
             quotation_list.append(qut)
 
-        # vc = var.children
-        # print(vc)
-        # # nested = False
-        # processing = []
-        # for v1 in var.children:
-            # print(v1)
-            # if v1.data == "quotation":
-                # nested = True
         vr = Reconstructor(turtle_lark).reconstruct(var)
         vr = vr.replace(";","")
         quotation_dict[qut] = str(myHash(qut))
@@ -182,26 +154,7 @@ class FindVariables(Visitor):
         id = quotation_dict.get(vr)
         for x in quotation_dict:
             if x in vr:
-                # print(var)
-                # for y in var.children:
-                #     # print(x.data)
-                #     try:
-                #         print(y.data)
-                #         if y.data == 'predicate_object_list':
-                #             yc = y.children
-                #             for z in yc:
-                #                 y2 = Reconstructor(turtle_lark).reconstruct(z)
-                #                 print("atatattt", y2)
-                #                 appends1.append(y2) # or push
-                #         else:
-                #             y1 = Reconstructor(turtle_lark).reconstruct(y)
-                #             print("asdasdasd", y1)
-                #             appends1.append(y1)
-                #     except:
-                #         print("except", y)
-                # print(appends1)
-                # print(quotation_dict.get(x))
-                print("replace", x, ":"+quotation_dict.get(x))
+                # print("replace", x, ":"+quotation_dict.get(x))
                 vr = vr.replace(x, ":"+quotation_dict.get(x))
                 vr = vr.replace("<<", "")
                 vr = vr.replace(">>", "")
@@ -214,33 +167,10 @@ class FindVariables(Visitor):
                 if (not (output in quotationreif)):
                     quotationreif.append(output)
 
-            # else:
-            # processing.append(Reconstructor(turtle_lark).reconstruct(v1))
-        # if not nested:
-        # qut = qut.replace("<<", "")
-        # qut = qut.replace(">>", "") ##################################### why no difference?
-        # quotation_dict[qut] = str(myHash(qut))
-
-
-
-        # print(a)
-        # print("\n")
-        # print(v)
-        # print("\n")
-
-        # try:
-        #     self.variable_list.append(var)
-        # except Exception as e:
-        #     raise
     def triples(self, var):
 
         appends1 = []
 
-        # print("triples")
-        # print("\n")
-        # print(self)
-        # print("\n")
-        # print(var.children)
         for x in var.children:
             # print(x.data)
             if x.data == 'predicate_object_list':
@@ -259,56 +189,44 @@ class FindVariables(Visitor):
         if not (appends1 in vblist):
             vblist.append(appends1)
 
+    def prefixed_name(self, children):
+        print("prefixed_name")
+        # pname, = children
+        print("pn", children)
+        # ns, _, ln = pname.partition(':')
+        # return self.make_named_node(self.prefixes[ns] + decode_literal(ln))
+
+    def prefix_id(self, children):
+        print("prefix_id")
+        ns, iriref = children
+        print("prefix_id", ns, iriref)
+        iri = smart_urljoin(self.base_iri, self.decode_iriref(iriref))
+        print(iri)
+        ns = ns[:-1]  # Drop trailing : from namespace
+        # self.prefixes[ns] = iri
+        # return []
+
+    def sparql_prefix(self, children):
+        print("sparql_prefix", children)
+        prefix_list.append(children)
+
+    def base(self, children):
+        print("base")
+        base_directive, base_iriref = children
+        print("base", base_directive, base_iriref)
+        # Workaround for lalr parser token ambiguity in python 2.7
+        if base_directive.startswith('@') and base_directive != '@base':
+            raise ValueError('Unexpected @base: ' + base_directive)
+
 at = FindVariables().visit(tree)
 print("what is in the quotation: ", quotation_list, "\nwhat quotations need to represent: ", quotationreif, "\nwhat are the original lists of statements: ", vblist, "\nwhat are the quotation_dict: ", quotation_dict)
 
 constructors = ""
 
-
-# for x in quotationreif:
-#     if len(x) == 2:
-#         myvalue = x[0]
-#         px = x[1]
-#         px = px.replace("<<", "")
-#         px = px.replace(">>", "")
-#         px = px.replace(";", "")
-#         px = px.split(":")
-#         px.pop(0)
-#         subject = ":"+px[0]
-#         predicate = ":"+px[1]
-#         object = ":"+px[2]
-
-#         next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
-#         # returnvalue = ""
-#         # returnvalue+=next_rdf_object
-#         # returnvalue = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" + returnvalue
-#         # print(next_rdf_object)
-#         constructors+=next_rdf_object
-
-#     elif len(x) == 4:
-#         refe= x.pop()
-#         print(refe)
-#         for z in quotation_dict:
-#             print(z)
-#         refe1 = quotation_dict.get(refe)
-#         myvalue = refe1
-#         subject = ":"+x[0]
-#         predicate = ":"+x[1]
-#         object = ":"+x[2]
-
-#         next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
-#         # returnvalue = ""
-#         # returnvalue+=next_rdf_object
-#         # returnvalue = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" + returnvalue
-#         # print(next_rdf_object)
-#         constructors+=next_rdf_object
-#     else:
-#         print("exception")
-
 for y in vblist:
     result = "".join(y)
     result = "<<"+result+">>"
-    print("asdadasds", result, quotation_list, result in quotation_list)
+    # print("asdadasds", result, quotation_list, result in quotation_list)
     # isin -
     # for q in quotation_list:
     #     if q == result:
@@ -318,7 +236,7 @@ for y in vblist:
             # print("asjdwatad", y[z], "number", z)
             if "<<" in y[z]:
                 # print("asiodjasoidjay", [z])
-                print("adad", ":"+quotation_dict[y[z]])
+                # print("adad", ":"+quotation_dict[y[z]])
                 y[z] = ":"+quotation_dict[y[z]] #get also ok
         # print("aaaaaaaagggggg",y)
         myvalue = str(myHash(result))
@@ -330,13 +248,13 @@ for y in vblist:
         # print(next_rdf_object)
         constructors+=next_rdf_object
     else:
-        print("t3243242352")
+        # print("t3243242352")
         value = quotation_dict[result]
         for z in range(0,len(y)):
             # print("asjdwatad", y[z], "number", z)
             if "<<" in y[z]:
                 # print("asiodjasoidjay", [z])
-                print("adad", ":"+quotation_dict[y[z]])
+                # print("adad", ":"+quotation_dict[y[z]])
                 y[z] = ":"+quotation_dict[y[z]] #get also ok
         subject = y[0]
         predicate = y[1]
@@ -344,8 +262,13 @@ for y in vblist:
         next_rdf_object = ":" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
         constructors+=next_rdf_object
 
-constructors = "PREFIX : <http://example/> \n"+constructors # prefix
-constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors
+for x in range(0, len(prefix_list)):
+    prefix_list[x] = Reconstructor(turtle_lark).reconstruct(prefix_list[x])
+    constructors = prefix_list[x]+"\n"+constructors
+
+# constructors = "PREFIX : <http://example/> \n"+constructors # prefix
+# constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors
+
 print(constructors)
 # if len x in quotatioinreif ==2 3.................
 # string +=
