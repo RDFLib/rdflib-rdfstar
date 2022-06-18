@@ -34,7 +34,7 @@ from pymantic.util import (
 )
 
 grammar = r"""turtle_doc: statement*
-?statement: directive | triples "."
+?statement: directive | triples "." | quotedtriples "."
 directive: prefix_id | base | sparql_prefix | sparql_base
 prefix_id: "@prefix" PNAME_NS IRIREF "."
 base: BASE_DIRECTIVE IRIREF "."
@@ -45,6 +45,7 @@ triples: subject predicate_object_list
        | quotation predicate_object_list
        | subject verb quotation
        | quotation verb quotation
+quotedtriples: triples compoundanno
 predicate_object_list: verb object_list (";" (verb object_list)?)*
 ?object_list: object ("," object)*
 ?verb: predicate | /a/
@@ -55,6 +56,9 @@ predicate_object_list: verb object_list (";" (verb object_list)?)*
 ANGLEBRACKETL: "<<"
 ANGLEBRACKETR: ">>"
 quotation: ANGLEBRACKETL triples ANGLEBRACKETR
+COMPOUNDL: "{|"
+COMPOUNDR: "|}"
+compoundanno: COMPOUNDL predicate_object_list COMPOUNDR
 blank_node_property_list: "[" predicate_object_list "]"
 collection: "(" object* ")"
 numeric_literal: INTEGER | DECIMAL | DOUBLE
@@ -104,7 +108,7 @@ COMMENT: "#" /[^\n]/*
 
 turtle_lark = Lark(grammar, start="turtle_doc", parser="lalr", maybe_placeholders = False)
 
-f = open("turtle-star/turtle-star-syntax-nested-02.ttl", "rb")
+f = open("turtle-star/nt-ttl-star-nested-1.ttl", "rb")
 rdbytes = f.read()
 f.close()
 rdbytes_processing = rdbytes.decode("utf-8")
@@ -131,6 +135,7 @@ quotation_dict = dict()
 vblist = []
 quotationreif = []
 prefix_list = []
+quotationannolist = []
 
 def myHash(text:str):
   return str(hashlib.md5(text.encode('utf-8')).hexdigest())
@@ -140,6 +145,38 @@ class FindVariables(Visitor):
         super().__init__()
         # self.quotation_list = []
         self.variable_list = []
+
+    def quotedtriples(self, var):
+        triple1 = None
+        subjecthash = ""
+
+        for x in var.children:
+            print(x)
+            if x.data == "triples":
+                triple1 = Reconstructor(turtle_lark).reconstruct(x)
+                triple1 = triple1.replace(";","")
+
+                print(triple1)
+                triple1 = "<<"+triple1+">>"
+                subjecthash = ":" + str(myHash(triple1))
+                print(subjecthash)
+
+            elif x.data == "compoundanno":
+                for y in x.children:
+                    if (y != "{|") & (y!= "|}"):
+                        count2 = 0
+                        quotationtriple = []
+                        for z in y.children:
+                            count2+=1
+                            z2 = Reconstructor(turtle_lark).reconstruct(z)
+                            z2 = z2.replace(";","")
+                            print("z",z2)
+                            quotationtriple.append(z2)
+                            if count2 ==2:
+                                quotationtriple.insert(0, subjecthash)
+                                quotationannolist.append(quotationtriple)
+                                count2 = 0
+                                quotationtriple = []
 
     def quotation(self, var):
         qut = Reconstructor(turtle_lark).reconstruct(var) # replace here or replace later
@@ -220,7 +257,7 @@ class FindVariables(Visitor):
 
 at = FindVariables().visit(tree)
 print("what is in the quotation: ", quotation_list, "\nwhat quotations need to represent: ", quotationreif, "\nwhat are the original lists of statements: ", vblist, "\nwhat are the quotation_dict: ", quotation_dict)
-
+print("\n compound", quotationannolist)
 constructors = ""
 
 for y in vblist:
@@ -244,7 +281,7 @@ for y in vblist:
         predicate = y[1]
         object = y[2]
         # print("tytyty", subject)
-        next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
+        next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
         # print(next_rdf_object)
         constructors+=next_rdf_object
     else:
@@ -259,15 +296,27 @@ for y in vblist:
         subject = y[0]
         predicate = y[1]
         object = y[2]
-        next_rdf_object = ":" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n\r"
+        next_rdf_object = ":" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
         constructors+=next_rdf_object
-
+for z in quotationannolist:
+    result1 = "".join(z)
+    result1 = "<<"+result1+">>"
+    value = str(myHash(result1))
+    subject = z[0]
+    predicate = z[1]
+    object = z[2]
+    next_rdf_object = ":" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+    constructors+=next_rdf_object
 for x in range(0, len(prefix_list)):
     prefix_list[x] = Reconstructor(turtle_lark).reconstruct(prefix_list[x])
     constructors = prefix_list[x]+"\n"+constructors
 
+constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors
 # constructors = "PREFIX : <http://example/> \n"+constructors # prefix
-# constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors
+
+if not ("PREFIX : <http://example/>" in constructors):
+    constructors = "PREFIX : <http://example/> \n"+constructors
+
 
 print(constructors)
 # if len x in quotatioinreif ==2 3.................

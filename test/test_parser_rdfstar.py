@@ -51,25 +51,25 @@ def test_TurtlePositiveSyntax_nestedquotedtripleobjectposition():
 #     g = Graph()
 #     assert isinstance(g.parse("turtle-star/turtle-star-syntax-compound.ttl", format = "ttls"), Graph)
 
-# def test_TurtlePositiveSyntax_blanknodesubject():
-#     g = Graph()
-#     assert isinstance(g.parse("turtle-star/turtle-star-syntax-bnode-01.ttl", format = "ttls"), Graph)
+def test_TurtlePositiveSyntax_blanknodesubject():
+    g = Graph()
+    assert isinstance(g.parse("turtle-star/turtle-star-syntax-bnode-01.ttl", format = "ttls"), Graph)
 
-# def test_TurtlePositiveSyntax_blanknodeobject():
-#     g = Graph()
-#     assert isinstance(g.parse("turtle-star/turtle-star-syntax-bnode-02.ttl", format = "ttls"), Graph)
+def test_TurtlePositiveSyntax_blanknodeobject():
+    g = Graph()
+    assert isinstance(g.parse("turtle-star/turtle-star-syntax-bnode-02.ttl", format = "ttls"), Graph)
 
-# def test_TurtlePositiveSyntax_blanknode():
-#     g = Graph()
-#     assert isinstance(g.parse("turtle-star/turtle-star-syntax-bnode-03.ttl", format = "ttls"), Graph)
+def test_TurtlePositiveSyntax_blanknode():
+    g = Graph()
+    assert isinstance(g.parse("turtle-star/turtle-star-syntax-bnode-03.ttl", format = "ttls"), Graph)
 
-# def test_TurtlePositiveSyntax_Annotationform():
-#     g = Graph()
-#     assert isinstance(g.parse("turtle-star/turtle-star-annotation-1.ttl", format = "ttls"), Graph)
+def test_TurtlePositiveSyntax_Annotationform():
+    g = Graph()
+    assert isinstance(g.parse("turtle-star/turtle-star-annotation-1.ttl", format = "ttls"), Graph)
 
-# def test_TurtlePositiveSyntax_Annotationexample():
-#     g = Graph()
-#     assert isinstance(g.parse("turtle-star/turtle-star-annotation-2.ttl", format = "ttls"), Graph)
+def test_TurtlePositiveSyntax_Annotationexample():
+    g = Graph()
+    assert isinstance(g.parse("turtle-star/turtle-star-annotation-2.ttl", format = "ttls"), Graph)
 
 # def test_TurtlePositiveSyntax_subjectquotedtriple():
 #     g = Graph()
