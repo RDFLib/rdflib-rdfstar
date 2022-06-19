@@ -284,16 +284,13 @@ sparql_base: /BASE/i IRIREF
 sparql_prefix: /PREFIX/i PNAME_NS IRIREF
 triples: subject predicate_object_list
        | blank_node_property_list predicate_object_list?
-       | quotation predicate_object_list
-       | subject verb quotation
-       | quotation verb quotation
 quotedtriples: triples compoundanno
 predicate_object_list: verb object_list (";" (verb object_list)?)*
 ?object_list: object ("," object)*
 ?verb: predicate | /a/
-?subject: iri | blank_node | collection
+?subject: iri | blank_node | collection | quotation
 ?predicate: iri
-?object: iri | blank_node | collection | blank_node_property_list | literal
+?object: iri | blank_node | collection | blank_node_property_list | literal | quotation
 ?literal: rdf_literal | numeric_literal | boolean_literal
 ANGLEBRACKETL: "<<"
 ANGLEBRACKETR: ">>"
