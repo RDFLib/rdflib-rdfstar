@@ -105,7 +105,7 @@ COMMENT: "#" /[^\n]/*
 
 turtle_lark = Lark(grammar, start="turtle_doc", parser="lalr", maybe_placeholders = False)
 
-f = open("turtle-star/nt-ttl-star-nested-2.ttl", "rb")
+f = open("turtle-star/turtle-star-syntax-nested-02.ttl", "rb")
 rdbytes = f.read()
 f.close()
 rdbytes_processing = rdbytes.decode("utf-8")
@@ -208,17 +208,55 @@ class FindVariables(Visitor):
         for x in var.children:
             # print(x.data)
             if x.data == 'predicate_object_list':
+                # print("how to edit", x)
+                # if x.data == 'collection':
+                #     print ("collection edit", x.children)
                 xc = x.children
                 for y in xc:
-                    x2 = Reconstructor(turtle_lark).reconstruct(y)
-                    # print(x2)
-                    x2 = x2.replace(";","")
-                    appends1.append(x2) # or push
+                    if y.data == 'collection':
+                      t5 = "("
+                      ycc = y.children
+                      for h in ycc:
+                          if h.data == "quotation":
+                              t1 = Reconstructor(turtle_lark).reconstruct(h)
+                              t1 = t1.replace(";","")
+                              print("edededed", t1, quotation_dict)
+                              t2 = quotation_dict[t1] # this is the (<<>> <<>>)
+                              hasht2 = ":" + t2
+                              print("hashed", hasht2)
+                              t5+=hasht2
+                      t5+=")"
+                      appends1.append(t5)
+
+                    else:
+                      x2 = Reconstructor(turtle_lark).reconstruct(y)
+                      # print(x2)
+                      x2 = x2.replace(";","")
+                      appends1.append(x2) # or push
             else:
-              x1 = Reconstructor(turtle_lark).reconstruct(x)
-            #   print(x1)
-              x1 = x1.replace(";","")
-              appends1.append(x1)
+              print("how to edit2", x)
+              anyquotationin = False
+              if x.data == 'collection':
+                    t3 = "("
+                    print ("collection edit2", len(x.children))
+                    xcc = x.children
+                    for t in xcc:
+                        if t.data == "quotation":
+                            t1 = Reconstructor(turtle_lark).reconstruct(t)
+                            t1 = t1.replace(";","")
+                            print("edededed", t1, quotation_dict)
+                            t2 = quotation_dict[t1] # this is the (<<>> <<>>)
+                            hasht2 = ":" + t2
+                            print("hashed", hasht2)
+                            t3+=hasht2
+                    t3+=")"
+                    appends1.append(t3)
+              else:
+                x1 = Reconstructor(turtle_lark).reconstruct(x)
+              #   print(x1)
+                x1 = x1.replace(";","")
+                print("compareed", x1)
+                appends1.append(x1)
 
         if not (appends1 in vblist):
             vblist.append(appends1)
@@ -269,9 +307,17 @@ for y in vblist:
         for z in range(0,len(y)):
             # print("asjdwatad", y[z], "number", z)
             if "<<" in y[z]:
+                if "[" in y[z]:
                 # print("asiodjasoidjay", [z])
                 # print("adad", ":"+quotation_dict[y[z]])
-                y[z] = ":"+quotation_dict[y[z]] #get also ok
+                    index1 = y[z].index("<<")
+                    index2 = y[z].rfind(">>")
+                    y[z] = y[z].replace((y[z])[index1: index2+2], ":"+quotation_dict[(y[z])[index1: index2+2]])
+                elif "(" in y[z]:
+
+                    pass
+                else:
+                    y[z] = ":"+quotation_dict[y[z]] #get also ok
         # print("aaaaaaaagggggg",y)
         myvalue = str(myHash(result))
         subject = y[0]
@@ -311,7 +357,7 @@ for x in range(0, len(prefix_list)):
 constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors
 # constructors = "PREFIX : <http://example/> \n"+constructors # prefix
 
-if not ("PREFIX : <http://example/>" in constructors):
+if not (("PREFIX : <http://example/>" in constructors) or ("PREFIX:<http://example/>" in constructors)):
     constructors = "PREFIX : <http://example/> \n"+constructors
 
 
