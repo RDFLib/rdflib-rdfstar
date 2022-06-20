@@ -1,4 +1,4 @@
-sphinx==4.4.0
+sphinx==5.0.2
 sphinxcontrib-apidoc
 git+https://github.com/gniezen/n3pygments.git
 myst-parser
