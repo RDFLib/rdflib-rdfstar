@@ -105,7 +105,7 @@ COMMENT: "#" /[^\n]/*
 
 turtle_lark = Lark(grammar, start="turtle_doc", parser="lalr", maybe_placeholders = False)
 
-f = open("turtle-star/turtle-star-syntax-nested-02.ttl", "rb")
+f = open("turtle-star/turtle-star-annotation-2.ttl", "rb")
 rdbytes = f.read()
 f.close()
 rdbytes_processing = rdbytes.decode("utf-8")
@@ -143,6 +143,66 @@ class FindVariables(Visitor):
         # self.quotation_list = []
         self.variable_list = []
 
+    def quotation(self, var):
+        qut = Reconstructor(turtle_lark).reconstruct(var) # replace here or replace later
+        qut = qut.replace(";", "") #####################
+        if not (qut in quotation_list):
+            quotation_list.append(qut)
+
+        vr = Reconstructor(turtle_lark).reconstruct(var)
+        vr = vr.replace(";","")
+        quotation_dict[qut] = str(myHash(qut))
+        qut_hash = ":" + str(myHash(qut))
+        # try:
+        id = quotation_dict.get(vr)
+        for x in quotation_dict:
+            if x in vr:
+                # print("replace", x, ":"+quotation_dict.get(x))
+                vr = vr.replace(x, ":"+quotation_dict.get(x))
+                vr = vr.replace("<<", "")
+                vr = vr.replace(">>", "")
+                output = vr.split(":") # what if not :? directly url? if and else?
+                output.pop(0)
+                oa1 = Reconstructor(turtle_lark).reconstruct(var)
+                oa1 = oa1.replace(";","")
+                output.append(oa1)
+                # print(quotationreif)
+                if (not (output in quotationreif)):
+                    quotationreif.append(output)
+                    
+        # print("fixing quotation before",var)
+        # var = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', qut_hash)])])
+        # print("fixing quotation",var)
+
+        ##################
+        #########################
+
+    def blank_node_property_list(self, var):
+        # print("bnpl", (var.children[0]).children)
+        object_list = ((var.children[0]).children)[1].children
+        for x in range(0, len(object_list)):
+            try:
+                if object_list[x].data == 'quotation':
+                    # print("fixing blank node property list:", object_list, "\n","\n")
+                    collection_quotation_reconstruct = Reconstructor(turtle_lark).reconstruct(object_list[x])
+                    collection_quotation_reconstruct = collection_quotation_reconstruct.replace(";","")
+                    t2 = quotation_dict[collection_quotation_reconstruct]
+                    hasht2 = ":" + t2
+                    object_list[x] = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', hasht2)])])
+                    # print("iriririri", object_list)
+            except:
+                pass
+    def collection(self, var):
+        for x in range(0, len(var.children)):
+            if var.children[x].data == 'quotation':
+                # print("fixing collection:", x, "\n","\n")
+                collection_quotation_reconstruct = Reconstructor(turtle_lark).reconstruct(var.children[x])
+                collection_quotation_reconstruct = collection_quotation_reconstruct.replace(";","")
+                t2 = quotation_dict[collection_quotation_reconstruct]
+                hasht2 = ":" + t2
+                var.children[x] = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', hasht2)])])
+                # print("iriririri", var.children)
+
     def quotedtriples(self, var):
         triple1 = None
         subjecthash = ""
@@ -174,33 +234,7 @@ class FindVariables(Visitor):
                                 quotationannolist.append(quotationtriple)
                                 count2 = 0
                                 quotationtriple = []
-
-    def quotation(self, var):
-        qut = Reconstructor(turtle_lark).reconstruct(var) # replace here or replace later
-        qut = qut.replace(";", "") #####################
-        if not (qut in quotation_list):
-            quotation_list.append(qut)
-
-        vr = Reconstructor(turtle_lark).reconstruct(var)
-        vr = vr.replace(";","")
-        quotation_dict[qut] = str(myHash(qut))
-        # try:
-        id = quotation_dict.get(vr)
-        for x in quotation_dict:
-            if x in vr:
-                # print("replace", x, ":"+quotation_dict.get(x))
-                vr = vr.replace(x, ":"+quotation_dict.get(x))
-                vr = vr.replace("<<", "")
-                vr = vr.replace(">>", "")
-                output = vr.split(":") # what if not :? directly url? if and else?
-                output.pop(0)
-                oa1 = Reconstructor(turtle_lark).reconstruct(var)
-                oa1 = oa1.replace(";","")
-                output.append(oa1)
-                # print(quotationreif)
-                if (not (output in quotationreif)):
-                    quotationreif.append(output)
-
+    
     def triples(self, var):
 
         appends1 = []
@@ -213,50 +247,50 @@ class FindVariables(Visitor):
                 #     print ("collection edit", x.children)
                 xc = x.children
                 for y in xc:
-                    if y.data == 'collection':
-                      t5 = "("
-                      ycc = y.children
-                      for h in ycc:
-                          if h.data == "quotation":
-                              t1 = Reconstructor(turtle_lark).reconstruct(h)
-                              t1 = t1.replace(";","")
-                              print("edededed", t1, quotation_dict)
-                              t2 = quotation_dict[t1] # this is the (<<>> <<>>)
-                              hasht2 = ":" + t2
-                              print("hashed", hasht2)
-                              t5+=hasht2
-                      t5+=")"
-                      appends1.append(t5)
+                    # if y.data == 'collection':
+                    #   t5 = "("
+                    #   ycc = y.children
+                    #   for h in ycc:
+                    #       if h.data == "quotation":
+                    #           t1 = Reconstructor(turtle_lark).reconstruct(h)
+                    #           t1 = t1.replace(";","")
+                    #           print("edededed", t1, quotation_dict)
+                    #           t2 = quotation_dict[t1] # this is the (<<>> <<>>)
+                    #           hasht2 = ":" + t2
+                    #           print("hashed", hasht2)
+                    #           t5+=hasht2
+                    #   t5+=")"
+                    #   appends1.append(t5)
 
-                    else:
-                      x2 = Reconstructor(turtle_lark).reconstruct(y)
-                      # print(x2)
-                      x2 = x2.replace(";","")
-                      appends1.append(x2) # or push
+                    # else:
+                    x2 = Reconstructor(turtle_lark).reconstruct(y)
+                    # print(x2)
+                    x2 = x2.replace(";","")
+                    appends1.append(x2) # or push
             else:
               print("how to edit2", x)
               anyquotationin = False
-              if x.data == 'collection':
-                    t3 = "("
-                    print ("collection edit2", len(x.children))
-                    xcc = x.children
-                    for t in xcc:
-                        if t.data == "quotation":
-                            t1 = Reconstructor(turtle_lark).reconstruct(t)
-                            t1 = t1.replace(";","")
-                            print("edededed", t1, quotation_dict)
-                            t2 = quotation_dict[t1] # this is the (<<>> <<>>)
-                            hasht2 = ":" + t2
-                            print("hashed", hasht2)
-                            t3+=hasht2
-                    t3+=")"
-                    appends1.append(t3)
-              else:
-                x1 = Reconstructor(turtle_lark).reconstruct(x)
+            #   if x.data == 'collection':
+            #         t3 = "("
+            #         print ("collection edit2", len(x.children))
+            #         xcc = x.children
+            #         for t in xcc:
+            #             if t.data == "quotation":
+            #                 t1 = Reconstructor(turtle_lark).reconstruct(t)
+            #                 t1 = t1.replace(";","")
+            #                 print("edededed", t1, quotation_dict)
+            #                 t2 = quotation_dict[t1] # this is the (<<>> <<>>)
+            #                 hasht2 = ":" + t2
+            #                 print("hashed", hasht2)
+            #                 t3+=hasht2
+            #         t3+=")"
+            #         appends1.append(t3)
+            #   else:
+              x1 = Reconstructor(turtle_lark).reconstruct(x)
               #   print(x1)
-                x1 = x1.replace(";","")
-                print("compareed", x1)
-                appends1.append(x1)
+              x1 = x1.replace(";","")
+              print("compareed", x1)
+              appends1.append(x1)
 
         if not (appends1 in vblist):
             vblist.append(appends1)
@@ -307,17 +341,17 @@ for y in vblist:
         for z in range(0,len(y)):
             # print("asjdwatad", y[z], "number", z)
             if "<<" in y[z]:
-                if "[" in y[z]:
-                # print("asiodjasoidjay", [z])
-                # print("adad", ":"+quotation_dict[y[z]])
-                    index1 = y[z].index("<<")
-                    index2 = y[z].rfind(">>")
-                    y[z] = y[z].replace((y[z])[index1: index2+2], ":"+quotation_dict[(y[z])[index1: index2+2]])
-                elif "(" in y[z]:
+                # if "[" in y[z]:
+                # # print("asiodjasoidjay", [z])
+                # # print("adad", ":"+quotation_dict[y[z]])
+                #     index1 = y[z].index("<<")
+                #     index2 = y[z].rfind(">>")
+                #     y[z] = y[z].replace((y[z])[index1: index2+2], ":"+quotation_dict[(y[z])[index1: index2+2]])
+                # elif "(" in y[z]:
 
-                    pass
-                else:
-                    y[z] = ":"+quotation_dict[y[z]] #get also ok
+                #     pass
+                # else:
+                y[z] = ":"+quotation_dict[y[z]] #get also ok
         # print("aaaaaaaagggggg",y)
         myvalue = str(myHash(result))
         subject = y[0]
