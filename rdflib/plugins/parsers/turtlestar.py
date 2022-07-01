@@ -284,6 +284,7 @@ sparql_base: /BASE/i IRIREF
 sparql_prefix: /PREFIX/i PNAME_NS IRIREF
 triples: subject predicate_object_list
        | blank_node_property_list predicate_object_list?
+insidequotation: qtsubject verb qtobject
 quotedtriples: triples compoundanno
 predicate_object_list: verb object_list (";" (verb object_list)?)*
 ?object_list: object ("," object)*
@@ -292,9 +293,11 @@ predicate_object_list: verb object_list (";" (verb object_list)?)*
 ?predicate: iri
 ?object: iri | blank_node | collection | blank_node_property_list | literal | quotation
 ?literal: rdf_literal | numeric_literal | boolean_literal
+?qtsubject: iri | blank_node | quotation
+?qtobject: 	iri | blank_node | literal | quotation
 ANGLEBRACKETL: "<<"
 ANGLEBRACKETR: ">>"
-quotation: ANGLEBRACKETL triples ANGLEBRACKETR
+quotation: ANGLEBRACKETL insidequotation ANGLEBRACKETR
 COMPOUNDL: "{|"
 COMPOUNDR: "|}"
 compoundanno: COMPOUNDL predicate_object_list COMPOUNDR
@@ -469,55 +472,28 @@ class FindVariables(Visitor):
         for x in var.children:
             # print(x.data)
             if x.data == 'predicate_object_list':
-                # print("how to edit", x)
-                # if x.data == 'collection':
-                #     print ("collection edit", x.children)
                 xc = x.children
                 for y in xc:
-                    # if y.data == 'collection':
-                    #   t5 = "("
-                    #   ycc = y.children
-                    #   for h in ycc:
-                    #       if h.data == "quotation":
-                    #           t1 = Reconstructor(turtle_lark).reconstruct(h)
-                    #           t1 = t1.replace(";","")
-                    #           print("edededed", t1, quotation_dict)
-                    #           t2 = quotation_dict[t1] # this is the (<<>> <<>>)
-                    #           hasht2 = ":" + t2
-                    #           print("hashed", hasht2)
-                    #           t5+=hasht2
-                    #   t5+=")"
-                    #   appends1.append(t5)
-
-                    # else:
                     x2 = Reconstructor(turtle_lark).reconstruct(y)
-                    # print(x2)
                     x2 = x2.replace(";","")
                     appends1.append(x2) # or push
             else:
               print("how to edit2", x)
               anyquotationin = False
-            #   if x.data == 'collection':
-            #         t3 = "("
-            #         print ("collection edit2", len(x.children))
-            #         xcc = x.children
-            #         for t in xcc:
-            #             if t.data == "quotation":
-            #                 t1 = Reconstructor(turtle_lark).reconstruct(t)
-            #                 t1 = t1.replace(";","")
-            #                 print("edededed", t1, quotation_dict)
-            #                 t2 = quotation_dict[t1] # this is the (<<>> <<>>)
-            #                 hasht2 = ":" + t2
-            #                 print("hashed", hasht2)
-            #                 t3+=hasht2
-            #         t3+=")"
-            #         appends1.append(t3)
-            #   else:
               x1 = Reconstructor(turtle_lark).reconstruct(x)
-              #   print(x1)
               x1 = x1.replace(";","")
               print("compareed", x1)
               appends1.append(x1)
+
+        if not (appends1 in vblist):
+            vblist.append(appends1)
+    
+    def insidequotation(self, var):
+        appends1 = []
+        for x in var.children:
+            x1 = Reconstructor(turtle_lark).reconstruct(x)
+            x1 = x1.replace(";","")
+            appends1.append(x1)
 
         if not (appends1 in vblist):
             vblist.append(appends1)
