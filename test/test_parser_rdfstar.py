@@ -110,7 +110,7 @@ def test_TurtlePositiveSyntax_Nestedsubjectterm2():
 
 # tests should be broken
 
-def test_TurtleNegativeSyntax_Badquotedtripleliteralsubject():
+def test_TurtleNegativeSyntax_Badquotedtripleaspredicate():
     g = Graph()
     try:
         assert isinstance(g.parse("turtle-star/nt-ttl-star-bad-syntax-1.ttl", format = "ttls"), Graph)
