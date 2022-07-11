@@ -362,6 +362,7 @@ vblist = []
 quotationreif = []
 prefix_list = []
 quotationannolist = []
+constructors = ""
 
 def myHash(text:str):
   return str(hashlib.md5(text.encode('utf-8')).hexdigest())
@@ -528,6 +529,7 @@ class FindVariables(Visitor):
             raise ValueError('Unexpected @base: ' + base_directive)
 
 def RDFstarParsings(rdfstarstring):
+    global quotationannolist, vblist, quotationreif, prefix_list, constructors
     quotationannolist = []
     vblist = []
     quotationreif = []
@@ -536,6 +538,7 @@ def RDFstarParsings(rdfstarstring):
     tree = turtle_lark.parse(rdfstarstring)
     # t2 = Reconstructor(turtle_lark).reconstruct(tree)
     # print(tree)
+    print("y", tree)
     at = FindVariables().visit(tree)
 
     # for x in quotationreif:
@@ -577,7 +580,7 @@ def RDFstarParsings(rdfstarstring):
     #         constructors+=next_rdf_object
     #     else:
     #         print("exception")
-
+    print("ye,", vblist, quotationannolist)
     for y in vblist:
         result = "".join(y)
         result = "<<"+result+">>"
@@ -635,17 +638,17 @@ def RDFstarParsings(rdfstarstring):
         next_rdf_object = ":" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
         constructors+=next_rdf_object
 
-    for x in range(0, len(prefix_list)):
-        prefix_list[x] = Reconstructor(turtle_lark).reconstruct(prefix_list[x])
-        constructors = prefix_list[x]+"\n"+constructors
-
+    # for x in range(0, len(prefix_list)):
+    #     prefix_list[x] = Reconstructor(turtle_lark).reconstruct(prefix_list[x])
+    #     constructors = prefix_list[x]+"\n"+constructors
+    print("yes", constructors)
     constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors
     # constructors = "PREFIX : <http://example/> \n\n"+constructors # prefix
 
     if not ("PREFIX : <http://example/>" in constructors):
         constructors = "PREFIX : <http://example/> \n"+constructors
 
-    print(constructors)
+    print("yes?", constructors)
     constructors = bytes(constructors, 'utf-8')
     return constructors
 
@@ -2500,6 +2503,7 @@ class TurtleParser(Parser):
 
         bp = rdbytes.decode("utf-8")
         ou = RDFstarParsings(bp)
+        print(ou)
         p.feed(ou)
         p.endDoc()
         for prefix, namespace in p._bindings.items():

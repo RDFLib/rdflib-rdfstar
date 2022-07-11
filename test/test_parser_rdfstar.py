@@ -25,6 +25,7 @@ register(
 def test_TurtlePositiveSyntax_subject():
     g = Graph()
     assert isinstance(g.parse(data="turtle-star/turtle-star-syntax-basic-01.ttl", format = "ttls"), Graph)
+    print(g.serialize())
 
 def test_TurtlePositiveSyntax_object():
     g = Graph()
