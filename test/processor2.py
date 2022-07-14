@@ -108,7 +108,7 @@ COMMENT: "#" /[^\n]/*
 
 turtle_lark = Lark(grammar, start="turtle_doc", parser="lalr", maybe_placeholders = False)
 
-f = open("turtle-star/turtle-star-syntax-nested-02.ttl", "rb")
+f = open("turtle-star/nt-ttl-star-nested-2.ttl", "rb")
 rdbytes = f.read()
 f.close()
 rdbytes_processing = rdbytes.decode("utf-8")
@@ -190,7 +190,7 @@ class FindVariables(Visitor):
                     collection_quotation_reconstruct = Reconstructor(turtle_lark).reconstruct(object_list[x])
                     collection_quotation_reconstruct = collection_quotation_reconstruct.replace(";","")
                     t2 = quotation_dict[collection_quotation_reconstruct]
-                    hasht2 = ":" + t2
+                    hasht2 = "_:" + t2
                     object_list[x] = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', hasht2)])])
                     # print("iriririri", object_list)
             except:
@@ -202,7 +202,7 @@ class FindVariables(Visitor):
                 collection_quotation_reconstruct = Reconstructor(turtle_lark).reconstruct(var.children[x])
                 collection_quotation_reconstruct = collection_quotation_reconstruct.replace(";","")
                 t2 = quotation_dict[collection_quotation_reconstruct]
-                hasht2 = ":" + t2
+                hasht2 = "_:" + t2
                 var.children[x] = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', hasht2)])])
                 # print("iriririri", var.children)
 
@@ -218,7 +218,7 @@ class FindVariables(Visitor):
 
                 print(triple1)
                 triple1 = "<<"+triple1+">>"
-                subjecthash = ":" + str(myHash(triple1))
+                subjecthash = "_:" + str(myHash(triple1))
                 print(subjecthash)
 
             elif x.data == "compoundanno":
@@ -327,14 +327,14 @@ for y in vblist:
 
                 #     pass
                 # else:
-                y[z] = ":"+quotation_dict[y[z]] #get also ok
+                y[z] = "_:"+quotation_dict[y[z]] #get also ok
         # print("aaaaaaaagggggg",y)
         myvalue = str(myHash(result))
         subject = y[0]
         predicate = y[1]
         object = y[2]
         # print("tytyty", subject)
-        next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+        next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
         # print(next_rdf_object)
         constructors+=next_rdf_object
     else:
@@ -345,11 +345,11 @@ for y in vblist:
             if "<<" in y[z]:
                 # print("asiodjasoidjay", [z])
                 # print("adad", ":"+quotation_dict[y[z]])
-                y[z] = ":"+quotation_dict[y[z]] #get also ok
+                y[z] = "_:"+quotation_dict[y[z]] #get also ok
         subject = y[0]
         predicate = y[1]
         object = y[2]
-        next_rdf_object = ":" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+        next_rdf_object = "_:" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
         constructors+=next_rdf_object
 for z in quotationannolist:
     result1 = "".join(z)
@@ -358,7 +358,7 @@ for z in quotationannolist:
     subject = z[0]
     predicate = z[1]
     object = z[2]
-    next_rdf_object = ":" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+    next_rdf_object = "_:" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
     constructors+=next_rdf_object
 for x in range(0, len(prefix_list)):
     prefix_list[x] = Reconstructor(turtle_lark).reconstruct(prefix_list[x])
