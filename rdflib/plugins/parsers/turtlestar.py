@@ -432,7 +432,6 @@ class FindVariables(Visitor):
                 t2 = quotation_dict[collection_quotation_reconstruct]
                 hasht2 = "_:" + t2
                 var.children[x] = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', hasht2)])])
-                # print("iriririri", var.children)
 
     def quotedtriples(self, var):
         triple1 = None
@@ -471,7 +470,6 @@ class FindVariables(Visitor):
         appends1 = []
 
         for x in var.children:
-            # print(x.data)
             if x.data == 'predicate_object_list':
                 xc = x.children
                 for y in xc:
@@ -479,11 +477,11 @@ class FindVariables(Visitor):
                     x2 = x2.replace(";","")
                     appends1.append(x2) # or push
             else:
-              print("how to edit2", x)
+            #   print("how to edit2", x)
               anyquotationin = False
               x1 = Reconstructor(turtle_lark).reconstruct(x)
               x1 = x1.replace(";","")
-              print("compareed", x1)
+            #   print("compareed", x1)
               appends1.append(x1)
 
         if not (appends1 in vblist):
@@ -499,22 +497,12 @@ class FindVariables(Visitor):
         if not (appends1 in vblist):
             vblist.append(appends1)
 
-    def prefixed_name(self, children):
-        print("prefixed_name")
-        # pname, = children
-        print("pn", children)
-        # ns, _, ln = pname.partition(':')
-        # return self.make_named_node(self.prefixes[ns] + decode_literal(ln))
+    # def prefixed_name(self, children):
+        # print("prefixed_name")
+        # print("pn", children)
 
     def prefix_id(self, children):
         print("prefix_id")
-        # ns, iriref = children
-        # print("prefix_id", ns, iriref)
-        # iri = smart_urljoin(self.base_iri, self.decode_iriref(iriref))
-        # print(iri)
-        # ns = ns[:-1]  # Drop trailing : from namespace
-        # # self.prefixes[ns] = iri
-        # # return []
 
     def sparql_prefix(self, children):
         print("sparql_prefix", children)
@@ -536,92 +524,26 @@ def RDFstarParsings(rdfstarstring):
     prefix_list = []
     constructors = ""
     tree = turtle_lark.parse(rdfstarstring)
-    # t2 = Reconstructor(turtle_lark).reconstruct(tree)
-    # print(tree)
-    print("y", tree)
     at = FindVariables().visit(tree)
 
-    # for x in quotationreif:
-    #     if len(x) == 2:
-    #         myvalue = x[0]
-    #         px = x[1]
-    #         px = px.replace("<<", "")
-    #         px = px.replace(">>", "")
-    #         px = px.replace(";", "")
-    #         px = px.split(":")
-    #         px.pop(0)
-    #         subject = ":"+px[0]
-    #         predicate = ":"+px[1]
-    #         object = ":"+px[2]
-
-    #         next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
-    #         # returnvalue = ""
-    #         # returnvalue+=next_rdf_object
-    #         # returnvalue = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" + returnvalue
-    #         # print(next_rdf_object)
-    #         constructors+=next_rdf_object
-
-    #     elif len(x) == 4:
-    #         refe= x.pop()
-    #         # print(refe)
-    #         # for z in quotation_dict:
-    #             # print(z)
-    #         refe1 = quotation_dict.get(refe)
-    #         myvalue = refe1
-    #         subject = ":"+x[0]
-    #         predicate = ":"+x[1]
-    #         object = ":"+x[2]
-
-    #         next_rdf_object = ":" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
-    #         # returnvalue = ""
-    #         # returnvalue+=next_rdf_object
-    #         # returnvalue = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" + returnvalue
-    #         # print(next_rdf_object)
-    #         constructors+=next_rdf_object
-    #     else:
-    #         print("exception")
-    print("ye,", vblist, quotationannolist)
     for y in vblist:
         result = "".join(y)
         result = "<<"+result+">>"
-        # print("asdadasds", result, quotation_list, result in quotation_list)
-        # isin -
-        # for q in quotation_list:
-        #     if q == result:
-        #         isin = True
         if not (result in quotation_list):
             for z in range(0,len(y)):
-                # print("asjdwatad", y[z], "number", z)
                 if "<<" in y[z]:
-                    # if "[" in y[z]:
-                    # # print("asiodjasoidjay", [z])
-                    # # print("adad", ":"+quotation_dict[y[z]])
-                    #     index1 = y[z].index("<<")
-                    #     index2 = y[z].rfind(">>")
-                    #     y[z] = y[z].replace((y[z])[index1: index2+2], ":"+quotation_dict[(y[z])[index1: index2+2]])
-                    # elif "(" in y[z]:
-
-                    #     pass
-                    # else:
-                    y[z] = "_:"+quotation_dict[y[z]] #get also ok
-            # print("aaaaaaaagggggg",y)
+                    y[z] = "_:"+quotation_dict[y[z]]
             myvalue = str(myHash(result))
             subject = y[0]
             predicate = y[1]
             object = y[2]
-            # print("tytyty", subject)
             next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
-            # print(next_rdf_object)
             constructors+=next_rdf_object
         else:
-            # print("t3243242352")
             value = quotation_dict[result]
             for z in range(0,len(y)):
-                # print("asjdwatad", y[z], "number", z)
                 if "<<" in y[z]:
-                    # print("asiodjasoidjay", [z])
-                    # print("adad", ":"+quotation_dict[y[z]])
-                    y[z] = "_:"+quotation_dict[y[z]] #get also ok
+                    y[z] = "_:"+quotation_dict[y[z]]
             subject = y[0]
             predicate = y[1]
             object = y[2]
@@ -638,10 +560,6 @@ def RDFstarParsings(rdfstarstring):
         next_rdf_object = "_:" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
         constructors+=next_rdf_object
 
-    # for x in range(0, len(prefix_list)):
-    #     prefix_list[x] = Reconstructor(turtle_lark).reconstruct(prefix_list[x])
-    #     constructors = prefix_list[x]+"\n"+constructors
-    print("yes", constructors)
     constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors
     # constructors = "PREFIX : <http://example/> \n\n"+constructors # prefix
 
@@ -652,187 +570,16 @@ def RDFstarParsings(rdfstarstring):
     constructors = bytes(constructors, 'utf-8')
     return constructors
 
-
-# import re
-
-# # f = open("turtle-star/turtle-star-syntax-nested-02.ttl", "rb")
-# # rdbytes = f.read()
-# # f.close()
-# # rdbytes_processing = rdbytes.decode("utf-8")
-
-#  #https://stackoverflow.com/questions/4284991/parsing-nested-parentheses-in-python-grab-content-by-level https://stackoverflow.com/questions/14952113/how-can-i-match-nested-brackets-using-regex https://stackoverflow.com/questions/11404482/recursive-descent-parser-and-nested-parentheses
-# current_quotation = []
-# def myHash(text:str):
-#   hash=0
-#   for ch in text:
-#     hash = ( hash*281  ^ ord(ch)*997) & 0xFFFFFFFF
-#   return hash
-#   # https://stackoverflow.com/questions/27522626/hash-function-in-python-3-3-returns-different-results-between-sessions
-# def ParseNestedParen(string, level):
-#     """
-#     Generate strings contained in nested (), indexing i = level
-#     """
-#     if len(re.findall("\(", string)) == len(re.findall("\)", string)):
-#         LeftRightIndex = [x for x in zip(
-#         [Left.start()+1 for Left in re.finditer('\(', string)],
-#         reversed([Right.start() for Right in re.finditer('\)', string)]))]
-
-#     elif len(re.findall("\(", string)) > len(re.findall("\)", string)):
-#         return ParseNestedParen(string + ')', level)
-
-#     elif len(re.findall("\(", string)) < len(re.findall("\)", string)):
-#         return ParseNestedParen('(' + string, level)
-
-#     else:
-#         return 'fail'
-
-#     return [string[LeftRightIndex[level][0]:LeftRightIndex[level][1]]]
-
-# def parse_to_rdf(string1, current_quotation):
-#     string1 = string1.replace("\n","")
-#     string1 = string1.replace("\r","")
-#     if string1[0] == " ":
-#         string1 = string1[1:]
-#     if string1[-1] == " ":
-#         # print(string1, len(string1)-1)
-#         string1 = string1[:-1]
-#     # print("now6",string1)
-#     if not(len(current_quotation)==0):
-#         my_value = myHash(string1)
-#         not_in = True
-#         for x in current_quotation:
-#             if x[0] == string1:
-#                 pass
-#                 not_in = False
-#         if not_in:
-#             current_quotation.insert(0, [string1, myHash(string1)])
-
-#         not_in = True
-#         for x in current_quotation:
-#             # print(x,"wadawdad","okokoko","a","?")
-
-#             if x[0] == string1:
-#                 pass
-#                 not_in = False
-
-#             elif x[0] in string1:
-#                 # print("ok")
-#                 if "(" in x[0]:
-#                     match ="("+" " + x[0] + ")"
-#                 else:
-#                     match="("+x[0]+" "+")"
-
-#                 if "(" in x[0]:
-#                     string1=string1.replace(match,":" + str(x[1]))
-#                 else:
-#                     string1= string1.replace(match,":" + str(x[1]))
-#                 # print(string1)
-#                 break
-
-
-#     else:
-#         my_value = myHash(string1)
-#         # print("ok")
-#         current_quotation.insert(0, [string1,myHash(string1)])
-
-
-#     splitz = string1.split(" ")
-#     # print(current_quotation)
-#     subject = splitz[0]
-#     predicate = splitz[1]
-#     object = splitz[2]
-#     # :rei-1
-#     #a rdf:Statement ;
-#     #rdf:subject :s ;
-#     #rdf:predicate :p ;
-#     #rdf:object :o ;
-#     #.
-
-#     next_rdf_object = ":" + str(my_value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
-#     return next_rdf_object
-
-# start_processing =  False
-
-
-
-# def RDFstarParsings(rdbytes_p):
-#     rdf_resultspp = ""
-#     current_processing = ""
-#     for x in range(0, len(rdbytes_p)-1):
-#         if (not rdbytes_p[x] == '.'):
-#             current_processing+=rdbytes_p[x]
-#         else:
-#             number_brack = current_processing.count("<<")
-#             # print(number_brack)
-#             ts = current_processing.replace("<<", "(")
-#             outcome_s = ts.replace(">>",")")
-
-#             if outcome_s[0] == "P":
-#                 # print(len(outcome_s)-1)
-#                 for z in range(0, len(outcome_s)-1):
-#                     # print(z)
-#                     if outcome_s[z] == '\n':
-#                         rdf_resultspp+= outcome_s[0:z+2]
-#                         rdf_resultspp+="PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"
-#                         outcome_s = outcome_s[z+2:len(outcome_s)        ]
-
-
-#                         break
-#                 # print(outcome_s)
-
-#                 if number_brack==0:
-#                     rdf_resultspp += parse_to_rdf(outcome_s,current_quotation)
-#                 else:
-#                     for y in range(number_brack-1,-1, -1):
-
-#                         # print(y)
-#                         nested = ParseNestedParen(outcome_s,y)
-#                         rdf_resultspp += parse_to_rdf(nested[0],current_quotation)
-#                     rdf_resultspp += parse_to_rdf(outcome_s,current_quotation)
-
-
-#                 # print(parse_to_rdf(outcome_s,current_quotation))
-#                 pass
-#             else:
-#                 # print(parse_parentheses(outcome_s))
-#                 # outcomet = parse_parentheses(outcome_s)
-
-#                 # print(outcome_s)
-
-#                 if number_brack==0:
-#                     rdf_resultspp += parse_to_rdf(outcome_s,current_quotation)
-
-#                 else :
-
-#                     for y in range(number_brack-1,-1, -1):
-
-#                         # print(y)
-#                         nested = ParseNestedParen(outcome_s,y)
-#                         rdf_resultspp += parse_to_rdf(nested[0],current_quotation)
-#                         rdf_resultspp += parse_to_rdf(outcome_s,current_quotation)
-
-#             # process(current_processing)
-#             current_processing = ""
-
-#             print(rdf_resultspp)
-
-#     rdbytes_2 = bytes(rdf_resultspp, 'utf-8')
-#     print(rdbytes_2)
-
-#     return rdbytes_2
-
 def uniqueURI():
     """A unique URI"""
     global nextu
     nextu += 1
     return runNamespace() + "u_" + str(nextu)
 
-
 tracking = False
 chatty_flag = 50
 
 # from why import BecauseOfData, becauseSubexpression
-
 
 def BecauseOfData(*args, **kargs):
     # print args, kargs
@@ -2503,7 +2250,7 @@ class TurtleParser(Parser):
 
         bp = rdbytes.decode("utf-8")
         ou = RDFstarParsings(bp)
-        print(ou)
+        # print(ou)
         p.feed(ou)
         p.endDoc()
         for prefix, namespace in p._bindings.items():

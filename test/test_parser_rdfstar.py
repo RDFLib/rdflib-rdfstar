@@ -47,7 +47,8 @@ def test_TurtlePositiveSyntax_nestedquotedtriplesubjectposition():
 def test_TurtlePositiveSyntax_nestedquotedtripleobjectposition():
     g = Graph()
     assert isinstance(g.parse("turtle-star/turtle-star-syntax-nested-02.ttl", format = "ttls"), Graph)
-
+    print(g.serialize())
+    
 def test_TurtlePositiveSyntax_compoundforms():
     g = Graph()
     assert isinstance(g.parse("turtle-star/turtle-star-syntax-compound.ttl", format = "ttls"), Graph)
@@ -104,7 +105,8 @@ def test_TurtlePositiveSyntax_Blanknodeobject():
 def test_TurtlePositiveSyntax_Nestedsubjectterm1():
     g = Graph()
     assert isinstance(g.parse("turtle-star/nt-ttl-star-nested-1.ttl", format = "ttls"), Graph)
-
+    print(g.serialize())
+    
 def test_TurtlePositiveSyntax_Nestedsubjectterm2():
     g = Graph()
     assert isinstance(g.parse("turtle-star/nt-ttl-star-nested-2.ttl", format = "ttls"), Graph)
