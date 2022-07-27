@@ -186,7 +186,7 @@ class TurtlestarSerializer(RecursiveSerializer):
 
     def __init__(self, store):
         self._ns_rewrite = {}
-        super(TurtleSerializer, self).__init__(store)
+        super(TurtlestarSerializer, self).__init__(store)
         self.keywords = {RDF.type: "a"}
         self.reset()
         self.stream = None
@@ -214,11 +214,11 @@ class TurtlestarSerializer(RecursiveSerializer):
 
             prefix = self._ns_rewrite.get(prefix, prefix)
 
-        super(TurtleSerializer, self).addNamespace(prefix, namespace)
+        super(TurtlestarSerializer, self).addNamespace(prefix, namespace)
         return prefix
 
     def reset(self):
-        super(TurtleSerializer, self).reset()
+        super(TurtlestarSerializer, self).reset()
         self._shortNames = {}
         self._started = False
         self._ns_rewrite = {}
@@ -255,7 +255,7 @@ class TurtlestarSerializer(RecursiveSerializer):
         self.base = None
 
     def preprocessTriple(self, triple):
-        super(TurtleSerializer, self).preprocessTriple(triple)
+        super(TurtlestarSerializer, self).preprocessTriple(triple)
         for i, node in enumerate(triple):
             if i == VERB and node in self.keywords:
                 # predicate is a keyword

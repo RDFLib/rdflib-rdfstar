@@ -1,4 +1,3 @@
-
 import pytest
 
 from pathlib import Path
@@ -31,5 +30,5 @@ register(
 
 g = Graph()
 
-g.parse("turtle-star/turtle-star-syntax-nested-02.ttl", format = "ttls")
+g.parse("test/turtle-star/turtle-star-syntax-nested-02.ttl", format = "ttls")
 print(g.serialize(format = "ttlstar"))
