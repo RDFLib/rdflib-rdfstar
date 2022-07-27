@@ -441,7 +441,7 @@ class FindVariables(Visitor):
             print(x)
             if x.data == "triples":
                 triple1 = Reconstructor(turtle_lark).reconstruct(x)
-                triple1 = triple1.replace(";","")
+                # triple1 = triple1.replace(";","")
 
                 print(triple1)
                 triple1 = "<<"+triple1+">>"
@@ -456,7 +456,7 @@ class FindVariables(Visitor):
                         for z in y.children:
                             count2+=1
                             z2 = Reconstructor(turtle_lark).reconstruct(z)
-                            z2 = z2.replace(";","")
+                            # z2 = z2.replace(";","")
                             print("z",z2)
                             quotationtriple.append(z2)
                             if count2 ==2:
@@ -498,8 +498,8 @@ class FindVariables(Visitor):
             vblist.append(appends1)
 
     # def prefixed_name(self, children):
-        # print("prefixed_name")
-        # print("pn", children)
+    #     print("prefixed_name")
+    #     print("pn", self)
 
     def prefix_id(self, children):
         print("prefix_id")
@@ -560,11 +560,18 @@ def RDFstarParsings(rdfstarstring):
         next_rdf_object = "_:" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
         constructors+=next_rdf_object
 
-    constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors
-    # constructors = "PREFIX : <http://example/> \n\n"+constructors # prefix
+    for x in range(0, len(prefix_list)):
+        prefix_list[x] = Reconstructor(turtle_lark).reconstruct(prefix_list[x])
+        constructors = prefix_list[x]+"\n"+constructors
 
-    if not ("PREFIX : <http://example/>" in constructors):
+    constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors
+    # constructors = "PREFIX : <http://example/> \n"+constructors # prefix
+
+    if not (("PREFIX : <http://example/>" in constructors) or ("PREFIX:<http://example/>" in constructors)):
         constructors = "PREFIX : <http://example/> \n"+constructors
+
+    if "PREFIX:" in constructors:
+        constructors = constructors.replace("PREFIX:", "PREFIX :")
 
     print("yes?", constructors)
     constructors = bytes(constructors, 'utf-8')
@@ -1238,6 +1245,7 @@ class SinkParser:
                     argstr, i, "EOF when ']' expected after [ <propertyList>"
                 )
             if argstr[j] != "]":
+                # print("asdadasd", argstr[j-1], argstr[j-2], argstr[j-3], argstr[j-4], argstr[j-5])
                 self.BadSyntax(argstr, j, "']' expected")
             res.append(subj)
             return j + 1

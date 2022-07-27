@@ -26,6 +26,8 @@ def test_TurtlePositiveSyntax_subject():
     g = Graph()
     assert isinstance(g.parse(data="turtle-star/turtle-star-syntax-basic-01.ttl", format = "ttls"), Graph)
     print(g.serialize())
+    # for s, p, o in g:
+    #     print(s, p, o)
 
 def test_TurtlePositiveSyntax_object():
     g = Graph()
@@ -48,6 +50,8 @@ def test_TurtlePositiveSyntax_nestedquotedtripleobjectposition():
     g = Graph()
     assert isinstance(g.parse("turtle-star/turtle-star-syntax-nested-02.ttl", format = "ttls"), Graph)
     print(g.serialize())
+    # for s, p, o, g in g.quads((None, RDF.type, None, None)):
+    #     print(s)
     
 def test_TurtlePositiveSyntax_compoundforms():
     g = Graph()

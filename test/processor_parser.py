@@ -108,7 +108,7 @@ COMMENT: "#" /[^\n]/*
 
 turtle_lark = Lark(grammar, start="turtle_doc", parser="lalr", maybe_placeholders = False)
 
-f = open("turtle-star/nt-ttl-star-nested-2.ttl", "rb")
+f = open("turtle-star/turtle-star-annotation-2.ttl", "rb")
 rdbytes = f.read()
 f.close()
 rdbytes_processing = rdbytes.decode("utf-8")
@@ -214,7 +214,7 @@ class FindVariables(Visitor):
             print(x)
             if x.data == "triples":
                 triple1 = Reconstructor(turtle_lark).reconstruct(x)
-                triple1 = triple1.replace(";","")
+                # triple1 = triple1.replace(";","")
 
                 print(triple1)
                 triple1 = "<<"+triple1+">>"
@@ -229,7 +229,7 @@ class FindVariables(Visitor):
                         for z in y.children:
                             count2+=1
                             z2 = Reconstructor(turtle_lark).reconstruct(z)
-                            z2 = z2.replace(";","")
+                            # z2 = z2.replace(";","")
                             print("z",z2)
                             quotationtriple.append(z2)
                             if count2 ==2:
@@ -248,13 +248,13 @@ class FindVariables(Visitor):
                 xc = x.children
                 for y in xc:
                     x2 = Reconstructor(turtle_lark).reconstruct(y)
-                    x2 = x2.replace(";","")
+                    # x2 = x2.replace(";","")
                     appends1.append(x2) # or push
             else:
               print("how to edit2", x)
               anyquotationin = False
               x1 = Reconstructor(turtle_lark).reconstruct(x)
-              x1 = x1.replace(";","")
+            #   x1 = x1.replace(";","")
               print("compareed", x1)
               appends1.append(x1)
 
@@ -369,6 +369,9 @@ constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+co
 
 if not (("PREFIX : <http://example/>" in constructors) or ("PREFIX:<http://example/>" in constructors)):
     constructors = "PREFIX : <http://example/> \n"+constructors
+
+if "PREFIX:" in constructors:
+    constructors = constructors.replace("PREFIX:", "PREFIX :")
 
 
 print(constructors)
