@@ -34,7 +34,7 @@ register(
 
 g = Graph()
 
-g.parse("test/turtle-star/turtle-star-syntax-nested-02.ttl", format = "ttls")
+g.parse("test/turtle-star/turtle-star-syntax-inside-02.ttl", format = "ttls")
 # print(g.serialize(format = "ttlstar"))
 # for all Statements
 
@@ -75,11 +75,19 @@ for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
 
     # predicate = "<"+str(predicate)+">"
 
+    print("before", subject, type(subject))
+    if (isinstance(subject, rdflib.term.URIRef)):
+        subject = "<"+str(subject)+">"
 
+    if (isinstance(object, rdflib.term.URIRef)):
+        object = "<"+str(object)+">"
+
+    if(isinstance(predicate, rdflib.term.URIRef)):
+        predicate = "<"+str(g.value(s, RDF.predicate))+">"
 
     # print("adada", serialized_subject)
 
-    dictionary[s] = (subject, predicate,object)
+    dictionary[s] = "<< "+str(subject)+ str(predicate)+str(object)+" >>"
 
     print(type(g.value(s, RDF.object))) # why hash value is changed?
 
@@ -88,3 +96,7 @@ for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
     print("test", subject ,predicate,object)
     # if s == g.value(s, RDF.object):
     #     print("equal")
+
+# Todo: how to put this into serializer?
+
+# Todo: how to read in the blanknode to process collection and blank node property list?
