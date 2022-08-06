@@ -35,7 +35,7 @@ register(
 
 g = Graph()
 
-g.parse("test/turtle-star/turtle-star-syntax-inside-02.ttl", format = "ttls")
+g.parse("test/turtle-star/turtle-star-syntax-inside-01.ttl", format = "ttls")
 # print(g.serialize(format = "ttlstar"))
 # for all Statements
 
@@ -48,7 +48,7 @@ g.parse("test/turtle-star/turtle-star-syntax-inside-02.ttl", format = "ttls")
 #     ))
 # print(unreified_g.serialize())
 
-def expand_Bnode(node, g, dictionary, properties):
+def expand_Bnode(node, g, dictionary, properties, collection_or_not):
     for s, p, o in g.triples((node, None, None)):
         #todo () and []
         # oList = properties.get(p, [])
@@ -56,15 +56,26 @@ def expand_Bnode(node, g, dictionary, properties):
         print("atatat", s,p, o)
         print("ptype", type(p))
         if ("http://www.w3.org/1999/02/22-rdf-syntax-ns#first" in p) or ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
+            collection_or_not  =  True
             if o in dictionary:
                 properties.append(dictionary[o])
             # elif isinstance(o, rdflib.term.BNode):
             #     expand_Bnode(o, g, dictionary,properties)
             # else:
             #     properties.append(o)
-            else:
-                expand_Bnode(o, g, dictionary,properties)
+            elif not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"  in o):
+                print("recursive", o)
+
+                if not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
+                    properties.append("(")
+
+                expand_Bnode(o, g, dictionary,properties, collection_or_not)
+
+                if not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
+                    properties.append(")")
+
         else:
+            collection_or_not = False
             properties.append(p)
             if o in dictionary:
                 properties.append(dictionary[o])
@@ -73,10 +84,10 @@ def expand_Bnode(node, g, dictionary, properties):
             # else:
             #     properties.append(o)
             else:
-                expand_Bnode(o, g, dictionary,properties)
+                expand_Bnode(o, g, dictionary,properties, collection_or_not)
 
 
-    return properties
+    return properties, collection_or_not
 
 dictionary = dict()
 result = ""
@@ -95,6 +106,7 @@ for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
     print("typetest", subject, type(subject), "\n")
     print("current dict", dictionary, "\n")
     properties = []
+    collection_or_not = False
     # all_changed = True
     # while all_changed:
         # for s, p, o in g.triples((subject, None, None)):
@@ -103,8 +115,13 @@ for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
         #     if o in dictionary:
         #         properties.append(dictionary(o))
         #     else:
-    result = expand_Bnode(subject,g,dictionary,properties)
-
+    result, ifcollection = expand_Bnode(subject,g,dictionary,properties,collection_or_not)
+    if ifcollection == True:
+        result.insert(0, "(")
+        result.append(")")
+    else:
+        result.insert(0, "[")
+        result.append("]")
     print("expand", result, "\n")
 
     # all_changed = False
