@@ -1,446 +1,238 @@
 """
-Turtle RDF graph serializer for RDFLib.
-See <http://www.w3.org/TeamSubmission/turtle/> for syntax specification.
+HextuplesSerializer RDF graph serializer for RDFLib.
+See <https://github.com/ontola/hextuples> for details about the format.
 """
-
-from collections import defaultdict
-from functools import cmp_to_key
-
-from rdflib.term import BNode, Literal, URIRef
-from rdflib.exceptions import Error
+from typing import IO, Optional, Type, Union
+import json
+from rdflib.graph import Graph, ConjunctiveGraph
+from rdflib.term import Literal, URIRef, Node, BNode
 from rdflib.serializer import Serializer
-from rdflib.namespace import RDF, RDFS
+from rdflib.namespace import RDF, XSD
+import warnings
+import rdflib
 
-__all__ = ["RecursiveSerializer", "TurtlestarSerializer"]
+__all__ = ["TurtlestarSerializer"]
 
 
-def _object_comparator(a, b):
+class TurtlestarSerializer(Serializer):
     """
-    for nice clean output we sort the objects of triples,
-    some of them are literals,
-    these are sorted according to the sort order of the underlying python objects
-    in py3 not all things are comparable.
-    This falls back on comparing string representations when not.
+    Serializes RDF graphs to NTriples format.
     """
 
-    try:
-        if a > b:
-            return 1
-        if a < b:
-            return -1
-        return 0
-
-    except TypeError:
-        a = str(a)
-        b = str(b)
-        return (a > b) - (a < b)
-
-
-class RecursiveSerializer(Serializer):
-
-    topClasses = [RDFS.Class]
-    predicateOrder = [RDF.type, RDFS.label]
-    maxDepth = 10
-    indentString = "  "
-    roundtrip_prefixes = ()
-
-    def __init__(self, store):
-
-        super(RecursiveSerializer, self).__init__(store)
-        self.stream = None
-        self.reset()
-
-    def addNamespace(self, prefix, uri):
-        if prefix in self.namespaces and self.namespaces[prefix] != uri:
-            raise Exception(
-                "Trying to override namespace prefix %s => %s, but it's already bound to %s"
-                % (prefix, uri, self.namespaces[prefix])
-            )
-        self.namespaces[prefix] = uri
-
-    def checkSubject(self, subject):
-        """Check to see if the subject should be serialized yet"""
-        if (
-            (self.isDone(subject))
-            or (subject not in self._subjects)
-            or ((subject in self._topLevels) and (self.depth > 1))
-            or (isinstance(subject, URIRef) and (self.depth >= self.maxDepth))
-        ):
-            return False
-        return True
-
-    def isDone(self, subject):
-        """Return true if subject is serialized"""
-        return subject in self._serialized
-
-    def orderSubjects(self):
-        seen = {}
-        subjects = []
-
-        for classURI in self.topClasses:
-            members = list(self.store.subjects(RDF.type, classURI))
-            members.sort()
-
-            subjects.extend(members)
-            for member in members:
-                self._topLevels[member] = True
-                seen[member] = True
-
-        recursable = [
-            (isinstance(subject, BNode), self._references[subject], subject)
-            for subject in self._subjects
-            if subject not in seen
-        ]
-
-        recursable.sort()
-        subjects.extend([subject for (isbnode, refs, subject) in recursable])
-
-        return subjects
-
-    def preprocess(self):
-        for triple in self.store.triples((None, None, None)):
-            self.preprocessTriple(triple)
-
-    def preprocessTriple(self, spo):
-        s, p, o = spo
-        self._references[o] += 1
-        self._subjects[s] = True
-
-    def reset(self):
-        self.depth = 0
-        self.lists = {}
-        self.namespaces = {}
-        self._references = defaultdict(int)
-        self._serialized = {}
-        self._subjects = {}
-        self._topLevels = {}
-
-        if self.roundtrip_prefixes:
-            if hasattr(self.roundtrip_prefixes, "__iter__"):
-                for prefix, ns in self.store.namespaces():
-                    if prefix in self.roundtrip_prefixes:
-                        self.addNamespace(prefix, ns)
+    def __init__(self, store: Union[Graph, ConjunctiveGraph]):
+        self.default_context: Optional[Node]
+        self.graph_type: Type[Graph]
+        if isinstance(store, ConjunctiveGraph):
+            self.graph_type = ConjunctiveGraph
+            self.contexts = list(store.contexts())
+            if store.default_context:
+                self.default_context = store.default_context
+                self.contexts.append(store.default_context)
             else:
-                for prefix, ns in self.store.namespaces():
-                    self.addNamespace(prefix, ns)
+                self.default_context = None
+        else:
+            self.graph_type = Graph
+            self.contexts = [store]
+            self.default_context = None
 
-    def buildPredicateHash(self, subject):
-        """
-        Build a hash key by predicate to a list of objects for the given
-        subject
-        """
-        properties = {}
-        for s, p, o in self.store.triples((subject, None, None)):
-            oList = properties.get(p, [])
-            oList.append(o)
-            properties[p] = oList
-        return properties
+        Serializer.__init__(self, store)
 
-    def sortProperties(self, properties):
-        """Take a hash from predicate uris to lists of values.
-        Sort the lists of values.  Return a sorted list of properties."""
-        # Sort object lists
-        for prop, objects in properties.items():
-            objects.sort(key=cmp_to_key(_object_comparator))
-
-        # Make sorted list of properties
-        propList = []
-        seen = {}
-        for prop in self.predicateOrder:
-            if (prop in properties) and (prop not in seen):
-                propList.append(prop)
-                seen[prop] = True
-        props = list(properties.keys())
-        props.sort()
-        for prop in props:
-            if prop not in seen:
-                propList.append(prop)
-                seen[prop] = True
-        return propList
-
-    def subjectDone(self, subject):
-        """Mark a subject as done."""
-        self._serialized[subject] = True
-
-    def indent(self, modifier=0):
-        """Returns indent string multiplied by the depth"""
-        return (self.depth + modifier) * self.indentString
-
-    def write(self, text):
-        """Write text in given encoding."""
-        self.stream.write(text.encode(self.encoding, "replace"))
-
-
-SUBJECT = 0
-VERB = 1
-OBJECT = 2
-
-_GEN_QNAME_FOR_DT = False
-_SPACIOUS_OUTPUT = False
-
-
-class TurtlestarSerializer(RecursiveSerializer):
-
-    short_name = "turtlestar"
-    indentString = "    "
-
-    def __init__(self, store):
-        self._ns_rewrite = {}
-        super(TurtlestarSerializer, self).__init__(store)
-        self.keywords = {RDF.type: "a"}
-        self.reset()
-        self.stream = None
-        self._spacious = _SPACIOUS_OUTPUT
-
-    def addNamespace(self, prefix, namespace):
-        # Turtle does not support prefix that start with _
-        # if they occur in the graph, rewrite to p_blah
-        # this is more complicated since we need to make sure p_blah
-        # does not already exist. And we register namespaces as we go, i.e.
-        # we may first see a triple with prefix _9 - rewrite it to p_9
-        # and then later find a triple with a "real" p_9 prefix
-
-        # so we need to keep track of ns rewrites we made so far.
-
-        if (prefix > "" and prefix[0] == "_") or self.namespaces.get(
-            prefix, namespace
-        ) != namespace:
-
-            if prefix not in self._ns_rewrite:
-                p = "p" + prefix
-                while p in self.namespaces:
-                    p = "p" + p
-                self._ns_rewrite[prefix] = p
-
-            prefix = self._ns_rewrite.get(prefix, prefix)
-
-        super(TurtlestarSerializer, self).addNamespace(prefix, namespace)
-        return prefix
-
-    def reset(self):
-        super(TurtlestarSerializer, self).reset()
-        self._shortNames = {}
-        self._started = False
-        self._ns_rewrite = {}
-
-    def serialize(self, stream, base=None, encoding=None, spacious=None, **args):
-        self.reset()
-        self.stream = stream
-        # if base is given here, use that, if not and a base is set for the graph use that
+    def serialize(
+        self,
+        stream: IO[bytes],
+        base: Optional[str] = None,
+        encoding: Optional[str] = "utf-8",
+        **kwargs,
+    ):
         if base is not None:
-            self.base = base
-        elif self.store.base is not None:
-            self.base = self.store.base
-
-        if spacious is not None:
-            self._spacious = spacious
-
-        self.preprocess()
-        subjects_list = self.orderSubjects()
-
-        self.startDocument()
-
-        firstTime = True
-        for subject in subjects_list:
-            if self.isDone(subject):
-                continue
-            if firstTime:
-                firstTime = False
-            if self.statement(subject) and not firstTime:
-                self.write("\n")
-
-        self.endDocument()
-        stream.write("\n".encode("latin-1"))
-
-        self.base = None
-
-    def preprocessTriple(self, triple):
-        super(TurtlestarSerializer, self).preprocessTriple(triple)
-        for i, node in enumerate(triple):
-            if i == VERB and node in self.keywords:
-                # predicate is a keyword
-                continue
-            # Don't use generated prefixes for subjects and objects
-            self.getQName(node, gen_prefix=(i == VERB))
-            if isinstance(node, Literal) and node.datatype:
-                self.getQName(node.datatype, gen_prefix=_GEN_QNAME_FOR_DT)
-        p = triple[1]
-        if isinstance(p, BNode):  # hmm - when is P ever a bnode?
-            self._references[p] += 1
-
-    # TODO: Rename to get_pname
-    def getQName(self, uri, gen_prefix=True):
-        if not isinstance(uri, URIRef):
-            return None
-
-        parts = None
-
-        try:
-            parts = self.store.compute_qname(uri, generate=gen_prefix)
-        except:
-
-            # is the uri a namespace in itself?
-            pfx = self.store.store.prefix(uri)
-
-            if pfx is not None:
-                parts = (pfx, uri, "")
-            else:
-                # nothing worked
-                return None
-
-        prefix, namespace, local = parts
-
-        local = local.replace(r"(", r"\(").replace(r")", r"\)")
-
-        # QName cannot end with .
-        if local.endswith("."):
-            return None
-
-        prefix = self.addNamespace(prefix, namespace)
-
-        return "%s:%s" % (prefix, local)
-
-    def startDocument(self):
-        self._started = True
-        ns_list = sorted(self.namespaces.items())
-
-        if self.base:
-            self.write(self.indent() + "@base <%s> .\n" % self.base)
-        for prefix, uri in ns_list:
-            self.write(self.indent() + "@prefix %s: <%s> .\n" % (prefix, uri))
-        if ns_list and self._spacious:
-            self.write("\n")
-
-    def endDocument(self):
-        if self._spacious:
-            self.write("\n")
-
-    def statement(self, subject):
-        self.subjectDone(subject)
-        return self.s_squared(subject) or self.s_default(subject)
-
-    def s_default(self, subject):
-        self.write("\n" + self.indent())
-        self.path(subject, SUBJECT)
-        self.predicateList(subject)
-        self.write(" .")
-        return True
-
-    def s_squared(self, subject):
-        if (self._references[subject] > 0) or not isinstance(subject, BNode):
-            return False
-        self.write("\n" + self.indent() + "[]")
-        self.predicateList(subject)
-        self.write(" .")
-        return True
-
-    def path(self, node, position, newline=False):
-        if not (
-            self.p_squared(node, position, newline)
-            or self.p_default(node, position, newline)
-        ):
-            raise Error("Cannot serialize node '%s'" % (node,))
-
-    def p_default(self, node, position, newline=False):
-        if position != SUBJECT and not newline:
-            self.write(" ")
-        self.write(self.label(node, position))
-        return True
-
-    def label(self, node, position):
-        if node == RDF.nil:
-            return "()"
-        if position is VERB and node in self.keywords:
-            return self.keywords[node]
-        if isinstance(node, Literal):
-            return node._literal_n3(
-                use_plain=True,
-                qname_callback=lambda dt: self.getQName(dt, _GEN_QNAME_FOR_DT),
+            warnings.warn(
+                "base has no meaning for Hextuples serialization. "
+                "I will ignore this value"
             )
+
+        if encoding not in [None, "utf-8"]:
+            warnings.warn(
+                f"Hextuples files are always utf-8 encoded. "
+                f"I was passed: {encoding}, "
+                "but I'm still going to use utf-8 anyway!"
+            )
+
+        if self.store.formula_aware is True:
+            raise Exception(
+                "Hextuple serialization can't (yet) handle formula-aware stores"
+            )
+        dictionary = dict()
+        result_subject = ""
+        result_object = ""
+
+        def expand_Bnode(node, g, dictionary, properties, collection_or_not):
+            for s, p, o in g.triples((node, None, None)):
+                #todo () and []
+                # oList = properties.get(p, [])
+                # oList.append(o)
+                # print("atatat", s,p, o)
+                # print("ptype", type(p))
+                if ("http://www.w3.org/1999/02/22-rdf-syntax-ns#first" in p) or ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
+                    collection_or_not  =  True
+                    if o in dictionary:
+                        properties.append(dictionary[o])
+                    # elif isinstance(o, rdflib.term.BNode):
+                    #     expand_Bnode(o, g, dictionary,properties)
+                    # else:
+                    #     properties.append(o)
+                    elif not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"  in o):
+                        # print("recursive", o)
+
+                        if not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
+                            properties.append("(")
+
+                        expand_Bnode(o, g, dictionary,properties, collection_or_not)
+
+                        if not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
+                            properties.append(")")
+
+                else:
+                    collection_or_not = False
+                    properties.append(p)
+                    if o in dictionary:
+                        properties.append(dictionary[o])
+                    # elif isinstance(o, rdflib.term.BNode):
+                    #     expand_Bnode(o, g, dictionary,properties)
+                    # else:
+                    #     properties.append(o)
+                    else:
+                        expand_Bnode(o, g, dictionary,properties, collection_or_not)
+
+            return properties, collection_or_not
+
+        for g in self.contexts:
+            for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
+                subject = g.value(s, RDF.subject)
+                predicate = g.value(s, RDF.predicate)
+                object = g.value(s, RDF.object)
+
+                # print("typetest", subject, type(subject), "\n")
+                # print("current dict", dictionary, "\n")
+                properties = []
+                collection_or_not = False
+
+                if isinstance(g.value(s, RDF.subject), rdflib.term.BNode):
+                    if subject in dictionary:
+                        subject = dictionary[g.value(s, RDF.subject)]
+
+                if isinstance(g.value(s, RDF.object), rdflib.term.BNode):
+                    if object in dictionary:
+                        object = dictionary[g.value(s, RDF.object)]
+
+                if (isinstance(subject, rdflib.term.URIRef)):
+                    subject = "<"+str(subject)+">"
+                elif (isinstance(subject, rdflib.term.BNode)):
+                    result_subject, ifcollection = expand_Bnode(subject,g,dictionary,properties,collection_or_not)
+
+                    if ifcollection == True:
+                        result_subject.insert(0, "(")
+                        result_subject.append(")")
+                    else:
+                        result_subject.insert(0, "[")
+                        result_subject.append("]")
+                    subject = "".join(result_subject)
+
+
+                if (isinstance(object, rdflib.term.URIRef)):
+                    object = "<"+str(object)+">"
+                elif (isinstance(object, rdflib.term.BNode)):
+                    result_object, ifcollection = expand_Bnode(subject,g,dictionary,properties,collection_or_not)
+                    if ifcollection == True:
+                        result_object.insert(0, "(")
+                        result_object.append(")")
+                    else:
+                        result_object.insert(0, "[")
+                        result_object.append("]")
+                    object = "".join(result_object)
+
+                if(isinstance(predicate, rdflib.term.URIRef)):
+                    predicate = "<"+str(g.value(s, RDF.predicate))+">"
+
+                dictionary[s] = "<< "+str(subject)+ str(predicate)+str(object)+" >>"
+
+                output = subject+" "+predicate+" "+object+" ."+"\n"
+                if output is not None:
+                    stream.write(output.encode())
+    #Todo
+
+
+                # hl = self._hex_line(triple, context)
+                # if hl is not None:
+                #     stream.write(hl.encode())
+
+    # def _hex_line(self, triple, context):
+    #     if isinstance(
+    #         triple[0], (URIRef, BNode)
+    #     ):  # exclude QuotedGraph and other objects
+    #         # value
+    #         value = (
+    #             triple[2]
+    #             if isinstance(triple[2], Literal)
+    #             else self._iri_or_bn(triple[2])
+    #         )
+
+    #         # datatype
+    #         if isinstance(triple[2], URIRef):
+    #             # datatype = "http://www.w3.org/1999/02/22-rdf-syntax-ns#namedNode"
+    #             datatype = "globalId"
+    #         elif isinstance(triple[2], BNode):
+    #             # datatype = "http://www.w3.org/1999/02/22-rdf-syntax-ns#blankNode"
+    #             datatype = "localId"
+    #         elif isinstance(triple[2], Literal):
+    #             if triple[2].datatype is not None:
+    #                 datatype = f"{triple[2].datatype}"
+    #             else:
+    #                 if triple[2].language is not None:  # language
+    #                     datatype = RDF.langString
+    #                 else:
+    #                     datatype = XSD.string
+    #         else:
+    #             return None  # can't handle non URI, BN or Literal Object (QuotedGraph)
+
+    #         # language
+    #         if isinstance(triple[2], Literal):
+    #             if triple[2].language is not None:
+    #                 language = f"{triple[2].language}"
+    #             else:
+    #                 language = ""
+    #         else:
+    #             language = ""
+
+    #         return (
+    #             json.dumps(
+    #                 [
+    #                     self._iri_or_bn(triple[0]),
+    #                     triple[1],
+    #                     value,
+    #                     datatype,
+    #                     language,
+    #                     self._context(context),
+    #                 ]
+    #             )
+    #             + "\n"
+    #         )
+    #     else:  # do not return anything for non-IRIs or BNs, e.g. QuotedGraph, Subjects
+    #         return None
+
+    def _iri_or_bn(self, i_):
+        if isinstance(i_, URIRef):
+            return f"{i_}"
+        elif isinstance(i_, BNode):
+            return f"{i_.n3()}"
         else:
-            node = self.relativize(node)
+            return None
 
-            return self.getQName(node, position == VERB) or node.n3()
-
-    def p_squared(self, node, position, newline=False):
-        if (
-            not isinstance(node, BNode)
-            or node in self._serialized
-            or self._references[node] > 1
-            or position == SUBJECT
-        ):
-            return False
-
-        if not newline:
-            self.write(" ")
-
-        if self.isValidList(node):
-            # this is a list
-            self.write("(")
-            self.depth += 1  # 2
-            self.doList(node)
-            self.depth -= 1  # 2
-            self.write(" )")
-        else:
-            self.subjectDone(node)
-            self.depth += 2
-            # self.write('[\n' + self.indent())
-            self.write("[")
-            self.depth -= 1
-            # self.predicateList(node, newline=True)
-            self.predicateList(node, newline=False)
-            # self.write('\n' + self.indent() + ']')
-            self.write(" ]")
-            self.depth -= 1
-
-        return True
-
-    def isValidList(self, l_):
-        """
-        Checks if l is a valid RDF list, i.e. no nodes have other properties.
-        """
-        try:
-            if self.store.value(l_, RDF.first) is None:
-                return False
-        except:
-            return False
-        while l_:
-            if l_ != RDF.nil and len(list(self.store.predicate_objects(l_))) != 2:
-                return False
-            l_ = self.store.value(l_, RDF.rest)
-        return True
-
-    def doList(self, l_):
-        while l_:
-            item = self.store.value(l_, RDF.first)
-            if item is not None:
-                self.path(item, OBJECT)
-                self.subjectDone(l_)
-            l_ = self.store.value(l_, RDF.rest)
-
-    def predicateList(self, subject, newline=False):
-        properties = self.buildPredicateHash(subject)
-        propList = self.sortProperties(properties)
-        if len(propList) == 0:
-            return
-        self.verb(propList[0], newline=newline)
-        self.objectList(properties[propList[0]])
-        for predicate in propList[1:]:
-            self.write(" ;\n" + self.indent(1))
-            self.verb(predicate, newline=True)
-            self.objectList(properties[predicate])
-
-    def verb(self, node, newline=False):
-        self.path(node, VERB, newline)
-
-    def objectList(self, objects):
-        count = len(objects)
-        if count == 0:
-            return
-        depthmod = (count == 1) and 0 or 1
-        self.depth += depthmod
-        self.path(objects[0], OBJECT)
-        for obj in objects[1:]:
-            self.write(",\n" + self.indent(1))
-            self.path(obj, OBJECT, newline=True)
-        self.depth -= depthmod
+    def _context(self, context):
+        if self.graph_type == Graph:
+            return ""
+        if context.identifier == "urn:x-rdflib:default":
+            return ""
+        elif context is not None and self.default_context is not None:
+            if context.identifier == self.default_context.identifier:
+                return ""
+        return context.identifier

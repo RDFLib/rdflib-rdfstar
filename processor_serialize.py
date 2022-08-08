@@ -35,8 +35,8 @@ register(
 
 g = Graph()
 
-g.parse("test/turtle-star/turtle-star-syntax-inside-01.ttl", format = "ttls")
-# print(g.serialize(format = "ttlstar"))
+g.parse("test/turtle-star/turtle-star-syntax-nested-02.ttl", format = "ttls")
+print("testing serializer", g.serialize(format = "ttlstar"))
 # for all Statements
 
 # unreified_g = Graph()
@@ -90,7 +90,8 @@ def expand_Bnode(node, g, dictionary, properties, collection_or_not):
     return properties, collection_or_not
 
 dictionary = dict()
-result = ""
+result_subject = ""
+result_object = ""
 for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
     # print(s)
     # print(
@@ -115,14 +116,14 @@ for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
         #     if o in dictionary:
         #         properties.append(dictionary(o))
         #     else:
-    result, ifcollection = expand_Bnode(subject,g,dictionary,properties,collection_or_not)
-    if ifcollection == True:
-        result.insert(0, "(")
-        result.append(")")
-    else:
-        result.insert(0, "[")
-        result.append("]")
-    print("expand", result, "\n")
+    # result, ifcollection = expand_Bnode(subject,g,dictionary,properties,collection_or_not)
+    # if ifcollection == True:
+    #     result.insert(0, "(")
+    #     result.append(")")
+    # else:
+    #     result.insert(0, "[")
+    #     result.append("]")
+    # print("expand", result, "\n")
 
     # all_changed = False
     # while (all_changed==False):
@@ -145,9 +146,28 @@ for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
     # print("before", subject, type(subject))
     if (isinstance(subject, rdflib.term.URIRef)):
         subject = "<"+str(subject)+">"
+    elif (isinstance(subject, rdflib.term.BNode)):
+        result_subject, ifcollection = expand_Bnode(subject,g,dictionary,properties,collection_or_not)
+        if ifcollection == True:
+            result_subject.insert(0, "(")
+            result_subject.append(")")
+        else:
+            result_subject.insert(0, "[")
+            result_subject.append("]")
+        subject = "".join(result_subject)
+
 
     if (isinstance(object, rdflib.term.URIRef)):
         object = "<"+str(object)+">"
+    elif (isinstance(object, rdflib.term.BNode)):
+        result_object, ifcollection = expand_Bnode(subject,g,dictionary,properties,collection_or_not)
+        if ifcollection == True:
+            result_object.insert(0, "(")
+            result_object.append(")")
+        else:
+            result_object.insert(0, "[")
+            result_object.append("]")
+        object = "".join(result_object)
 
     if(isinstance(predicate, rdflib.term.URIRef)):
         predicate = "<"+str(g.value(s, RDF.predicate))+">"
