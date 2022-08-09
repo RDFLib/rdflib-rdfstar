@@ -35,7 +35,7 @@ register(
 
 g = Graph()
 
-g.parse("test/turtle-star/turtle-star-syntax-inside-01.ttl", format = "ttls")
+g.parse("test/turtle-star/turtle-star-syntax-inside-02.ttl", format = "ttls")
 print("testing serializer", g.serialize(format = "ttlstar"))
 # for all Statements
 
@@ -53,8 +53,8 @@ def expand_Bnode(node, g, dictionary, properties, collection_or_not):
         #todo () and []
         # oList = properties.get(p, [])
         # oList.append(o)
-        print("atatat", s,p, o)
-        print("ptype", type(p))
+        # print("atatat", s,p, o)
+        # print("ptype", type(p))
         if ("http://www.w3.org/1999/02/22-rdf-syntax-ns#first" in p) or ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
             collection_or_not  =  True
             if o in dictionary:
@@ -104,8 +104,8 @@ for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
     predicate = g.value(s, RDF.predicate)
     object = g.value(s, RDF.object)
 
-    print("typetest", subject, type(subject), "\n")
-    print("current dict", dictionary, "\n")
+    # print("typetest", subject, type(subject), "\n")
+    # print("current dict", dictionary, "\n")
     properties = []
     collection_or_not = False
     # all_changed = True
