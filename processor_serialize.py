@@ -35,7 +35,7 @@ register(
 
 g = Graph()
 
-g.parse("test/turtle-star/turtle-star-syntax-nested-02.ttl", format = "ttls")
+g.parse("test/turtle-star/turtle-star-syntax-inside-01.ttl", format = "ttls")
 print("testing serializer", g.serialize(format = "ttlstar"))
 # for all Statements
 

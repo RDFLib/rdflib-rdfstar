@@ -172,7 +172,7 @@ class FindVariables(Visitor):
                 # print(quotationreif)
                 if (not (output in quotationreif)):
                     quotationreif.append(output)
-                    
+
         # print("fixing quotation before",var)
         # var = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', qut_hash)])])
         # print("fixing quotation",var)
@@ -237,7 +237,7 @@ class FindVariables(Visitor):
                                 quotationannolist.append(quotationtriple)
                                 count2 = 0
                                 quotationtriple = []
-    
+
     def triples(self, var):
 
         appends1 = []
@@ -260,7 +260,7 @@ class FindVariables(Visitor):
 
         if not (appends1 in vblist):
             vblist.append(appends1)
-    
+
     def insidequotation(self, var):
         appends1 = []
         for x in var.children:

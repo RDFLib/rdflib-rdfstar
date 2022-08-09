@@ -399,7 +399,7 @@ class FindVariables(Visitor):
                 # print(quotationreif)
                 if (not (output in quotationreif)):
                     quotationreif.append(output)
-                    
+
         # print("fixing quotation before",var)
         # var = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', qut_hash)])])
         # print("fixing quotation",var)
@@ -413,6 +413,7 @@ class FindVariables(Visitor):
         for x in range(0, len(object_list)):
             try:
                 if object_list[x].data == 'quotation':
+                    print("normal", object_list)
                     # print("fixing blank node property list:", object_list, "\n","\n")
                     collection_quotation_reconstruct = Reconstructor(turtle_lark).reconstruct(object_list[x])
                     collection_quotation_reconstruct = collection_quotation_reconstruct.replace(";","")
@@ -420,9 +421,19 @@ class FindVariables(Visitor):
                     hasht2 = "_:" + t2
                     object_list[x] = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', hasht2)])])
                     # print("iriririri", object_list)
-            except:
-                pass
-                
+            except Exception as ex:
+                # print(ex, "blank node property list is not nested")
+                object_list = ((var.children[0]).children)[1]
+                collection_quotation_reconstruct = Reconstructor(turtle_lark).reconstruct(object_list)
+                collection_quotation_reconstruct = collection_quotation_reconstruct.replace(";","")
+                try:
+                    t2 = quotation_dict[collection_quotation_reconstruct]
+                    hasht2 = "_:" + t2
+                    ((var.children[0]).children)[1] = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', hasht2)])])
+                    break
+                except Exception as ex2:
+                    pass
+
     def collection(self, var):
         for x in range(0, len(var.children)):
             if var.children[x].data == 'quotation':
@@ -464,7 +475,7 @@ class FindVariables(Visitor):
                                 quotationannolist.append(quotationtriple)
                                 count2 = 0
                                 quotationtriple = []
-    
+
     def triples(self, var):
 
         appends1 = []
@@ -486,7 +497,7 @@ class FindVariables(Visitor):
 
         if not (appends1 in vblist):
             vblist.append(appends1)
-    
+
     def insidequotation(self, var):
         appends1 = []
         for x in var.children:
@@ -549,7 +560,7 @@ def RDFstarParsings(rdfstarstring):
             object = y[2]
             next_rdf_object = "_:" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
             constructors+=next_rdf_object
-    
+
     for z in quotationannolist:
         result1 = "".join(z)
         result1 = "<<"+result1+">>"
