@@ -108,7 +108,7 @@ COMMENT: "#" /[^\n]/*
 
 turtle_lark = Lark(grammar, start="turtle_doc", parser="lalr", maybe_placeholders = False)
 
-f = open("turtle-star/turtle-star-annotation-2.ttl", "rb")
+f = open("turtle-star/turtle-star-annotation-1.ttl", "rb")
 rdbytes = f.read()
 f.close()
 rdbytes_processing = rdbytes.decode("utf-8")
@@ -149,11 +149,13 @@ class FindVariables(Visitor):
     def quotation(self, var):
         qut = Reconstructor(turtle_lark).reconstruct(var) # replace here or replace later
         qut = qut.replace(";", "") #####################
+        # qut = qut.replace(" ", "") #qut = qut.strip()
         if not (qut in quotation_list):
             quotation_list.append(qut)
 
         vr = Reconstructor(turtle_lark).reconstruct(var)
         vr = vr.replace(";","")
+        # vr = vr.replace(" ","")
         quotation_dict[qut] = str(myHash(qut))
         qut_hash = ":" + str(myHash(qut))
         # try:
@@ -168,6 +170,7 @@ class FindVariables(Visitor):
                 output.pop(0)
                 oa1 = Reconstructor(turtle_lark).reconstruct(var)
                 oa1 = oa1.replace(";","")
+                # oa1 = oa1.replace(" ","")
                 output.append(oa1)
                 # print(quotationreif)
                 if (not (output in quotationreif)):
@@ -214,11 +217,12 @@ class FindVariables(Visitor):
             print(x)
             if x.data == "triples":
                 triple1 = Reconstructor(turtle_lark).reconstruct(x)
-                # triple1 = triple1.replace(";","")
+                triple1 = triple1.replace(";","")
 
                 print(triple1)
                 triple1 = "<<"+triple1+">>"
                 subjecthash = "_:" + str(myHash(triple1))
+                print("teststestt", triple1)
                 print(subjecthash)
 
             elif x.data == "compoundanno":
@@ -248,13 +252,15 @@ class FindVariables(Visitor):
                 xc = x.children
                 for y in xc:
                     x2 = Reconstructor(turtle_lark).reconstruct(y)
-                    # x2 = x2.replace(";","")
+                    x2 = x2.replace(";","")
+                    # x2 = x2.replace(" ","")
                     appends1.append(x2) # or push
             else:
               print("how to edit2", x)
               anyquotationin = False
               x1 = Reconstructor(turtle_lark).reconstruct(x)
-            #   x1 = x1.replace(";","")
+              x1 = x1.replace(";","")
+            #   x1 = x1.replace(" ","")
               print("compareed", x1)
               appends1.append(x1)
 
@@ -266,6 +272,7 @@ class FindVariables(Visitor):
         for x in var.children:
             x1 = Reconstructor(turtle_lark).reconstruct(x)
             x1 = x1.replace(";","")
+            # x1 = x1.replace(" ","")
             appends1.append(x1)
 
         if not (appends1 in vblist):
@@ -306,13 +313,23 @@ print("\n compound", quotationannolist)
 constructors = ""
 
 for y in vblist:
+    # print("warc3casca", y)
+    for element_index in range(0, len(y)):
+        if y[element_index][0] == "_":
+            y[element_index]=" "+y[element_index]
     result = "".join(y)
     result = "<<"+result+">>"
+    print("test2",result)
+    # print(result)
     # print("asdadasds", result, quotation_list, result in quotation_list)
     # isin -
     # for q in quotation_list:
     #     if q == result:
     #         isin = True
+    # print("fixing bnode", result)
+    # lq = list(quotation_list.keys()) #lq = [*dict]
+    # for lqs in lq:
+    #     lqs = lqs.strip()
     if not (result in quotation_list):
         for z in range(0,len(y)):
             # print("asjdwatad", y[z], "number", z)
@@ -330,6 +347,7 @@ for y in vblist:
                 y[z] = "_:"+quotation_dict[y[z]] #get also ok
         # print("aaaaaaaagggggg",y)
         myvalue = str(myHash(result))
+        # print("asrtrrrrrtt", myvalue)
         subject = y[0]
         predicate = y[1]
         object = y[2]
