@@ -27,6 +27,13 @@ register(
 )
 
 register(
+    "trigs",
+    Parser,
+    "rdflib.plugins.parsers.trigstar",
+    "TrigParser",
+)
+
+register(
     "ttlstar",
     Serializer,
     "rdflib.plugins.serializers.turtlestar",
@@ -34,85 +41,91 @@ register(
 )
 
 g = Graph()
+g.parse(data="test/trig-star/trig-star-syntax-basic-01.trig", format = "trigs")
+print(g.serialize(format = "ttlstar"))
+# for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
+#     print("rwrwrwrwwrww",s)
+
+g = Graph()
 g.parse(data="test/turtle-star/turtle-star-syntax-basic-01.ttl", format = "ttls")
 print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/turtle-star-syntax-basic-02.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/turtle-star-syntax-basic-02.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/turtle-star-syntax-inside-01.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/turtle-star-syntax-inside-01.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/turtle-star-syntax-inside-02.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/turtle-star-syntax-inside-02.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/turtle-star-syntax-nested-01.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/turtle-star-syntax-nested-01.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/turtle-star-syntax-nested-02.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/turtle-star-syntax-nested-02.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/turtle-star-syntax-compound.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/turtle-star-syntax-compound.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/turtle-star-syntax-bnode-01.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/turtle-star-syntax-bnode-01.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/turtle-star-syntax-bnode-02.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/turtle-star-syntax-bnode-02.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/turtle-star-syntax-bnode-03.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/turtle-star-syntax-bnode-03.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/turtle-star-annotation-1.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/turtle-star-annotation-1.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/turtle-star-annotation-2.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/turtle-star-annotation-2.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/nt-ttl-star-syntax-1.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/nt-ttl-star-syntax-1.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/nt-ttl-star-syntax-2.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/nt-ttl-star-syntax-2.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/nt-ttl-star-syntax-3.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/nt-ttl-star-syntax-3.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/nt-ttl-star-syntax-4.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/nt-ttl-star-syntax-4.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/nt-ttl-star-syntax-5.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/nt-ttl-star-syntax-5.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/nt-ttl-star-bnode-1.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/nt-ttl-star-bnode-1.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/nt-ttl-star-bnode-2.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/nt-ttl-star-bnode-2.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/nt-ttl-star-nested-1.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/nt-ttl-star-nested-1.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
-g = Graph()
-g.parse("test/turtle-star/nt-ttl-star-nested-2.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse("test/turtle-star/nt-ttl-star-nested-2.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
