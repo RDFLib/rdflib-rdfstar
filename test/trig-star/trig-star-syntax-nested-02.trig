@@ -1,22 +1,7 @@
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX :<http://example/>
-:G{
-_:b3f5e185425e8b59dc2f2c4178794ea6
-    a rdf:Statement ;
-    rdf:subject :s ;
-    rdf:predicate :p ;
-    rdf:object :o ;
-.
-_:b6bd38345f102d69190ff6468e1862db
-    a rdf:Statement ;
-    rdf:subject _:b3f5e185425e8b59dc2f2c4178794ea6 ;
-    rdf:predicate :r ;
-    rdf:object :z ;
-.
-_:70a24aa3cc36166fd9f199024d049e72
-    a rdf:Statement ;
-    rdf:subject _:b6bd38345f102d69190ff6468e1862db ;
-    rdf:predicate :q ;
-    rdf:object 1 ;
-.
+PREFIX : <http://example/>
+
+:G {
+  :s :p :o .
+  :a :q <<:s :p :o >> .
+  << :a :q <<:s :p :o >>>> :r :z .
 }
