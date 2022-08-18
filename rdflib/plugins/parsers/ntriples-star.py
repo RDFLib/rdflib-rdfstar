@@ -397,7 +397,7 @@ class FindVariables(Visitor):
         appends1 = []
 
         for x in var.children:
-            print("atatat", x)
+            # print("atatat", x)
             anyquotationin = False
             if (isinstance(x, lark.tree.Tree)):
                 oa2 = Reconstructor(ntriples_lark).reconstruct(x)
@@ -423,7 +423,7 @@ def RDFstarParsings(rdfstarstring):
         # print("warc3casca", y)
         result = "".join(y)
         result = "<<"+result+">>"
-        print("test2",result)
+        # print("test2",result)
         # print(result)
         # print("asdadasds", result, quotation_list, result in quotation_list)
         # isin -
@@ -460,7 +460,7 @@ def RDFstarParsings(rdfstarstring):
             # print(next_rdf_object)
             constructors+=next_rdf_object
         else:
-            print("t3243242352")
+            # print("t3243242352")
             value = quotation_dict[result]
             for z in range(0,len(y)):
                 # print("asjdwatad", y[z], "number", z)
