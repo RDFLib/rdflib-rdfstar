@@ -108,7 +108,7 @@ COMMENT: "#" /[^\n]/*
 
 turtle_lark = Lark(grammar, start="turtle_doc", parser="lalr", maybe_placeholders = False)
 
-f = open("turtle-star/turtle-star-syntax-nested-01.ttl", "rb")
+f = open("turtle-star/nt-ttl-star-syntax-1.ttl", "rb")
 rdbytes = f.read()
 f.close()
 rdbytes_processing = rdbytes.decode("utf-8")
@@ -250,7 +250,8 @@ class FindVariables(Visitor):
         tri = Reconstructor(turtle_lark).reconstruct(var)
         print("ttttttttttttttttttttttttttttt", tri,"\n" )
         tri = tri.replace(";", "")
-        assertedtriplelist.append(tri)
+        if not (tri in assertedtriplelist):
+            assertedtriplelist.append(tri)
         for x in var.children:
             # print(x.data)
             if x.data == 'predicate_object_list':
@@ -325,7 +326,7 @@ for y in vblist:
         if y[element_index][0] == "_":
             y[element_index]=" "+y[element_index]
     result = "".join(y)
-    print("test_result",result)
+    # print("test_result",result)
     if result in assertedtriplelist:
         test1 = "<<"+result+">>"
         if test1 in quotation_list:
@@ -431,7 +432,10 @@ for x in range(0, len(prefix_list)):
     prefix_list[x] = Reconstructor(turtle_lark).reconstruct(prefix_list[x])
     constructors = prefix_list[x]+"\n"+constructors
 
+constructors = "PREFIX rdfstar: <https://w3id.org/rdf-star/> \n"+constructors
+
 constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors
+
 # constructors = "PREFIX : <http://example/> \n"+constructors # prefix
 
 if not (("PREFIX : <http://example/>" in constructors) or ("PREFIX:<http://example/>" in constructors)):

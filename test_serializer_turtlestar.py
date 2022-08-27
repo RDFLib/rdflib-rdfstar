@@ -40,15 +40,15 @@ register(
     "TurtlestarSerializer"
 )
 
-g = Graph()
-g.parse(data="test/trig-star/trig-star-syntax-basic-01.trig", format = "trigs")
-print(g.serialize(format = "ttlstar"))
-# for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
-#     print("rwrwrwrwwrww",s)
+# g = Graph()
+# g.parse(data="test/trig-star/trig-star-syntax-basic-01.trig", format = "trigs")
+# print(g.serialize(format = "ttlstar"))
+# # for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
+# #     print("rwrwrwrwwrww",s)
 
-g = Graph()
-g.parse(data="test/turtle-star/turtle-star-syntax-basic-01.ttl", format = "ttls")
-print(g.serialize(format = "ttlstar"))
+# g = Graph()
+# g.parse(data="test/turtle-star/turtle-star-syntax-basic-01.ttl", format = "ttls")
+# print(g.serialize(format = "ttlstar"))
 
 # g = Graph()
 # g.parse("test/turtle-star/turtle-star-syntax-basic-02.ttl", format = "ttls")
@@ -62,9 +62,9 @@ print(g.serialize(format = "ttlstar"))
 # g.parse("test/turtle-star/turtle-star-syntax-inside-02.ttl", format = "ttls")
 # print(g.serialize(format = "ttlstar"))
 
-# g = Graph()
-# g.parse("test/turtle-star/turtle-star-syntax-nested-01.ttl", format = "ttls")
-# print(g.serialize(format = "ttlstar"))
+g = Graph()
+g.parse("test/turtle-star/nt-ttl-star-syntax-1.ttl", format = "ttls")
+print(g.serialize(format = "ttlstar"))
 
 # g = Graph()
 # g.parse("test/turtle-star/turtle-star-syntax-nested-02.ttl", format = "ttls")

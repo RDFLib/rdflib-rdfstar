@@ -276,16 +276,31 @@ from lark.lexer import (
 # )
 
 grammar = r"""ntriplesdoc: statement*
-?statement: triples "." | triples "."? (EOL triples ".")* EOL?
-triples: subject predicate object
+?statement: directive | triples "." | quotedtriples "."
+directive: prefix_id | base | sparql_prefix | sparql_base
+prefix_id: "@prefix" PNAME_NS IRIREF "."
+base: BASE_DIRECTIVE IRIREF "."
+sparql_base: /BASE/i IRIREF
+sparql_prefix: /PREFIX/i PNAME_NS IRIREF
+triples: subject predicate_object_list
+       | blank_node_property_list predicate_object_list?
+insidequotation: qtsubject verb qtobject
+quotedtriples: triples compoundanno
+predicate_object_list: verb object_list (";" (verb object_list)?)*
+?object_list: object ("," object)*
 ?verb: predicate | /a/
-?subject: IRIREF | BLANK_NODE_LABEL | quotation
-?predicate: IRIREF
-?object: IRIREF | BLANK_NODE_LABEL | literal | quotation
+?subject: iri | blank_node | collection | quotation
+?predicate: iri
+?object: iri | blank_node | collection | blank_node_property_list | literal | quotation
 ?literal: rdf_literal | numeric_literal | boolean_literal
-ANGLEBRACKETL: "<<"
-ANGLEBRACKETR: ">>"
-quotation: ANGLEBRACKETL triples ANGLEBRACKETR
+?qtsubject: iri | blank_node | quotation
+?qtobject: 	iri | blank_node | literal | quotation
+quotation: "<<" insidequotation ">>"
+COMPOUNDL: "{|"
+COMPOUNDR: "|}"
+compoundanno: COMPOUNDL predicate_object_list COMPOUNDR
+blank_node_property_list: "[" predicate_object_list "]"
+collection: "(" object* ")"
 numeric_literal: INTEGER | DECIMAL | DOUBLE
 rdf_literal: string (LANGTAG | "^^" iri)?
 boolean_literal: /true|false/
@@ -295,8 +310,9 @@ string: STRING_LITERAL_QUOTE
       | STRING_LITERAL_LONG_QUOTE
 iri: IRIREF | prefixed_name
 prefixed_name: PNAME_LN | PNAME_NS
+blank_node: BLANK_NODE_LABEL | ANON
 
-EOL: /[#xD#xA]+/
+BASE_DIRECTIVE: "@base"
 IRIREF: "<" (/[^\x00-\x20<>"{}|^`\\]/ | UCHAR)* ">"
 PNAME_NS: PN_PREFIX? ":"
 PNAME_LN: PNAME_NS PN_LOCAL
@@ -330,6 +346,61 @@ COMMENT: "#" /[^\n]/*
 %ignore COMMENT
 """
 
+# r"""ntriplesdoc: statement*
+# ?statement: triples "." | triples "."? (EOL triples ".")* EOL?
+# triples: subject predicate object
+# ?verb: predicate | /a/
+# ?subject: IRIREF | BLANK_NODE_LABEL | quotation
+# ?predicate: IRIREF
+# ?object: IRIREF | BLANK_NODE_LABEL | literal | quotation
+# ?literal: rdf_literal | numeric_literal | boolean_literal
+# ANGLEBRACKETL: "<<"
+# ANGLEBRACKETR: ">>"
+# quotation: ANGLEBRACKETL triples ANGLEBRACKETR
+# numeric_literal: INTEGER | DECIMAL | DOUBLE
+# rdf_literal: string (LANGTAG | "^^" iri)?
+# boolean_literal: /true|false/
+# string: STRING_LITERAL_QUOTE
+#       | STRING_LITERAL_SINGLE_QUOTE
+#       | STRING_LITERAL_LONG_SINGLE_QUOTE
+#       | STRING_LITERAL_LONG_QUOTE
+# iri: IRIREF | prefixed_name
+# prefixed_name: PNAME_LN | PNAME_NS
+
+# EOL: /[#xD#xA]+/
+# IRIREF: "<" (/[^\x00-\x20<>"{}|^`\\]/ | UCHAR)* ">"
+# PNAME_NS: PN_PREFIX? ":"
+# PNAME_LN: PNAME_NS PN_LOCAL
+# BLANK_NODE_LABEL: "_:" (PN_CHARS_U | /[0-9]/) ((PN_CHARS | ".")* PN_CHARS)?
+# LANGTAG: "@" /[a-zA-Z]+/ ("-" /[a-zA-Z0-9]+/)*
+# INTEGER: /[+-]?[0-9]+/
+# DECIMAL: /[+-]?[0-9]*/ "." /[0-9]+/
+# DOUBLE: /[+-]?/ (/[0-9]+/ "." /[0-9]*/ EXPONENT
+#       | "." /[0-9]+/ EXPONENT | /[0-9]+/ EXPONENT)
+# EXPONENT: /[eE][+-]?[0-9]+/
+# STRING_LITERAL_QUOTE: "\"" (/[^\x22\x5C\x0A\x0D]/ | ECHAR | UCHAR)* "\""
+# STRING_LITERAL_SINGLE_QUOTE: "'" (/[^\x27\x5C\x0A\x0D]/ | ECHAR | UCHAR)* "'"
+# STRING_LITERAL_LONG_SINGLE_QUOTE: "'''" (/'|''/? (/[^'\\]/ | ECHAR | UCHAR))* "'''"
+# STRING_LITERAL_LONG_QUOTE: "\"\"\"" (/"|""/? (/[^"\\]/ | ECHAR | UCHAR))* "\"\"\""
+# UCHAR: "\\u" HEX~4 | "\\U" HEX~8
+# ECHAR: "\\" /[tbnrf"'\\]/
+# WS: /[\x20\x09\x0D\x0A]/
+# ANON: "[" WS* "]"
+# PN_CHARS_BASE: /[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD\U00010000-\U000EFFFF]/
+# PN_CHARS_U: PN_CHARS_BASE | "_"
+# PN_CHARS: PN_CHARS_U | /[\-0-9\u00B7\u0300-\u036F\u203F-\u2040]/
+# PN_PREFIX: PN_CHARS_BASE ((PN_CHARS | ".")* PN_CHARS)?
+# PN_LOCAL: (PN_CHARS_U | ":" | /[0-9]/ | PLX) ((PN_CHARS | "." | ":" | PLX)* (PN_CHARS | ":" | PLX))?
+# PLX: PERCENT | PN_LOCAL_ESC
+# PERCENT: "%" HEX~2
+# HEX: /[0-9A-Fa-f]/
+# PN_LOCAL_ESC: "\\" /[_~\.\-!$&'()*+,;=\/?#@%]/
+
+# %ignore WS
+# COMMENT: "#" /[^\n]/*
+# %ignore COMMENT
+# """
+
 ntriples_lark = Lark(grammar, start="ntriplesdoc", parser="lalr", maybe_placeholders=False)
 
 class Print_Tree(Visitor):
@@ -345,6 +416,9 @@ quotationreif = []
 prefix_list = []
 quotationannolist = []
 constructors = ""
+quoted_or_not = False
+both_quoted_and_asserted = False
+assertedtriplelist = []
 
 def myHash(text:str):
   return str(hashlib.md5(text.encode('utf-8')).hexdigest())
@@ -356,7 +430,9 @@ class FindVariables(Visitor):
         self.variable_list = []
 
     def quotation(self, var):
+
         qut = Reconstructor(ntriples_lark).reconstruct(var) # replace here or replace later
+        # print("qqqqqqqqqqqqqqqqqqqqqqqqqqq", qut,"\n" )
         qut = qut.replace(";", "") #####################
         # qut = qut.replace(" ", "") #qut = qut.strip()
         if not (qut in quotation_list):
@@ -391,88 +467,176 @@ class FindVariables(Visitor):
 
         ##################
         #########################
-
-    def triples(self, var):
-
+    def insidequotation(self, var):
         appends1 = []
-
         for x in var.children:
-            # print("atatat", x)
-            anyquotationin = False
-            if (isinstance(x, lark.tree.Tree)):
-                oa2 = Reconstructor(ntriples_lark).reconstruct(x)
-                oa2 = oa2.replace(";","")
-                appends1.append(oa2)
-            else:
-                appends1.append(str(x))
+            x1 = Reconstructor(ntriples_lark).reconstruct(x)
+            x1 = x1.replace(";","")
+            # x1 = x1.replace(" ","")
+            appends1.append(x1)
 
         if not (appends1 in vblist):
             vblist.append(appends1)
 
+    def triples(self, var):
+
+        appends1 = []
+        tri = Reconstructor(ntriples_lark).reconstruct(var)
+        # print("ttttttttttttttttttttttttttttt", tri,"\n" )
+        tri = tri.replace(";", "")
+        if not (tri in assertedtriplelist):
+            assertedtriplelist.append(tri)
+        for x in var.children:
+            # print(x.data)
+            if x.data == 'predicate_object_list':
+                xc = x.children
+                for y in xc:
+                    x2 = Reconstructor(ntriples_lark).reconstruct(y)
+                    x2 = x2.replace(";","")
+                    # x2 = x2.replace(" ","")
+                    appends1.append(x2) # or push
+            else:
+            #   print("how to edit2", x)
+              anyquotationin = False
+              x1 = Reconstructor(ntriples_lark).reconstruct(x)
+              x1 = x1.replace(";","")
+            #   x1 = x1.replace(" ","")
+            #   print("compareed", x1)
+              appends1.append(x1)
+
+        if not (appends1 in vblist):
+            vblist.append(appends1)
+    # def quotation(self, var):
+    #     qut = Reconstructor(ntriples_lark).reconstruct(var) # replace here or replace later
+    #     qut = qut.replace(";", "") #####################
+    #     # qut = qut.replace(" ", "") #qut = qut.strip()
+    #     if not (qut in quotation_list):
+    #         quotation_list.append(qut)
+
+    #     vr = Reconstructor(ntriples_lark).reconstruct(var)
+    #     vr = vr.replace(";","")
+    #     # vr = vr.replace(" ","")
+    #     quotation_dict[qut] = str(myHash(qut))
+    #     qut_hash = ":" + str(myHash(qut))
+    #     # try:
+    #     id = quotation_dict.get(vr)
+    #     for x in quotation_dict:
+    #         if x in vr:
+    #             # print("replace", x, ":"+quotation_dict.get(x))
+    #             vr = vr.replace(x, ":"+quotation_dict.get(x))
+    #             vr = vr.replace("<<", "")
+    #             vr = vr.replace(">>", "")
+    #             output = vr.split(":") # what if not :? directly url? if and else?
+    #             output.pop(0)
+    #             oa1 = Reconstructor(ntriples_lark).reconstruct(var)
+    #             oa1 = oa1.replace(";","")
+    #             # oa1 = oa1.replace(" ","")
+    #             output.append(oa1)
+    #             # print(quotationreif)
+    #             if (not (output in quotationreif)):
+    #                 quotationreif.append(output)
+
+    #     # print("fixing quotation before",var)
+    #     # var = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', qut_hash)])])
+    #     # print("fixing quotation",var)
+
+    #     ##################
+    #     #########################
+
+    # def triples(self, var):
+    #     tri = Reconstructor(ntriples_lark).reconstruct(var)
+    #     print("ttttttttttttttttttttttttttttt", tri,"\n" )
+    #     tri = tri.replace(";", "")
+    #     if not (tri in assertedtriplelist):
+    #         assertedtriplelist.append(tri)
+    #     # else:
+    #     #     assertedtriplelist.remove(tri)
+    #     appends1 = []
+
+    #     for x in var.children:
+    #         # print("atatat", x)
+    #         anyquotationin = False
+    #         if (isinstance(x, lark.tree.Tree)):
+    #             oa2 = Reconstructor(ntriples_lark).reconstruct(x)
+    #             oa2 = oa2.replace(";","")
+    #             appends1.append(oa2)
+    #         else:
+    #             appends1.append(str(x))
+
+    #     if not (appends1 in vblist):
+    #         vblist.append(appends1)
+
 def RDFstarParsings(rdfstarstring):
-    global quotationannolist, vblist, quotationreif, prefix_list, constructors
+    global quotationannolist, vblist, quotationreif, prefix_list, constructors, assertedtriplelist, quoted_or_not, both_quoted_and_asserted
     quotationannolist = []
     vblist = []
     quotationreif = []
     prefix_list = []
     constructors = ""
+    quoted_or_not = False
+    both_quoted_and_asserted = False
     tree = ntriples_lark.parse(rdfstarstring)
     at = FindVariables().visit(tree)
 
     for y in vblist:
         # print("warc3casca", y)
+        for element_index in range(0, len(y)):
+            if (y[element_index][0] == "_") & (not (element_index == 0)):
+                y[element_index]=" "+y[element_index]
         result = "".join(y)
+        if result in assertedtriplelist:
+            print("testassertedtriplelist", result)
+            test1 = "<<"+result+">>"
+            if test1 in quotation_list:
+                both_quoted_and_asserted = True
+            else:
+                both_quoted_and_asserted = False
+                quoted_or_not = False
+        else:
+            print("testassertedtriplelist2", result)
+            test2 = "<<"+result+">>"
+            if test2 in quotation_list:
+                both_quoted_and_asserted = False
+                quoted_or_not = True
+            else:
+                both_quoted_and_asserted = False
+                quoted_or_not = False
         result = "<<"+result+">>"
-        # print("test2",result)
-        # print(result)
-        # print("asdadasds", result, quotation_list, result in quotation_list)
-        # isin -
-        # for q in quotation_list:
-        #     if q == result:
-        #         isin = True
         # print("fixing bnode", result)
-        # lq = list(quotation_list.keys()) #lq = [*dict]
-        # for lqs in lq:
-        #     lqs = lqs.strip()
         if not (result in quotation_list):
             for z in range(0,len(y)):
-                # print("asjdwatad", y[z], "number", z)
                 if "<<" in y[z]:
-                    # if "[" in y[z]:
-                    # # print("asiodjasoidjay", [z])
-                    # # print("adad", ":"+quotation_dict[y[z]])
-                    #     index1 = y[z].index("<<")
-                    #     index2 = y[z].rfind(">>")
-                    #     y[z] = y[z].replace((y[z])[index1: index2+2], ":"+quotation_dict[(y[z])[index1: index2+2]])
-                    # elif "(" in y[z]:
-
-                    #     pass
-                    # else:
-                    y[z] = "_:"+quotation_dict[y[z]] #get also ok
-            # print("aaaaaaaagggggg",y)
+                    y[z] = "_:"+quotation_dict[y[z]]
             myvalue = str(myHash(result))
             # print("asrtrrrrrtt", myvalue)
             subject = y[0]
             predicate = y[1]
             object = y[2]
-            # print("tytyty", subject)
-            next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
-            # print(next_rdf_object)
+            if both_quoted_and_asserted:
+                next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:AssertedStatement, rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+            else:
+                if quoted_or_not:
+                    next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                else:
+                    next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
             constructors+=next_rdf_object
         else:
-            # print("t3243242352")
             value = quotation_dict[result]
             for z in range(0,len(y)):
-                # print("asjdwatad", y[z], "number", z)
                 if "<<" in y[z]:
-                    # print("asiodjasoidjay", [z])
-                    # print("adad", ":"+quotation_dict[y[z]])
-                    y[z] = "_:"+quotation_dict[y[z]] #get also ok
+                    y[z] = "_:"+quotation_dict[y[z]]
             subject = y[0]
             predicate = y[1]
             object = y[2]
-            next_rdf_object = "_:" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+            if both_quoted_and_asserted:
+                next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement, rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+            else:
+                if quoted_or_not:
+                    next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                else:
+                    next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
             constructors+=next_rdf_object
+
     for z in quotationannolist:
         result1 = "".join(z)
         result1 = "<<"+result1+">>"
@@ -483,7 +647,14 @@ def RDFstarParsings(rdfstarstring):
         next_rdf_object = "_:" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
         constructors+=next_rdf_object
 
+    for x in range(0, len(prefix_list)):
+        prefix_list[x] = Reconstructor(ntriples_lark).reconstruct(prefix_list[x])
+        constructors = prefix_list[x]+"\n"+constructors
+
+    constructors = "PREFIX rdfstar: <https://w3id.org/rdf-star/> \n"+constructors
+
     constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors
+
     # constructors = "PREFIX : <http://example/> \n"+constructors # prefix
 
     if not (("PREFIX : <http://example/>" in constructors) or ("PREFIX:<http://example/>" in constructors)):
@@ -492,6 +663,8 @@ def RDFstarParsings(rdfstarstring):
     if "PREFIX:" in constructors:
         constructors = constructors.replace("PREFIX:", "PREFIX :")
 
+    print("yes?", constructors)
+    constructors = bytes(constructors, 'utf-8')
     return constructors
 
 def uniqueURI():
