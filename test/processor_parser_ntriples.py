@@ -90,7 +90,7 @@ COMMENT: "#" /[^\n]/*
 
 ntriples_lark = Lark(grammar, start="ntriplesdoc", parser="lalr", maybe_placeholders = False)
 
-f = open("ntriples-star/ntriples-star-nested-1.nt", "rb")
+f = open("ntriples-star/ntriples-star-syntax-1.nt", "rb")
 rdbytes = f.read()
 f.close()
 rdbytes_processing = rdbytes.decode("utf-8")
