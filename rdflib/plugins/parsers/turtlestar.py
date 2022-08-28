@@ -487,7 +487,7 @@ class FindVariables(Visitor):
 
         appends1 = []
         tri = Reconstructor(turtle_lark).reconstruct(var)
-        print("ttttttttttttttttttttttttttttt", tri,"\n" )
+        # print("ttttttttttttttttttttttttttttt", tri,"\n" )
         tri = tri.replace(";", "")
         if not (tri in assertedtriplelist):
             assertedtriplelist.append(tri)
@@ -613,11 +613,22 @@ def RDFstarParsings(rdfstarstring):
     for z in quotationannolist:
         result1 = "".join(z)
         result1 = "<<"+result1+">>"
+        if result1 in quotation_list:
+            both_quoted_and_asserted = True
+        else:
+            both_quoted_and_asserted = False
+            quoted_or_not = False
         value = str(myHash(result1))
         subject = z[0]
         predicate = z[1]
         object = z[2]
-        next_rdf_object = "_:" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+        if both_quoted_and_asserted:
+            next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement, rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+        else:
+            if quoted_or_not:
+                next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+            else:
+                next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
         constructors+=next_rdf_object
 
     for x in range(0, len(prefix_list)):
