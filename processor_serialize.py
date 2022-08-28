@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 
 from rdflib.exceptions import ParserError
 
-from rdflib import Graph
+from rdflib import Namespace, Graph
 from rdflib.util import guess_format
 
 
@@ -18,6 +18,8 @@ import rdflib
 from rdflib import URIRef
 from rdflib.namespace import RDF
 from rdflib.namespace import FOAF
+
+RDFSTAR = Namespace("https://w3id.org/rdf-star/")
 
 register(
     "ttls",
@@ -35,8 +37,8 @@ register(
 
 g = Graph()
 
-g.parse("test/turtle-star/turtle-star-syntax-inside-02.ttl", format = "ttls")
-print("testing serializer", g.serialize(format = "ttlstar"))
+g.parse("test/turtle-star/turtle-star-syntax-basic-01.ttl", format = "ttls")
+# print("testing serializer", g.serialize(format = "ttlstar"))
 # for all Statements
 
 # unreified_g = Graph()
@@ -48,51 +50,70 @@ print("testing serializer", g.serialize(format = "ttlstar"))
 #     ))
 # print(unreified_g.serialize())
 
-def expand_Bnode(node, g, dictionary, properties, collection_or_not):
+def expand_Bnode(node, g, dictionary, properties, collection_or_not, quoted_Bnode_or_not):
     for s, p, o in g.triples((node, None, None)):
         #todo () and []
         # oList = properties.get(p, [])
         # oList.append(o)
-        # print("atatat", s,p, o)
-        # print("ptype", type(p))
-        if ("http://www.w3.org/1999/02/22-rdf-syntax-ns#first" in p) or ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
-            collection_or_not  =  True
-            if o in dictionary:
-                properties.append(dictionary[o])
-            # elif isinstance(o, rdflib.term.BNode):
-            #     expand_Bnode(o, g, dictionary,properties)
-            # else:
-            #     properties.append(o)
-            elif not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"  in o):
-                print("recursive", o)
+        print("atatat", dictionary, o, p, "a2a32a3", type(o), type(p))
+        if (not "rdf-star" in o):
 
-                if not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
-                    properties.append("(")
+            # print("ptype", type(p))
+            if ("http://www.w3.org/1999/02/22-rdf-syntax-ns#first" in p) or ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
+                collection_or_not  =  True
+                quoted_Bnode_or_not = False
+                if o in dictionary:
+                    properties.append(dictionary[o])
+                # elif isinstance(o, rdflib.term.BNode):
+                #     expand_Bnode(o, g, dictionary,properties)
+                # else:
+                #     properties.append(o)
+                elif not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"  in o):
+                    print("recursive", o)
 
-                expand_Bnode(o, g, dictionary,properties, collection_or_not)
+                    if not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
+                        properties.append("(")
 
-                if not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
-                    properties.append(")")
+                    expand_Bnode(o, g, dictionary,properties, collection_or_not)
 
-        else:
-            collection_or_not = False
-            properties.append(p)
-            if o in dictionary:
-                properties.append(dictionary[o])
-            # elif isinstance(o, rdflib.term.BNode):
-            #     expand_Bnode(o, g, dictionary,properties)
-            # else:
-            #     properties.append(o)
+                    if not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
+                        properties.append(")")
+
             else:
-                expand_Bnode(o, g, dictionary,properties, collection_or_not)
+                if (isinstance(o, rdflib.term.URIRef) & isinstance(p, rdflib.term.URIRef)):
+                    collection_or_not = False
+                    quoted_Bnode_or_not = True
+                    print("hererererer")
+                    properties.append(o)
+                    if o in dictionary:
+                        properties.append(dictionary[o])
+                    # elif isinstance(o, rdflib.term.BNode):
+                    #     expand_Bnode(o, g, dictionary,properties)
+                    # else:
+                    #     properties.append(o)
+                    else:
+                        expand_Bnode(o, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not)
+                else:
+                    collection_or_not = False
+                    quoted_Bnode_or_not = False
+                    # print("hererererer")
+                    properties.append(p)
+                    if o in dictionary:
+                        properties.append(dictionary[o])
+                    # elif isinstance(o, rdflib.term.BNode):
+                    #     expand_Bnode(o, g, dictionary,properties)
+                    # else:
+                    #     properties.append(o)
+                    else:
+                        expand_Bnode(o, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not)
 
 
-    return properties, collection_or_not
+    return properties, collection_or_not, quoted_Bnode_or_not
 
 dictionary = dict()
 result_subject = ""
 result_object = ""
-for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
+for s in g.subjects(predicate=RDF.type, object=RDFSTAR.AssertedStatement):
     # print(s)
     # print(
     #    ( g.value(s, RDF.subject),
@@ -108,6 +129,7 @@ for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
     # print("current dict", dictionary, "\n")
     properties = []
     collection_or_not = False
+    quoted_Bnode_or_not = False
     # all_changed = True
     # while all_changed:
         # for s, p, o in g.triples((subject, None, None)):
@@ -145,28 +167,41 @@ for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
 
     # print("before", subject, type(subject))
     if (isinstance(subject, rdflib.term.URIRef)):
+        print("tttttttttttuuuuuuuuuuuuuu")
         subject = "<"+str(subject)+">"
     elif (isinstance(subject, rdflib.term.BNode)):
-        result_subject, ifcollection = expand_Bnode(subject,g,dictionary,properties,collection_or_not)
+        print("tttttttttttuuuuuuuuuuuuuu22222222222222")
+        result_subject, ifcollection, ifquotedBnode = expand_Bnode(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
         if ifcollection == True:
             result_subject.insert(0, "(")
             result_subject.append(")")
         else:
-            result_subject.insert(0, "[")
-            result_subject.append("]")
+            if ifquotedBnode == True:
+                for x in range(0, len(result_subject)):
+                    if isinstance(result_subject[x], rdflib.term.URIRef):
+                        result_subject[x] = "<"+result_subject[x]+">"
+                # print("ararr", result_subject)
+                result_subject.insert(0, "<<")
+                result_subject.append(">>")
+            else:
+                result_subject.insert(0, "[")
+                result_subject.append("]")
         subject = "".join(result_subject)
 
 
     if (isinstance(object, rdflib.term.URIRef)):
         object = "<"+str(object)+">"
     elif (isinstance(object, rdflib.term.BNode)):
-        result_object, ifcollection = expand_Bnode(subject,g,dictionary,properties,collection_or_not)
+        result_object, ifcollection, ifquotedBnode = expand_Bnode(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
         if ifcollection == True:
             result_object.insert(0, "(")
             result_object.append(")")
         else:
-            result_object.insert(0, "[")
-            result_object.append("]")
+            if ifquotedBnode == True:
+                print("ararar2", result_subject)
+            else:
+                result_object.insert(0, "[")
+                result_object.append("]")
         object = "".join(result_object)
 
     if(isinstance(predicate, rdflib.term.URIRef)):
@@ -179,7 +214,7 @@ for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
     # print(type(g.value(s, RDF.object))) # why hash value is changed?
 
     # print("dictionary", dictionary)
-
+    print(properties)
     print("serialize", subject ,predicate,object)
     # if s == g.value(s, RDF.object):
     #     print("equal")
