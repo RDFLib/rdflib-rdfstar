@@ -37,7 +37,7 @@ register(
 
 g = Graph()
 
-g.parse("test/turtle-star/turtle-star-syntax-bnode-03.ttl", format = "ttls")
+g.parse("test/turtle-star/turtle-star-annotation-2.ttl", format = "ttls")
 # print("testing serializer", g.serialize(format = "ttlstar"))
 # for all Statements
 
@@ -51,11 +51,13 @@ g.parse("test/turtle-star/turtle-star-syntax-bnode-03.ttl", format = "ttls")
 # print(unreified_g.serialize())
 
 def expand_Bnode(node, g, dictionary, properties, collection_or_not, quoted_Bnode_or_not):
+    print("node", node)
     for s, p, o in g.triples((node, None, None)):
         #todo () and []
         # oList = properties.get(p, [])
         # oList.append(o)
-        print("atatat", dictionary, o, p, "a2a32a3", type(o), type(p))
+        print("atataererererert", dictionary, o, p, "a2a32a3", type(o), type(p))
+
         if (not "rdf-star" in o):
 
             # print("ptype", type(p))
@@ -84,6 +86,7 @@ def expand_Bnode(node, g, dictionary, properties, collection_or_not, quoted_Bnod
                     collection_or_not = False
                     quoted_Bnode_or_not = True
                     print("hererererer")
+                    o = "<"+str(o)+">"
                     properties.append(o)
                     if o in dictionary:
                         properties.append(dictionary[o])
@@ -97,6 +100,10 @@ def expand_Bnode(node, g, dictionary, properties, collection_or_not, quoted_Bnod
                     collection_or_not = False
                     quoted_Bnode_or_not = False
                     # print("hererererer")
+                    if (isinstance(p, rdflib.term.URIRef)):
+                        p = "<"+str(p)+">"
+                    else:
+                        pass
                     properties.append(p)
                     if o in dictionary:
                         properties.append(dictionary[o])
@@ -125,7 +132,7 @@ for s in g.subjects(predicate=RDF.type, object=RDFSTAR.QuotedStatement):
     predicate = g.value(s, RDF.predicate)
     object = g.value(s, RDF.object)
 
-    # print("typetest", subject, type(subject), "\n")
+    print("typetest", subject, type(subject), "\n", predicate, type(predicate), "\n", object, type(subject), "\n")
     # print("current dict", dictionary, "\n")
     properties = []
     collection_or_not = False
@@ -197,6 +204,7 @@ for s in g.subjects(predicate=RDF.type, object=RDFSTAR.QuotedStatement):
     if (isinstance(object, rdflib.term.URIRef)):
         object = "<"+str(object)+">"
     elif (isinstance(object, rdflib.term.BNode)):
+        print("hererererere")
         result_object, ifcollection, ifquotedBnode = expand_Bnode(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
         if (not len(result_object) == 0):
             if ifcollection == True:
@@ -244,7 +252,7 @@ for s in g.subjects(predicate=RDF.type, object=RDFSTAR.AssertedStatement):
     predicate = g.value(s, RDF.predicate)
     object = g.value(s, RDF.object)
 
-    # print("typetest", subject, type(subject), "\n")
+    print("typetest", subject, type(subject), "\n", predicate, type(predicate), "\n", object, type(object), "\n")
     # print("current dict", dictionary, "\n")
     properties = []
     collection_or_not = False
@@ -311,7 +319,8 @@ for s in g.subjects(predicate=RDF.type, object=RDFSTAR.AssertedStatement):
     if (isinstance(object, rdflib.term.URIRef)):
         object = "<"+str(object)+">"
     elif (isinstance(object, rdflib.term.BNode)):
-        result_object, ifcollection, ifquotedBnode = expand_Bnode(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
+        print("hererererere2")
+        result_object, ifcollection, ifquotedBnode = expand_Bnode(object,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
         if ifcollection == True:
             result_object.insert(0, "(")
             result_object.append(")")

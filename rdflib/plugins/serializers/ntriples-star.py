@@ -74,7 +74,7 @@ class NtriplesStarSerializer(Serializer):
                 # print("atatat", dictionary, o, p, "a2a32a3", type(o), type(p))
                 if (not "rdf-star" in o):
 
-                    # print("ptype", type(p))
+            # print("ptype", type(p))
                     if ("http://www.w3.org/1999/02/22-rdf-syntax-ns#first" in p) or ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
                         collection_or_not  =  True
                         quoted_Bnode_or_not = False
@@ -85,7 +85,7 @@ class NtriplesStarSerializer(Serializer):
                         # else:
                         #     properties.append(o)
                         elif not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"  in o):
-                            # print("recursive", o)
+                            print("recursive", o)
 
                             if not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
                                 properties.append("(")
@@ -99,7 +99,8 @@ class NtriplesStarSerializer(Serializer):
                         if (isinstance(o, rdflib.term.URIRef) & isinstance(p, rdflib.term.URIRef)):
                             collection_or_not = False
                             quoted_Bnode_or_not = True
-                            # print("hererererer")
+                            print("hererererer")
+                            o = "<"+str(o)+">"
                             properties.append(o)
                             if o in dictionary:
                                 properties.append(dictionary[o])
@@ -113,6 +114,10 @@ class NtriplesStarSerializer(Serializer):
                             collection_or_not = False
                             quoted_Bnode_or_not = False
                             # print("hererererer")
+                            if (isinstance(p, rdflib.term.URIRef)):
+                                p = "<"+str(p)+">"
+                            else:
+                                pass
                             properties.append(p)
                             if o in dictionary:
                                 properties.append(dictionary[o])
@@ -210,7 +215,7 @@ class NtriplesStarSerializer(Serializer):
                 if (isinstance(object, rdflib.term.URIRef)):
                     object = "<"+str(object)+">"
                 elif (isinstance(object, rdflib.term.BNode)):
-                    result_object, ifcollection, ifquotedBnode = expand_Bnode(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
+                    result_object, ifcollection, ifquotedBnode = expand_Bnode(object,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
                     if (not len(result_object) == 0):
                         if ifcollection == True:
                             result_object.insert(0, "(")
@@ -326,7 +331,7 @@ class NtriplesStarSerializer(Serializer):
                 if (isinstance(object, rdflib.term.URIRef)):
                     object = "<"+str(object)+">"
                 elif (isinstance(object, rdflib.term.BNode)):
-                    result_object, ifcollection, ifquotedBnode = expand_Bnode(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
+                    result_object, ifcollection, ifquotedBnode = expand_Bnode(object,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
                     if (not len(result_object) == 0):
                         if ifcollection == True:
                             result_object.insert(0, "(")
