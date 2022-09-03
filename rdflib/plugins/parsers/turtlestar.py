@@ -465,7 +465,10 @@ class FindVariables(Visitor):
                 triple1 = "<<"+triple1+">>"
                 subjecthash = "_:" + str(myHash(triple1))
                 print(subjecthash)
+                if not (triple1 in quotation_list):
+                    quotation_list.append(triple1)
 
+                quotation_dict[triple1] = str(myHash(triple1))
             elif x.data == "compoundanno":
                 for y in x.children:
                     if (y != "{|") & (y!= "|}"):

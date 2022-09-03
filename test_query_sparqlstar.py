@@ -37,7 +37,7 @@ g = Graph()
 g.parse(data="test/sparql-star/data-1.ttl", format = "ttls")
 # q = "SELECT * { <<:a :b :c>> ?p ?o }"
 
-f = open("test/sparql-star/sparql-star-basic-2-data-1.rq", "rb")
+f = open("test/sparql-star/sparql-star-basic-2-data-1-reified.rq", "rb")
 sparqlbytes = f.read()
 f.close()
 sparqlbytes_processing = sparqlbytes.decode("utf-8")
@@ -346,8 +346,186 @@ class Print_Tree(Visitor):
 from lark import Visitor, v_args
 
 tree = sparql_lark.parse(sparqlbytes_processing)
+quotation_dict = []
+quotationreif = []
+
+def myHash(text:str):
+  return str(hashlib.md5(text.encode('utf-8')).hexdigest())
 
 print(tree)
+class FindVariables(Visitor):
+    def __init__(self):
+        super().__init__()
+        # self.quotation_list = []
+        self.variable_list = []
 
+    def quotation(self, var):
+
+        qut = Reconstructor(sparql_lark).reconstruct(var) # replace here or replace later
+        print("qqqqqqqqqqqqqqqqqqqqqqqqqqq", qut,"\n" )
+        qut = qut.replace(";", "") #####################
+        # qut = qut.replace(" ", "") #qut = qut.strip()
+        if not (qut in sparql_lark):
+            sparql_lark.append(qut)
+
+        vr = Reconstructor(sparql_lark).reconstruct(var)
+        vr = vr.replace(";","")
+        # vr = vr.replace(" ","")
+        sparql_lark[qut] = str(myHash(qut))
+        qut_hash = ":" + str(myHash(qut))
+        # try:
+        id = quotation_dict.get(vr)
+        for x in quotation_dict:
+            if x in vr:
+                # print("replace", x, ":"+quotation_dict.get(x))
+                vr = vr.replace(x, ":"+quotation_dict.get(x))
+                vr = vr.replace("<<", "")
+                vr = vr.replace(">>", "")
+                output = vr.split(":") # what if not :? directly url? if and else?
+                output.pop(0)
+                oa1 = Reconstructor(sparql_lark).reconstruct(var)
+                oa1 = oa1.replace(";","")
+                # oa1 = oa1.replace(" ","")
+                output.append(oa1)
+                # print(quotationreif)
+                if (not (output in quotationreif)):
+                    quotationreif.append(output)
+
+        # print("fixing quotation before",var)
+        # var = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', qut_hash)])])
+        # print("fixing quotation",var)
+
+        ##################
+        #########################
+
+    # def blank_node_property_list(self, var):
+    #     # print("bnpl", (var.children[0]).children)
+    #     object_list = ((var.children[0]).children)[1].children
+    #     for x in range(0, len(object_list)):
+    #         try:
+    #             if object_list[x].data == 'quotation':
+    #                 # print("fixing blank node property list:", object_list, "\n","\n")
+    #                 collection_quotation_reconstruct = Reconstructor(turtle_lark).reconstruct(object_list[x])
+    #                 collection_quotation_reconstruct = collection_quotation_reconstruct.replace(";","")
+    #                 t2 = quotation_dict[collection_quotation_reconstruct]
+    #                 hasht2 = "_:" + t2
+    #                 object_list[x] = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', hasht2)])])
+    #                 # print("iriririri", object_list)
+    #         except:
+    #             pass
+    # def collection(self, var):
+    #     for x in range(0, len(var.children)):
+    #         if var.children[x].data == 'quotation':
+    #             # print("fixing collection:", x, "\n","\n")
+    #             collection_quotation_reconstruct = Reconstructor(turtle_lark).reconstruct(var.children[x])
+    #             collection_quotation_reconstruct = collection_quotation_reconstruct.replace(";","")
+    #             t2 = quotation_dict[collection_quotation_reconstruct]
+    #             hasht2 = "_:" + t2
+    #             var.children[x] = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', hasht2)])])
+    #             # print("iriririri", var.children)
+
+    # def quotedtriples(self, var):
+    #     triple1 = None
+    #     subjecthash = ""
+
+    #     for x in var.children:
+    #         print(x)
+    #         if x.data == "triples":
+    #             triple1 = Reconstructor(turtle_lark).reconstruct(x)
+    #             triple1 = triple1.replace(";","")
+
+    #             print(triple1)
+    #             triple1 = "<<"+triple1+">>"
+    #             subjecthash = "_:" + str(myHash(triple1))
+    #             print("teststestt", triple1)
+    #             print(subjecthash)
+
+    #         elif x.data == "compoundanno":
+    #             for y in x.children:
+    #                 if (y != "{|") & (y!= "|}"):
+    #                     count2 = 0
+    #                     quotationtriple = []
+    #                     for z in y.children:
+    #                         count2+=1
+    #                         z2 = Reconstructor(turtle_lark).reconstruct(z)
+    #                         # z2 = z2.replace(";","")
+    #                         print("z",z2)
+    #                         quotationtriple.append(z2)
+    #                         if count2 ==2:
+    #                             quotationtriple.insert(0, subjecthash)
+    #                             quotationannolist.append(quotationtriple)
+    #                             count2 = 0
+    #                             quotationtriple = []
+
+    # def triples(self, var):
+
+    #     appends1 = []
+    #     tri = Reconstructor(turtle_lark).reconstruct(var)
+    #     print("ttttttttttttttttttttttttttttt", tri,"\n" )
+    #     tri = tri.replace(";", "")
+    #     if not (tri in assertedtriplelist):
+    #         assertedtriplelist.append(tri)
+    #     for x in var.children:
+    #         # print(x.data)
+    #         if x.data == 'predicate_object_list':
+    #             xc = x.children
+    #             for y in xc:
+    #                 x2 = Reconstructor(turtle_lark).reconstruct(y)
+    #                 x2 = x2.replace(";","")
+    #                 # x2 = x2.replace(" ","")
+    #                 appends1.append(x2) # or push
+    #         else:
+    #           print("how to edit2", x)
+    #           anyquotationin = False
+    #           x1 = Reconstructor(turtle_lark).reconstruct(x)
+    #           x1 = x1.replace(";","")
+    #         #   x1 = x1.replace(" ","")
+    #           print("compareed", x1)
+    #           appends1.append(x1)
+
+    #     if not (appends1 in vblist):
+    #         vblist.append(appends1)
+
+    # def insidequotation(self, var):
+    #     appends1 = []
+    #     for x in var.children:
+    #         x1 = Reconstructor(turtle_lark).reconstruct(x)
+    #         x1 = x1.replace(";","")
+    #         # x1 = x1.replace(" ","")
+    #         appends1.append(x1)
+
+    #     if not (appends1 in vblist):
+    #         vblist.append(appends1)
+
+    # def prefixed_name(self, children):
+    #     print("prefixed_name")
+    #     # pname, = children
+    #     print("pn", children)
+    #     # ns, _, ln = pname.partition(':')
+    #     # return self.make_named_node(self.prefixes[ns] + decode_literal(ln))
+
+    # def prefix_id(self, children):
+    #     print("prefix_id")
+    #     ns, iriref = children
+    #     print("prefix_id", ns, iriref)
+    #     iri = smart_urljoin(self.base_iri, self.decode_iriref(iriref))
+    #     print(iri)
+    #     ns = ns[:-1]  # Drop trailing : from namespace
+    #     # self.prefixes[ns] = iri
+    #     # return []
+
+    # def sparql_prefix(self, children):
+    #     print("sparql_prefix", children)
+    #     prefix_list.append(children)
+
+    # def base(self, children):
+    #     print("base")
+    #     base_directive, base_iriref = children
+    #     print("base", base_directive, base_iriref)
+    #     # Workaround for lalr parser token ambiguity in python 2.7
+    #     if base_directive.startswith('@') and base_directive != '@base':
+    #         raise ValueError('Unexpected @base: ' + base_directive)
+
+# at = FindVariables().visit(tree)
 # res = g.query("SELECT * { <<:a :b :c>> ?p ?o }")
 # print(list(res))

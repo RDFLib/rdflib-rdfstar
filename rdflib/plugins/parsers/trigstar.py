@@ -38,10 +38,10 @@ from lark.lexer import (
 grammar = r"""trig_doc: (directive | block)*
 ?statement: directive | triples "." | quotedtriples "."
 block: triplesorgraph | wrappedgraph | triples2 | "GRAPH" labelorsubject wrappedgraph
-triplesorgraph: labelorsubject (wrappedgraph | predicate_object_list ".")
+triplesorgraph: labelorsubject (wrappedgraph | predicate_object_list ".") | quotation predicate_object_list "."
 triples2: blank_node_property_list predicate_object_list? "." | collection predicate_object_list "."
 wrappedgraph: "{" triplesblock? "}"
-triplesblock: triples ("." triplesblock?)?
+triplesblock: triples ("." triplesblock?)? | quotedtriples ("." triplesblock?)?
 labelorsubject: iri | blank_node
 directive: prefix_id | base | sparql_prefix | sparql_base
 prefix_id: "@prefix" PNAME_NS IRIREF "."
@@ -53,7 +53,7 @@ triples: subject predicate_object_list
 insidequotation: qtsubject verb qtobject
 quotedtriples: triples compoundanno
 predicate_object_list: verb object_list (";" (verb object_list)?)*
-?object_list: object ("," object)*
+?object_list: object ("," object )*
 ?verb: predicate | /a/
 ?subject: iri | blank_node | collection | quotation
 ?predicate: iri
@@ -129,6 +129,9 @@ quotationreif = []
 prefix_list = []
 quotationannolist = []
 constructors = ""
+assertedtriplelist = []
+quoted_or_not = False
+both_quoted_and_asserted = False
 
 def myHash(text:str):
   return str(hashlib.md5(text.encode('utf-8')).hexdigest())
@@ -143,6 +146,7 @@ class FindVariables(Visitor):
         qut = Reconstructor(trig_lark).reconstruct(var) # replace here or replace later
         qut = qut.replace(";", "") #####################
         # qut = qut.replace(" ", "") #qut = qut.strip()
+        # print("qqqqqqqqq", qut)
         if not (qut in quotation_list):
             quotation_list.append(qut)
 
@@ -227,7 +231,10 @@ class FindVariables(Visitor):
                 triple1 = "<<"+triple1+">>"
                 subjecthash = "_:" + str(myHash(triple1))
                 print(subjecthash)
+                if not (triple1 in quotation_list):
+                    quotation_list.append(triple1)
 
+                quotation_dict[triple1] = str(myHash(triple1))
             elif x.data == "compoundanno":
                 for y in x.children:
                     if (y != "{|") & (y!= "|}"):
@@ -248,7 +255,11 @@ class FindVariables(Visitor):
     def triples(self, var):
 
         appends1 = []
-
+        tri = Reconstructor(trig_lark).reconstruct(var)
+        # print("ttttttttttttttttttttttttttttt", tri,"\n" )
+        tri = tri.replace(";", "")
+        if not (tri in assertedtriplelist):
+            assertedtriplelist.append(tri)
         for x in var.children:
             if x.data == 'predicate_object_list':
                 xc = x.children
@@ -300,12 +311,14 @@ class FindVariables(Visitor):
             raise ValueError('Unexpected @base: ' + base_directive)
 
 def RDFstarParsings(rdfstarstring):
-    global quotationannolist, vblist, quotationreif, prefix_list, constructors
+    global quotationannolist, vblist, quotationreif, prefix_list, constructors, assertedtriplelist, quoted_or_not, both_quoted_and_asserted
     quotationannolist = []
     vblist = []
     quotationreif = []
     prefix_list = []
     constructors = ""
+    quoted_or_not = False
+    both_quoted_and_asserted = False
     tree = trig_lark.parse(rdfstarstring)
     at = FindVariables().visit(tree)
 
@@ -315,6 +328,21 @@ def RDFstarParsings(rdfstarstring):
             if (y[element_index][0] == "_") & (not (element_index == 0)):
                 y[element_index]=" "+y[element_index]
         result = "".join(y)
+        if result in assertedtriplelist:
+            test1 = "<<"+result+">>"
+            if test1 in quotation_list:
+                both_quoted_and_asserted = True
+            else:
+                both_quoted_and_asserted = False
+                quoted_or_not = False
+        else:
+            test2 = "<<"+result+">>"
+            if test2 in quotation_list:
+                both_quoted_and_asserted = False
+                quoted_or_not = True
+            else:
+                both_quoted_and_asserted = False
+                quoted_or_not = False
         result = "<<"+result+">>"
         # print("fixing bnode", result)
         if not (result in quotation_list):
@@ -326,7 +354,13 @@ def RDFstarParsings(rdfstarstring):
             subject = y[0]
             predicate = y[1]
             object = y[2]
-            next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+            if both_quoted_and_asserted:
+                next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:AssertedStatement, rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+            else:
+                if quoted_or_not:
+                    next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                else:
+                    next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
             constructors+=next_rdf_object
         else:
             value = quotation_dict[result]
@@ -336,27 +370,44 @@ def RDFstarParsings(rdfstarstring):
             subject = y[0]
             predicate = y[1]
             object = y[2]
-            next_rdf_object = "_:" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+            if both_quoted_and_asserted:
+                next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement, rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+            else:
+                if quoted_or_not:
+                    next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                else:
+                    next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
             constructors+=next_rdf_object
 
     for z in quotationannolist:
         result1 = "".join(z)
         result1 = "<<"+result1+">>"
+        if result1 in quotation_list:
+            both_quoted_and_asserted = True
+        else:
+            both_quoted_and_asserted = False
+            quoted_or_not = False
         value = str(myHash(result1))
         subject = z[0]
         predicate = z[1]
         object = z[2]
-        next_rdf_object = "_:" + str(value) + '\n' + "    a rdf:Statement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+        if both_quoted_and_asserted:
+            next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement, rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+        else:
+            if quoted_or_not:
+                next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+            else:
+                next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
         constructors+=next_rdf_object
-
-    # constructors = ":G{\n" + constructors
-    # constructors = constructors+"}" # insert 0
 
     for x in range(0, len(prefix_list)):
         prefix_list[x] = Reconstructor(trig_lark).reconstruct(prefix_list[x])
         constructors = prefix_list[x]+"\n"+constructors
 
+    constructors = "PREFIX rdfstar: <https://w3id.org/rdf-star/> \n"+constructors
+
     constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors
+
     # constructors = "PREFIX : <http://example/> \n"+constructors # prefix
 
     if not (("PREFIX : <http://example/>" in constructors) or ("PREFIX:<http://example/>" in constructors)):
