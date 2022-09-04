@@ -41,12 +41,6 @@ register(
 )
 
 g = Graph()
-g.parse(data="test/trig-star/trig-star-syntax-basic-01.trig", format = "trigs")
-print(g.serialize(format = "ttlstar"))
-# for s in g.subjects(predicate=RDF.type, object=RDF.Statement):
-#     print("rwrwrwrwwrww",s)
-
-g = Graph()
 g.parse(data="test/turtle-star/turtle-star-syntax-basic-01.ttl", format = "ttls")
 print(g.serialize(format = "ttlstar"))
 

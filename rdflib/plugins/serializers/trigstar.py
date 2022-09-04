@@ -11,11 +11,11 @@ from rdflib.namespace import RDF, XSD
 import warnings
 import rdflib
 
-__all__ = ["TurtlestarSerializer"]
+__all__ = ["TrigstarSerializer"]
 from rdflib import Namespace, Graph
 RDFSTAR = Namespace("https://w3id.org/rdf-star/")
 
-class TurtlestarSerializer(Serializer):
+class TrigstarSerializer(Serializer):
     """
     Serializes RDF graphs to NTriples format.
     """
