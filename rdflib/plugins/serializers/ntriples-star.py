@@ -389,66 +389,6 @@ class NtriplesStarSerializer(Serializer):
                 output = subject+" "+predicate+" "+object+" ."+"\n"
                 if output is not None:
                     stream.write(output.encode())
-    #Todo
-
-
-                # hl = self._hex_line(triple, context)
-                # if hl is not None:
-                #     stream.write(hl.encode())
-
-    # def _hex_line(self, triple, context):
-    #     if isinstance(
-    #         triple[0], (URIRef, BNode)
-    #     ):  # exclude QuotedGraph and other objects
-    #         # value
-    #         value = (
-    #             triple[2]
-    #             if isinstance(triple[2], Literal)
-    #             else self._iri_or_bn(triple[2])
-    #         )
-
-    #         # datatype
-    #         if isinstance(triple[2], URIRef):
-    #             # datatype = "http://www.w3.org/1999/02/22-rdf-syntax-ns#namedNode"
-    #             datatype = "globalId"
-    #         elif isinstance(triple[2], BNode):
-    #             # datatype = "http://www.w3.org/1999/02/22-rdf-syntax-ns#blankNode"
-    #             datatype = "localId"
-    #         elif isinstance(triple[2], Literal):
-    #             if triple[2].datatype is not None:
-    #                 datatype = f"{triple[2].datatype}"
-    #             else:
-    #                 if triple[2].language is not None:  # language
-    #                     datatype = RDF.langString
-    #                 else:
-    #                     datatype = XSD.string
-    #         else:
-    #             return None  # can't handle non URI, BN or Literal Object (QuotedGraph)
-
-    #         # language
-    #         if isinstance(triple[2], Literal):
-    #             if triple[2].language is not None:
-    #                 language = f"{triple[2].language}"
-    #             else:
-    #                 language = ""
-    #         else:
-    #             language = ""
-
-    #         return (
-    #             json.dumps(
-    #                 [
-    #                     self._iri_or_bn(triple[0]),
-    #                     triple[1],
-    #                     value,
-    #                     datatype,
-    #                     language,
-    #                     self._context(context),
-    #                 ]
-    #             )
-    #             + "\n"
-    #         )
-    #     else:  # do not return anything for non-IRIs or BNs, e.g. QuotedGraph, Subjects
-    #         return None
 
     def _iri_or_bn(self, i_):
         if isinstance(i_, URIRef):
