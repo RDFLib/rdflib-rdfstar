@@ -72,6 +72,7 @@ class TurtlestarSerializer(Serializer):
                 # oList = properties.get(p, [])
                 # oList.append(o)
                 # print("atatat", dictionary, o, p, "a2a32a3", type(o), type(p))
+                print("test2", s, p, o)
                 if (not "rdf-star" in o):
 
             # print("ptype", type(p))
@@ -96,12 +97,24 @@ class TurtlestarSerializer(Serializer):
                                 properties.append(")")
 
                     else:
-                        if (isinstance(o, rdflib.term.URIRef) & isinstance(p, rdflib.term.URIRef)):
+                        print("sadasdasd", o, p, type(o), type(p))
+                        if ((not isinstance(o, rdflib.term.BNode)) & (not isinstance(p, rdflib.term.BNode))):
                             collection_or_not = False
                             quoted_Bnode_or_not = True
                             # print("hererererer")
-                            o = "<"+str(o)+">"
+                            if isinstance(p, rdflib.term.URIRef):
+                                p = "<"+str(p)+">"
+                            elif isinstance(p, rdflib.term.Literal):
+                                p = p._literal_n3(use_plain=True)
+
+                            if isinstance(o, rdflib.term.URIRef):
+                                o = "<"+str(o)+">"
+                            elif isinstance(o, rdflib.term.Literal):
+                                o = o._literal_n3(use_plain=True)
+
+                            properties.append(p)
                             properties.append(o)
+                            properties.append(";")
                             if o in dictionary:
                                 properties.append(dictionary[o])
                             # elif isinstance(o, rdflib.term.BNode):
@@ -116,7 +129,11 @@ class TurtlestarSerializer(Serializer):
                             # print("hererererer")
                             if (isinstance(p, rdflib.term.URIRef)):
                                 p = "<"+str(p)+">"
-                            else:
+                            elif isinstance(p, rdflib.term.Literal):
+                                p = p._literal_n3(use_plain=True)
+                                #
+                                # pass
+
                                 pass
                             properties.append(p)
                             if o in dictionary:
@@ -189,6 +206,8 @@ class TurtlestarSerializer(Serializer):
                 if (isinstance(subject, rdflib.term.URIRef)):
                     # print("tttttttttttuuuuuuuuuuuuuu")
                     subject = "<"+str(subject)+">"
+                elif (isinstance(subject, rdflib.term.Literal)):
+                    subject = subject._literal_n3(use_plain=True)
                 elif (isinstance(subject, rdflib.term.BNode)):
                     # print("tttttttttttuuuuuuuuuuuuuu22222222222222")
                     result_subject, ifcollection, ifquotedBnode = expand_Bnode(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
@@ -214,6 +233,8 @@ class TurtlestarSerializer(Serializer):
 
                 if (isinstance(object, rdflib.term.URIRef)):
                     object = "<"+str(object)+">"
+                elif isinstance(object, rdflib.term.Literal):
+                    object = object._literal_n3(use_plain=True)
                 elif (isinstance(object, rdflib.term.BNode)):
                     result_object, ifcollection, ifquotedBnode = expand_Bnode(object,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
                     if (not len(result_object) == 0):
@@ -238,7 +259,8 @@ class TurtlestarSerializer(Serializer):
 
                 if(isinstance(predicate, rdflib.term.URIRef)):
                     predicate = "<"+str(g.value(s, RDF.predicate))+">"
-
+                elif isinstance(predicate, rdflib.term.Literal):
+                    predicate = predicate._literal_n3(use_plain=True)
                 # print("adada", serialized_subject)
 
                 dictionary[s] = "<< "+str(subject)+ str(predicate)+str(object)+" >>"
@@ -305,6 +327,8 @@ class TurtlestarSerializer(Serializer):
                 if (isinstance(subject, rdflib.term.URIRef)):
                     # print("tttttttttttuuuuuuuuuuuuuu")
                     subject = "<"+str(subject)+">"
+                elif isinstance(subject, rdflib.term.Literal):
+                    subject = subject._literal_n3(use_plain=True)
                 elif (isinstance(subject, rdflib.term.BNode)):
                     # print("tttttttttttuuuuuuuuuuuuuu22222222222222")
                     result_subject, ifcollection, ifquotedBnode = expand_Bnode(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
@@ -330,6 +354,8 @@ class TurtlestarSerializer(Serializer):
 
                 if (isinstance(object, rdflib.term.URIRef)):
                     object = "<"+str(object)+">"
+                elif isinstance(object, rdflib.term.Literal):
+                    object = object._literal_n3(use_plain=True)
                 elif (isinstance(object, rdflib.term.BNode)):
                     result_object, ifcollection, ifquotedBnode = expand_Bnode(object,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
                     if (not len(result_object) == 0):
@@ -354,7 +380,8 @@ class TurtlestarSerializer(Serializer):
 
                 if(isinstance(predicate, rdflib.term.URIRef)):
                     predicate = "<"+str(g.value(s, RDF.predicate))+">"
-
+                elif isinstance(predicate, rdflib.term.Literal):
+                    predicate = predicate._literal_n3(use_plain=True)
                 # print("adada", serialized_subject)
 
                 dictionary[s] = "<< "+str(subject)+ str(predicate)+str(object)+" >>"
