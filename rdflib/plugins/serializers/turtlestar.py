@@ -85,7 +85,7 @@ class TurtlestarSerializer(Serializer):
                         # else:
                         #     properties.append(o)
                         elif not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"  in o):
-                            print("recursive", o)
+                            # print("recursive", o)
 
                             if not ("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
                                 properties.append("(")
@@ -99,7 +99,7 @@ class TurtlestarSerializer(Serializer):
                         if (isinstance(o, rdflib.term.URIRef) & isinstance(p, rdflib.term.URIRef)):
                             collection_or_not = False
                             quoted_Bnode_or_not = True
-                            print("hererererer")
+                            # print("hererererer")
                             o = "<"+str(o)+">"
                             properties.append(o)
                             if o in dictionary:
