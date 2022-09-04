@@ -11,6 +11,8 @@ from rdflib.namespace import RDF, XSD
 import warnings
 import rdflib
 
+import hashlib
+
 __all__ = ["TrigstarSerializer"]
 from rdflib import Namespace, Graph
 RDFSTAR = Namespace("https://w3id.org/rdf-star/")
@@ -65,6 +67,9 @@ class TrigstarSerializer(Serializer):
         dictionary = dict()
         result_subject = ""
         result_object = ""
+        output = ""
+        def myHash(text:str):
+            return str(hashlib.md5(text.encode('utf-8')).hexdigest())
 
         def expand_Bnode(node, g, dictionary, properties, collection_or_not, quoted_Bnode_or_not):
             for s, p, o in g.triples((node, None, None)):
@@ -149,7 +154,7 @@ class TrigstarSerializer(Serializer):
             return properties, collection_or_not, quoted_Bnode_or_not
 
         for g in self.contexts:
-
+            # print(g)
             for s in g.subjects(predicate=RDF.type, object=RDFSTAR.QuotedStatement):
                 # print(s)
                 # print(
@@ -386,9 +391,11 @@ class TrigstarSerializer(Serializer):
 
                 dictionary[s] = "<< "+str(subject)+ str(predicate)+str(object)+" >>"
 
-                output = subject+" "+predicate+" "+object+" ."+"\n"
-                if output is not None:
-                    stream.write(output.encode())
+                output = output + subject+" "+predicate+" "+object+" ."+"\n"
+                # output = "_:"+str(myHash(output))+ "{\n"+ output + "}"
+        if output is not None:
+            output = "_:"+str(myHash(output))+ "{\n"+ output + "}"
+            stream.write(output.encode())
     #Todo
 
 
