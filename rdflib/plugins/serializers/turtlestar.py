@@ -72,7 +72,7 @@ class TurtlestarSerializer(Serializer):
                 # oList = properties.get(p, [])
                 # oList.append(o)
                 # print("atatat", dictionary, o, p, "a2a32a3", type(o), type(p))
-                print("test2", s, p, o)
+                # print("test2", s, p, o)
                 if (not "rdf-star" in o):
 
             # print("ptype", type(p))
@@ -97,7 +97,7 @@ class TurtlestarSerializer(Serializer):
                                 properties.append(")")
 
                     else:
-                        print("sadasdasd", o, p, type(o), type(p))
+                        # print("sadasdasd", o, p, type(o), type(p))
                         if ((not isinstance(o, rdflib.term.BNode)) & (not isinstance(p, rdflib.term.BNode))):
                             collection_or_not = False
                             quoted_Bnode_or_not = True

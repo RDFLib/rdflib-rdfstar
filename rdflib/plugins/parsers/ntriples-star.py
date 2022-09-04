@@ -585,7 +585,7 @@ def RDFstarParsings(rdfstarstring):
                 y[element_index]=" "+y[element_index]
         result = "".join(y)
         if result in assertedtriplelist:
-            print("testassertedtriplelist", result)
+            # print("testassertedtriplelist", result)
             test1 = "<<"+result+">>"
             if test1 in quotation_list:
                 both_quoted_and_asserted = True
@@ -593,7 +593,7 @@ def RDFstarParsings(rdfstarstring):
                 both_quoted_and_asserted = False
                 quoted_or_not = False
         else:
-            print("testassertedtriplelist2", result)
+            # print("testassertedtriplelist2", result)
             test2 = "<<"+result+">>"
             if test2 in quotation_list:
                 both_quoted_and_asserted = False
