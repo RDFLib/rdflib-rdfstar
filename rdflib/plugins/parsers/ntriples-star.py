@@ -567,7 +567,7 @@ class FindVariables(Visitor):
     #         vblist.append(appends1)
 
 def RDFstarParsings(rdfstarstring):
-    global quotationannolist, vblist, quotationreif, prefix_list, constructors, assertedtriplelist, quoted_or_not, both_quoted_and_asserted
+    global quotationannolist, quotation_dict, vblist, quotationreif, prefix_list, constructors, assertedtriplelist, quoted_or_not, both_quoted_and_asserted
     quotationannolist = []
     vblist = []
     quotationreif = []
@@ -584,6 +584,7 @@ def RDFstarParsings(rdfstarstring):
             if (y[element_index][0] == "_") & (not (element_index == 0)):
                 y[element_index]=" "+y[element_index]
         result = "".join(y)
+        result = result.replace(" ", "")
         if result in assertedtriplelist:
             # print("testassertedtriplelist", result)
             test1 = "<<"+result+">>"

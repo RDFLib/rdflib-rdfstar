@@ -37,7 +37,7 @@ register(
 
 g = Graph()
 
-g.parse("test/turtle-star/turtle-star-annotation-2.ttl", format = "ttls")
+g.parse("test/turtle-star/nt-ttl-star-bnode-2.ttl", format = "ttls")
 # print("testing serializer", g.serialize(format = "ttlstar"))
 # for all Statements
 
@@ -114,8 +114,9 @@ def expand_Bnode(node, g, dictionary, properties, collection_or_not, quoted_Bnod
                     else:
                         expand_Bnode(o, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not)
 
-
+    # return properties, collection_or_not, quoted_Bnode_or_not, bnodeid
     return properties, collection_or_not, quoted_Bnode_or_not
+    # return properties, collection_or_not, quoted_Bnode_or_not, bnodeid
 
 dictionary = dict()
 result_subject = ""
@@ -178,6 +179,7 @@ for s in g.subjects(predicate=RDF.type, object=RDFSTAR.QuotedStatement):
         subject = "<"+str(subject)+">"
     elif (isinstance(subject, rdflib.term.BNode)):
         # print(subject)
+        bnode_id = str(subject)
         print("tttttttttttuuuuuuuuuuuuuu22222222222222")
         result_subject, ifcollection, ifquotedBnode = expand_Bnode(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
         # print(len(result_subject))
@@ -198,13 +200,18 @@ for s in g.subjects(predicate=RDF.type, object=RDFSTAR.QuotedStatement):
                 result_subject.append("]")
             subject = "".join(result_subject)
         else:
-            subject = " [] "
+            subject = "[]"
+        if subject == "[]":
+            subject = " _:"+bnode_id + " "
+
 
 
     if (isinstance(object, rdflib.term.URIRef)):
         object = "<"+str(object)+">"
     elif (isinstance(object, rdflib.term.BNode)):
         print("hererererere")
+        # bnode_id2 = str(object)
+        bnode_id = str(object)
         result_object, ifcollection, ifquotedBnode = expand_Bnode(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
         if (not len(result_object) == 0):
             if ifcollection == True:
@@ -223,7 +230,9 @@ for s in g.subjects(predicate=RDF.type, object=RDFSTAR.QuotedStatement):
                 result_object.append("]")
             object = "".join(result_object)
         else:
-            object = " [] "
+            object = "[]"
+        if object == "[]":
+            object = " _:"+bnode_id + " "
 
     if(isinstance(predicate, rdflib.term.URIRef)):
         predicate = "<"+str(g.value(s, RDF.predicate))+">"
@@ -298,6 +307,7 @@ for s in g.subjects(predicate=RDF.type, object=RDFSTAR.AssertedStatement):
         subject = "<"+str(subject)+">"
     elif (isinstance(subject, rdflib.term.BNode)):
         print("tttttttttttuuuuuuuuuuuuuu22222222222222")
+        bnode_id = str(subject)
         result_subject, ifcollection, ifquotedBnode = expand_Bnode(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
         if ifcollection == True:
             result_subject.insert(0, "(")
@@ -314,12 +324,14 @@ for s in g.subjects(predicate=RDF.type, object=RDFSTAR.AssertedStatement):
             result_subject.insert(0, "[")
             result_subject.append("]")
         subject = "".join(result_subject)
-
+        if subject == "[]":
+            subject = " _:"+bnode_id + " "
 
     if (isinstance(object, rdflib.term.URIRef)):
         object = "<"+str(object)+">"
     elif (isinstance(object, rdflib.term.BNode)):
-        print("hererererere2")
+        print("hererererere2", str(object))
+        bnode_id = str(object)
         result_object, ifcollection, ifquotedBnode = expand_Bnode(object,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
         if ifcollection == True:
             result_object.insert(0, "(")
@@ -336,6 +348,8 @@ for s in g.subjects(predicate=RDF.type, object=RDFSTAR.AssertedStatement):
             result_object.insert(0, "[")
             result_object.append("]")
         object = "".join(result_object)
+        if object == "[]":
+            object = " _:"+bnode_id + " "
 
     if(isinstance(predicate, rdflib.term.URIRef)):
         predicate = "<"+str(g.value(s, RDF.predicate))+">"

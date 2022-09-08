@@ -1,3 +1,4 @@
+from tkinter import N
 import pytest
 
 from pathlib import Path
@@ -36,6 +37,10 @@ register(
 g = Graph()
 g.parse(data="test/sparql-star/data-1.ttl", format = "ttls")
 # q = "SELECT * { <<:a :b :c>> ?p ?o }"
+res = g.query("PREFIX :       <http://example/>\n PREFIX rdfstar: <https://w3id.org/rdfstar/>\n PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"+
+"SELECT * {\n"+
+"[a rdfstar:QutotedStatement;\n rdf:subject :a ;\n rdf:predicate :b ;\n rdf:object :c ; ] ?p ?o .\n}")
+print(list(res))
 
 f = open("test/sparql-star/sparql-star-basic-2-data-1-reified.rq", "rb")
 sparqlbytes = f.read()

@@ -545,7 +545,7 @@ class FindVariables(Visitor):
             raise ValueError('Unexpected @base: ' + base_directive)
 
 def RDFstarParsings(rdfstarstring):
-    global quotationannolist, vblist, quotationreif, prefix_list, constructors, assertedtriplelist, quoted_or_not, both_quoted_and_asserted
+    global quotationannolist, vblist, quotation_dict, quotationreif, prefix_list, constructors, assertedtriplelist, quoted_or_not, both_quoted_and_asserted
     quotationannolist = []
     vblist = []
     quotationreif = []
@@ -555,13 +555,15 @@ def RDFstarParsings(rdfstarstring):
     both_quoted_and_asserted = False
     tree = turtle_lark.parse(rdfstarstring)
     at = FindVariables().visit(tree)
-
+    # print("ascacascasc", vblist, quotation_dict, quotationreif)
     for y in vblist:
         # print("warc3casca", y)
         for element_index in range(0, len(y)):
             if (y[element_index][0] == "_") & (not (element_index == 0)):
                 y[element_index]=" "+y[element_index]
         result = "".join(y)
+        # print("ttttteeeeee", result)
+        result = result.replace(" ", "")
         if result in assertedtriplelist:
             test1 = "<<"+result+">>"
             if test1 in quotation_list:
@@ -595,6 +597,7 @@ def RDFstarParsings(rdfstarstring):
                     next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
                 else:
                     next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                    # next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n" "[a rdfstar:QutotedStatement;\n rdf:subject :a ;\n rdf:predicate :b ;\n rdf:object :c ; ] :q :z "+".\n"
             constructors+=next_rdf_object
         else:
             value = quotation_dict[result]
@@ -611,6 +614,7 @@ def RDFstarParsings(rdfstarstring):
                     next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
                 else:
                     next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                    # next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n" "[a rdfstar:QutotedStatement;\n rdf:subject :a ;\n rdf:predicate :b ;\n rdf:object :c ; ] :q :z "+".\n"
             constructors+=next_rdf_object
 
     for z in quotationannolist:
@@ -632,6 +636,7 @@ def RDFstarParsings(rdfstarstring):
                 next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
             else:
                 next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                # next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n" + subject +" " +predicate +" " +object +".\n"
         constructors+=next_rdf_object
 
     for x in range(0, len(prefix_list)):

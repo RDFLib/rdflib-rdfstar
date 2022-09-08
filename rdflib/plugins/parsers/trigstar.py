@@ -311,7 +311,7 @@ class FindVariables(Visitor):
             raise ValueError('Unexpected @base: ' + base_directive)
 
 def RDFstarParsings(rdfstarstring):
-    global quotationannolist, vblist, quotationreif, prefix_list, constructors, assertedtriplelist, quoted_or_not, both_quoted_and_asserted
+    global quotationannolist, quotation_dict, vblist, quotationreif, prefix_list, constructors, assertedtriplelist, quoted_or_not, both_quoted_and_asserted
     quotationannolist = []
     vblist = []
     quotationreif = []
@@ -328,6 +328,7 @@ def RDFstarParsings(rdfstarstring):
             if (y[element_index][0] == "_") & (not (element_index == 0)):
                 y[element_index]=" "+y[element_index]
         result = "".join(y)
+        result = result.replace(" ", "")
         if result in assertedtriplelist:
             test1 = "<<"+result+">>"
             if test1 in quotation_list:

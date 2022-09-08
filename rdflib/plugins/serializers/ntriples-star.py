@@ -209,6 +209,7 @@ class NtriplesStarSerializer(Serializer):
                 elif (isinstance(subject, rdflib.term.Literal)):
                     subject = subject._literal_n3(use_plain=True)
                 elif (isinstance(subject, rdflib.term.BNode)):
+                    bnode_id = str(subject)
                     # print("tttttttttttuuuuuuuuuuuuuu22222222222222")
                     result_subject, ifcollection, ifquotedBnode = expand_Bnode(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
                     if (not len(result_subject) == 0):
@@ -228,7 +229,9 @@ class NtriplesStarSerializer(Serializer):
                             result_subject.append("]")
                         subject = "".join(result_subject)
                     else:
-                        subject = " [] "
+                        subject = "[]"
+                    if subject == "[]":
+                        subject = " _:"+bnode_id + " "
 
 
                 if (isinstance(object, rdflib.term.URIRef)):
@@ -236,6 +239,7 @@ class NtriplesStarSerializer(Serializer):
                 elif isinstance(object, rdflib.term.Literal):
                     object = object._literal_n3(use_plain=True)
                 elif (isinstance(object, rdflib.term.BNode)):
+                    bnode_id = str(object)
                     result_object, ifcollection, ifquotedBnode = expand_Bnode(object,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
                     if (not len(result_object) == 0):
                         if ifcollection == True:
@@ -254,7 +258,9 @@ class NtriplesStarSerializer(Serializer):
                             result_object.append("]")
                         object = "".join(result_object)
                     else:
-                        object = " [] "
+                        object = "[]"
+                    if object == "[]":
+                        object = " _:"+bnode_id + " "
 
 
                 if(isinstance(predicate, rdflib.term.URIRef)):
@@ -330,6 +336,7 @@ class NtriplesStarSerializer(Serializer):
                 elif isinstance(subject, rdflib.term.Literal):
                     subject = subject._literal_n3(use_plain=True)
                 elif (isinstance(subject, rdflib.term.BNode)):
+                    bnode_id = str(subject)
                     # print("tttttttttttuuuuuuuuuuuuuu22222222222222")
                     result_subject, ifcollection, ifquotedBnode = expand_Bnode(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
                     if (not len(result_subject) == 0):
@@ -349,7 +356,9 @@ class NtriplesStarSerializer(Serializer):
                             result_subject.append("]")
                         subject = "".join(result_subject)
                     else:
-                        subject = " [] "
+                        subject = "[]"
+                    if subject == "[]":
+                        subject = " _:"+bnode_id + " "
 
 
                 if (isinstance(object, rdflib.term.URIRef)):
@@ -357,6 +366,7 @@ class NtriplesStarSerializer(Serializer):
                 elif isinstance(object, rdflib.term.Literal):
                     object = object._literal_n3(use_plain=True)
                 elif (isinstance(object, rdflib.term.BNode)):
+                    bnode_id = str(object)
                     result_object, ifcollection, ifquotedBnode = expand_Bnode(object,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
                     if (not len(result_object) == 0):
                         if ifcollection == True:
@@ -375,7 +385,9 @@ class NtriplesStarSerializer(Serializer):
                             result_object.append("]")
                         object = "".join(result_object)
                     else:
-                        object = " [] "
+                        object = "[]"
+                    if object == "[]":
+                        object = " _:"+bnode_id + " "
 
 
                 if(isinstance(predicate, rdflib.term.URIRef)):
