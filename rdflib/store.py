@@ -222,6 +222,22 @@ class Store(object):
         """
         self.dispatcher.dispatch(TripleAddedEvent(triple=triple, context=context))
 
+    def addStarTriple(
+        self,
+        startriple: Tuple["Node", "Node", "Node", "Node"],
+        context: Optional["Graph"],
+        quoted: bool = False,
+    ):
+        """
+        Adds the given statement to a specific context or to the model. The
+        quoted argument is interpreted by formula-aware stores to indicate
+        this statement is quoted/hypothetical It should be an error to not
+        specify a context and have the quoted argument be True. It should also
+        be an error for the quoted argument to be True when the store is not
+        formula-aware.
+        """
+        self.dispatcher.dispatch(TripleAddedEvent(triple=startriple, context=context))
+
     def addN(self, quads: Iterable[Tuple["Node", "Node", "Node", "Graph"]]):
         """
         Adds each item in the list of statements to a specific context. The
@@ -310,6 +326,24 @@ class Store(object):
         subject, predicate, object = triple_pattern
 
     # variants of triples will be done if / when optimization is needed
+    def rdfstartriples(
+        self,
+        rdfstartriple_pattern: Tuple[Optional["IdentifiedNode"],
+            Optional["IdentifiedNode"], Optional["IdentifiedNode"], Optional["Node"]
+        ],
+        context=None,
+    ):
+        """
+        A generator over all the triples matching the pattern. Pattern can
+        include any objects for used for comparing against nodes in the store,
+        for example, REGEXTerm, URIRef, Literal, BNode, Variable, Graph,
+        QuotedGraph, Date? DateRange?
+
+        :param context: A conjunctive query can be indicated by either
+                        providing a value of None, or a specific context can be
+                        queries by passing a Graph instance (if store is context aware).
+        """
+        hashnode, subject, predicate, object = rdfstartriple_pattern
 
     def __len__(self, context=None):
         """

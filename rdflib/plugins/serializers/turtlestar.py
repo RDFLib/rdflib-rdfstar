@@ -67,6 +67,7 @@ class TurtlestarSerializer(Serializer):
         result_object = ""
 
         def expand_Bnode(node, g, dictionary, properties, collection_or_not, quoted_Bnode_or_not):
+            print("testserializer", node, type(node))
             for s, p, o in g.triples((node, None, None)):
                 #todo () and []
                 # oList = properties.get(p, [])
@@ -147,6 +148,18 @@ class TurtlestarSerializer(Serializer):
 
 
             return properties, collection_or_not, quoted_Bnode_or_not
+
+        # for g in self.contexts:
+
+        #     for hashnode, s, p,o in g.rdfstartriples((None, None, None, None)):
+        #         print(hashnode, s,p,o)
+
+        for g in self.contexts:
+
+            for s,p,o in g.triples((None, None, None)):
+                print(s,p,o, type(s), type(p), type(o))
+                if type(o) == rdflib.term.RdfstarTriple:
+                    print("asdasdasd",o.subject(),o.predicate(),o.object())
 
         for g in self.contexts:
 
