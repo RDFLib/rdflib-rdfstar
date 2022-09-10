@@ -52,9 +52,9 @@ g = Graph()
 g.parse("test/turtle-star/turtle-star-syntax-basic-02.ttl", format = "ttls")
 print(g.serialize(format = "ttlstar"))
 
-# g = Graph()
-# g.parse("test/turtle-star/turtle-star-syntax-inside-01.ttl", format = "ttls")
-# print(g.serialize(format = "ttlstar"))
+g = Graph()
+g.parse("test/turtle-star/turtle-star-syntax-inside-01.ttl", format = "ttls")
+print(g.serialize(format = "ttlstar"))
 
 # g = Graph()
 # g.parse("test/turtle-star/turtle-star-syntax-inside-02.ttl", format = "ttls")

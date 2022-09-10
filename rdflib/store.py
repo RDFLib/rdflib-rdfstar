@@ -222,22 +222,6 @@ class Store(object):
         """
         self.dispatcher.dispatch(TripleAddedEvent(triple=triple, context=context))
 
-    def addStarTriple(
-        self,
-        startriple: Tuple["Node", "Node", "Node", "Node"],
-        context: Optional["Graph"],
-        quoted: bool = False,
-    ):
-        """
-        Adds the given statement to a specific context or to the model. The
-        quoted argument is interpreted by formula-aware stores to indicate
-        this statement is quoted/hypothetical It should be an error to not
-        specify a context and have the quoted argument be True. It should also
-        be an error for the quoted argument to be True when the store is not
-        formula-aware.
-        """
-        self.dispatcher.dispatch(TripleAddedEvent(triple=startriple, context=context))
-
     def addN(self, quads: Iterable[Tuple["Node", "Node", "Node", "Graph"]]):
         """
         Adds each item in the list of statements to a specific context. The
