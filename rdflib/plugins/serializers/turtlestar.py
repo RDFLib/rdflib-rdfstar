@@ -105,36 +105,37 @@ class TurtlestarSerializer(Serializer):
                     else:
                         # print("sadasdasd", o, p, type(o), type(p))
                         if ((not isinstance(o, rdflib.term.BNode)) & (not isinstance(o, rdflib.term.RdfstarTriple)) & ((not isinstance(p, rdflib.term.BNode)) & (not isinstance(p, rdflib.term.RdfstarTriple)))):
-                            print("sadasdasd", s, p, o, type(s),type(p), type(o))
-                            collection_or_not = False
-                            quoted_Bnode_or_not = False
-                            # print("hererererer")
-                            if isinstance(p, rdflib.term.URIRef):
-                                p = "<"+str(p)+">"
-                            elif isinstance(p, rdflib.term.Literal):
-                                p = p._literal_n3(use_plain=True)
+                            pass
+                            # print("sadasdasd", s, p, o, type(s),type(p), type(o))
+                            # collection_or_not = False
+                            # quoted_Bnode_or_not = False
+                            # # print("hererererer")
+                            # if isinstance(p, rdflib.term.URIRef):
+                            #     p = "<"+str(p)+">"
+                            # elif isinstance(p, rdflib.term.Literal):
+                            #     p = p._literal_n3(use_plain=True)
 
-                            if isinstance(o, rdflib.term.URIRef):
-                                o = "<"+str(o)+">"
-                            elif isinstance(o, rdflib.term.Literal):
-                                o = o._literal_n3(use_plain=True)
+                            # if isinstance(o, rdflib.term.URIRef):
+                            #     o = "<"+str(o)+">"
+                            # elif isinstance(o, rdflib.term.Literal):
+                            #     o = o._literal_n3(use_plain=True)
+                            # # else:
+
+                            # # elif isinstance(o, rdflib.term.RdfstarTriple):
+                            # #     expand_Bnode_and_RdfstarTriple(o, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not)
+
+                            # # if not isinstance(o, rdflib.term.RdfstarTriple):
+                            # properties.append(p)
+                            # properties.append(o)
+                            # properties.append(";")
+                            # if o in dictionary:
+                            #     properties.append(dictionary[o])
+                            # # elif isinstance(o, rdflib.term.BNode):
+                            # #     expand_Bnode(o, g, dictionary,properties)
+                            # # else:
+                            # #     properties.append(o)
                             # else:
-
-                            # elif isinstance(o, rdflib.term.RdfstarTriple):
                             #     expand_Bnode_and_RdfstarTriple(o, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not)
-
-                            # if not isinstance(o, rdflib.term.RdfstarTriple):
-                            properties.append(p)
-                            properties.append(o)
-                            properties.append(";")
-                            if o in dictionary:
-                                properties.append(dictionary[o])
-                            # elif isinstance(o, rdflib.term.BNode):
-                            #     expand_Bnode(o, g, dictionary,properties)
-                            # else:
-                            #     properties.append(o)
-                            else:
-                                expand_Bnode_and_RdfstarTriple(o, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not)
                             # elif o in dictionary:
                             #     print("testdfbalsda", o , dictionary, dictionary[o])
                             #     properties.append(dictionary[o])
@@ -230,7 +231,7 @@ class TurtlestarSerializer(Serializer):
         for g in self.contexts:
 
             for s,p,o in g.triples((None, None, None)):
-                # print("awasdsa",s,p,o, type(s), type(p), type(o))
+                print(" awasdsa",s,p,o, type(s), type(p), type(o))
 
                 # if type(o) == rdflib.term.RdfstarTriple:
                 #     print("asdasdasd123123123",o.subject(),o.predicate(),o.object())
