@@ -1486,8 +1486,8 @@ class SinkParser:
                     # quoted_triple_list[2].setPredicate(quoted_triple_list[4])
                     # quoted_triple_list[2].setObject(quoted_triple_list[5])
                     quoted_triple_list[2].setSubject(quoted_triple_list[4])
-                    quoted_triple_list[2].setSubject(quoted_triple_list[5])
-                    quoted_triple_list[2].setSubject(quoted_triple_list[6])
+                    quoted_triple_list[2].setPredicate(quoted_triple_list[5])
+                    quoted_triple_list[2].setObject(quoted_triple_list[6])
 
             else:
                 if dira == "->":
@@ -1496,14 +1496,15 @@ class SinkParser:
                     self.makeStatement((self._context, quoted_triple_list[2], quoted_triple_list[3], quoted_triple_list[1]))
         else:
             if dira == "->":
+                # print("making statement")
                 quoted_triple_list[1].setSubject(quoted_triple_list[2])
-                quoted_triple_list[1].setSubject(quoted_triple_list[3])
-                quoted_triple_list[1].setSubject(quoted_triple_list[4])
+                quoted_triple_list[1].setPredicate(quoted_triple_list[3])
+                quoted_triple_list[1].setObject(quoted_triple_list[4])
 
             else:
                 quoted_triple_list[1].setSubject(quoted_triple_list[2])
-                quoted_triple_list[1].setSubject(quoted_triple_list[3])
-                quoted_triple_list[1].setSubject(quoted_triple_list[4])
+                quoted_triple_list[1].setPredicate(quoted_triple_list[3])
+                quoted_triple_list[1].setObject(quoted_triple_list[4])
                 # self.makerdfstarStatement((self._context,quoted_triple_list[1], quoted_triple_list[3], quoted_triple_list[4], quoted_triple_list[2])) # what if don't change to str
 
     def property_list(self, argstr: str, i: int, subj):

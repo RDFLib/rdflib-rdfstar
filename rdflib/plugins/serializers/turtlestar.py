@@ -64,16 +64,51 @@ class TurtlestarSerializer(Serializer):
                 "Hextuple serialization can't (yet) handle formula-aware stores"
             )
         dictionary = {}
+        blanknode_dictionary = {}
         result_subject = ""
         result_object = ""
 
-        def update_dictionary_RdfstarTriple(node, g, dictionary, properties, collection_or_not, quoted_Bnode_or_not):
+        def update_dictionary_RdfstarTriple(node, g, dictionary, properties, collection_or_not, quoted_Bnode_or_not, blanknode_dictionary):
             quoted_Bnode_or_not = False
-
+            # print("update_dictionary_RdfstarTriple", node)
             if type(node) == rdflib.term.BNode:
                 for s, p, o in g.triples((node, None, None)):
                     if (isinstance(s, rdflib.term.BNode) & (not isinstance(o, rdflib.term.BNode)) & (not isinstance(o, rdflib.term.RdfstarTriple)) & ((not isinstance(p, rdflib.term.BNode)) & (not isinstance(p, rdflib.term.RdfstarTriple)))):
                         pass
+                        print("here", node)
+                        if isinstance(p, rdflib.term.URIRef):
+                            p = "<"+str(p)+">"
+                        elif isinstance(p, rdflib.term.Literal):
+                            p = p._literal_n3(use_plain=True)
+
+                        if isinstance(o, rdflib.term.URIRef):
+                            o = "<"+str(o)+">"
+                        elif isinstance(o, rdflib.term.Literal):
+                            o = o._literal_n3(use_plain=True)
+                        if not (node in blanknode_dictionary):
+
+                            # if isinstance(p, rdflib.term.URIRef):
+                            #         p = "<"+str(p)+">"
+                            # elif isinstance(p, rdflib.term.Literal):
+                            #         p = p._literal_n3(use_plain=True)
+
+                            # if isinstance(o, rdflib.term.URIRef):
+                            #         o = "<"+str(p)+">"
+                            # elif isinstance(p, rdflib.term.Literal):
+                            #         o = o._literal_n3(use_plain=True)
+
+                            blanknode_dictionary[node] = [p, o]
+                            # print(blanknode_dictionary)
+                        elif ((p in blanknode_dictionary[node]) & (o in blanknode_dictionary[node])):
+                            pass
+                        else:
+                            blanknode_dictionary[node].append(";")
+                            blanknode_dictionary[node].append(p)
+                            blanknode_dictionary[node].append(o)
+                            print(blanknode_dictionary)
+                            # blanknode_dictionary[node].append(p)
+                            # blanknode_dictionary[node].append(";", p, o)
+                            # blanknode_dictionary[node].append(o)
                     else:
                         # print("test2", s, p, o, type(s), type(p), type(o))
                         #todo () and []
@@ -135,26 +170,28 @@ class TurtlestarSerializer(Serializer):
                                 else:
                                     # print("testdfbalsdaewewe", o , dictionary)
                                     # properties.append(p)
-                                    update_dictionary_RdfstarTriple(o, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not)
+                                    update_dictionary_RdfstarTriple(o, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not, blanknode_dictionary)
                                     # properties.append(";")
 
             if type(node) == rdflib.term.RdfstarTriple:
+                print("update_dictionary_RdfstarTriple", node)
                 collection_or_not = False
                 quoted_Bnode_or_not = True
                 if node in dictionary:
-                    properties.append(dictionary[node])
-
+                    # properties.append(dictionary[node])
+                    pass
                 else:
-                    print("node expandable", node)
+
                 # expand_Bnode_and_RdfstarTriple(node, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not
                     subject = node.subject()
                     predicate = node.predicate()
                     object = node.object()
+                    print("node expandable", subject, predicate, object)
                     if subject in dictionary:
-                        print("subject stored", subject)
+                        # print("subject stored", subject)
                         subject = dictionary[subject]
                     if object in dictionary:
-                        print("object stored", object)
+                        # print("object stored", object)
                         object = dictionary[object]
                     subjectexpandable = ((type(subject) == rdflib.term.BNode) or (type(subject) == rdflib.term.RdfstarTriple))
                     objectexpandable = ((type(object) == rdflib.term.BNode) or (type(object) == rdflib.term.RdfstarTriple))
@@ -178,17 +215,17 @@ class TurtlestarSerializer(Serializer):
                         predicate = "<"+str(predicate)+">"
 
                     if subjectexpandable:
-                        result_object, ifcollection, ifquotedBnode, d1 = update_dictionary_RdfstarTriple(subject, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not)
+                        result_object, ifcollection, ifquotedBnode, d1 = update_dictionary_RdfstarTriple(subject, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not, blanknode_dictionary)
                         if isinstance(subject, rdflib.term.RdfstarTriple):
                             subject = d1[subject]
-                        elif isinstance(subject, rdflib.term.RdfstarTriple):
+                        elif isinstance(subject, rdflib.term.BNode):
                             subject = "_:"+str(subject)
 
                     if objectexpandable:
-                        result_object, ifcollection, ifquotedBnode, d2  = update_dictionary_RdfstarTriple(object, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not)
-                        if isinstance(subject, rdflib.term.RdfstarTriple):
+                        result_object, ifcollection, ifquotedBnode, d2  = update_dictionary_RdfstarTriple(object, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not, blanknode_dictionary)
+                        if isinstance(object, rdflib.term.RdfstarTriple):
                             object = d2[object]
-                        elif isinstance(subject, rdflib.term.RdfstarTriple):
+                        elif isinstance(object, rdflib.term.BNode):
                             object = "_:"+str(object)
 
                     if ((not subjectexpandable) and (not objectexpandable)):
@@ -198,17 +235,17 @@ class TurtlestarSerializer(Serializer):
 
                         dictionary[node] = "<<" + " "+str(subject)+ " "+str(predicate) + " "+str(object) + " "+">>"
                         # print("dictionary1",dictionary
-                        print("adding rdfstartriple node", dictionary[node])
+                        # print("adding rdfstartriple node", dictionary[node])
                         # properties.append(dictionary[node])
                     if node not in dictionary:
                     #     properties.append(dictionary[node])
                     # else:
                         # print("nd", node, dictionary)
                         dictionary[node] = "<<" + " "+str(subject)+ " "+str(predicate) + " "+str(object) + " "+">>"
-                        properties.append("<<" + " "+str(subject)+ " "+str(predicate) + " "+str(object) + " "+">>")
+                        # properties.append("<<" + " "+str(subject)+ " "+str(predicate) + " "+str(object) + " "+">>")
                         print("properties after append 2", properties)
                     else:
-                        properties.append(dictionary[node])
+                        # properties.append(dictionary[node])
                         print("properties after append 3", properties)
             return properties, collection_or_not, quoted_Bnode_or_not, dictionary
 
@@ -316,23 +353,44 @@ class TurtlestarSerializer(Serializer):
                         subject = "<"+str(subject)+">"
                     elif isinstance(subject, rdflib.term.Literal):
                         subject = subject._literal_n3(use_plain=True)
+                    elif isinstance(subject, rdflib.term.RdfstarTriple):
+                        subject = dictionary[subject]
+                    elif isinstance(subject, rdflib.term.BNode):
+                        # if subject in blanknode_dictionary:
+                        #     subject = "["+"".join(blanknode_dictionary[subject])+"]"
+
+                        if subject in blanknode_dictionary:
+                            subject = "["+"".join(blanknode_dictionary[subject])+"]"
+                        else:
+                            print("retrestsetse")
+                            subject = "_:"+str(subject)
+
+
                     if (isinstance(object, rdflib.term.URIRef)):
                         # print("tttttttttttuuuuuuuuuuuuuu")
                         object = "<"+str(object)+">"
                     elif isinstance(object, rdflib.term.Literal):
                         object = object._literal_n3(use_plain=True)
+                    elif isinstance(object, rdflib.term.RdfstarTriple):
+                        object = dictionary[object]
+                    elif isinstance(object, rdflib.term.BNode):
+                        if object in blanknode_dictionary:
+                            object = "["+"".join(blanknode_dictionary[object])+"]"
+                        else:
+                            object = "_:"+str(object)
+
                     if isinstance(predicate, rdflib.term.URIRef):
                         predicate = "<"+str(predicate)+">"
 
-                    if subjectexpandable:
-                        result_object, ifcollection, ifquotedBnode, d1 = expand_Bnode_and_RdfstarTriple(subject, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not)
+                    # if subjectexpandable:
+                    #     result_object, ifcollection, ifquotedBnode, d1 = expand_Bnode_and_RdfstarTriple(subject, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not)
 
-                        subject = d1[subject]
+                    #     subject = d1[subject]
 
-                    if objectexpandable:
-                        result_object, ifcollection, ifquotedBnode, d2  = expand_Bnode_and_RdfstarTriple(object, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not)
+                    # if objectexpandable:
+                    #     result_object, ifcollection, ifquotedBnode, d2  = expand_Bnode_and_RdfstarTriple(object, g, dictionary,properties, collection_or_not, quoted_Bnode_or_not)
 
-                        object = d2[object]
+                        # object = d2[object]
                     if ((not subjectexpandable) and (not objectexpandable)):
                         print("expand",subject, object, node)
                         # print("dictionary1",dictionary)
@@ -354,7 +412,7 @@ class TurtlestarSerializer(Serializer):
                         print("properties after append 3", properties)
             return properties, collection_or_not, quoted_Bnode_or_not, dictionary
 
-        # this loop is for updating the quoted triple dictionary
+        # this loop is for updating the quoted triple dictionary and blank node dictionary
         for g in self.contexts:
 
             for s,p,o in g.triples((None, None, None)):
@@ -379,12 +437,14 @@ class TurtlestarSerializer(Serializer):
                     elif (isinstance(subject, rdflib.term.BNode) or isinstance(subject, rdflib.term.RdfstarTriple)):
                         thenode_id = str(subject)
                         print("tttttttttttuuuuuuuuuuuuuu22222222222222", subject)
-                        result_subject, ifcollection, ifquotedBnode, dictionary = update_dictionary_RdfstarTriple(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
+                        result_subject, ifcollection, ifquotedBnode, dictionary = update_dictionary_RdfstarTriple(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not, blanknode_dictionary)
                         print("etsetest", result_subject, ifquotedBnode)
                         if (not len(result_subject) == 0):
                             if ifcollection == True:
                                 result_subject.insert(0, "(")
                                 result_subject.append(")")
+                            elif subject in blanknode_dictionary:
+                                subject = "["+"".join(blanknode_dictionary[subject])+"]"
                             elif ifquotedBnode:
                                 pass
                             else:
@@ -392,9 +452,20 @@ class TurtlestarSerializer(Serializer):
                                 result_subject.insert(0, "[")
                                 result_subject.append("]")
                             subject = "".join(result_subject)
+                        # elif subject in blanknode_dictionary:
+                        #     subject = "["+"".join(blanknode_dictionary[subject])+"]"
                         else:
+                        #     print("retrestsetse")
+                        #     subject = "_:"+str(subject):
+                        # else:
                             subject = "[]"
                         if subject == "[]":
+                        #     if subject in blanknode_dictionary:
+                        #         subject = "["+"".join(blanknode_dictionary[subject])+"]"
+                        #     else:
+                        #         print("retrestsetse")
+                        #         subject = "_:"+str(subject)
+                        #     # print("wearwra")
                             subject = " _:"+thenode_id + " "
 
 
@@ -404,19 +475,23 @@ class TurtlestarSerializer(Serializer):
                         object = object._literal_n3(use_plain=True)
                     elif (isinstance(object, rdflib.term.BNode) or isinstance(object, rdflib.term.RdfstarTriple)):
                         thenode_id = str(object)
-                        result_object, ifcollection, ifquotedBnode, dictionary = update_dictionary_RdfstarTriple(object,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
+                        result_object, ifcollection, ifquotedBnode, dictionary = update_dictionary_RdfstarTriple(object,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not, blanknode_dictionary)
                         # print("etsetest2222222", result_object)
                         if (not len(result_object) == 0):
                             if ifcollection == True:
                                 result_object.insert(0, "(")
                                 result_object.append(")")
                             # elif ifquotedBnode:
+                            elif object in blanknode_dictionary:
+                                object = "["+"".join(blanknode_dictionary[object])+"]"
                             elif ifquotedBnode:
                                 pass
                             else:
                                 result_object.insert(0, "[")
                                 result_object.append("]")
                             object = "".join(result_object)
+                        # elif object in blanknode_dictionary:
+                        #     object = "["+"".join(blanknode_dictionary[object])+"]"
                         else:
                             object = "[]"
                         if object == "[]":
@@ -430,213 +505,229 @@ class TurtlestarSerializer(Serializer):
         for g in self.contexts:
 
             for s,p,o in g.triples((None, None, None)):
+                if not s in blanknode_dictionary:
+                    if (isinstance(s, rdflib.term.BNode) & (isinstance(o, rdflib.term.BNode)  or isinstance(o, rdflib.term.RdfstarTriple) or isinstance(p, rdflib.term.BNode) or isinstance(p, rdflib.term.RdfstarTriple))):
+                        pass
+                    elif("http://www.w3.org/1999/02/22-rdf-syntax-ns#first" in p or "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
+                        pass
+                    else:
+                        print(" awasdsa",s,p,o, type(s), type(p), type(o))
+                        # if type(o) == rdflib.term.RdfstarTriple:
+                        #     print("asdasdasd123123123",o.subject(),o.predicate(),o.object())
+                        subject = s
+                        predicate = p
+                        object = o
 
-                if (isinstance(s, rdflib.term.BNode) & (isinstance(o, rdflib.term.BNode)  or isinstance(o, rdflib.term.RdfstarTriple) or isinstance(p, rdflib.term.BNode) or isinstance(p, rdflib.term.RdfstarTriple))):
-                    pass
-                elif("http://www.w3.org/1999/02/22-rdf-syntax-ns#first" in p or "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
-                    pass
-                else:
-                    print(" awasdsa",s,p,o, type(s), type(p), type(o))
-                    # if type(o) == rdflib.term.RdfstarTriple:
-                    #     print("asdasdasd123123123",o.subject(),o.predicate(),o.object())
-                    subject = s
-                    predicate = p
-                    object = o
+                        # print("typetest", subject, type(subject), "\n")
+                        # print("current dict", dictionary, "\n")
+                        properties = []
+                        collection_or_not = False
+                        quoted_Bnode_or_not = False
+
+                        if (isinstance(subject, rdflib.term.URIRef)):
+                            # print("tttttttttttuuuuuuuuuuuuuu")
+                            subject = "<"+str(subject)+">"
+                        elif isinstance(subject, rdflib.term.Literal):
+                            subject = subject._literal_n3(use_plain=True)
+                        elif (isinstance(subject, rdflib.term.BNode) or isinstance(subject, rdflib.term.RdfstarTriple)):
+                            thenode_id = str(subject)
+                            print("tttttttttttuuuuuuuuuuuuuu22222222222222", subject)
+                            result_subject, ifcollection, ifquotedBnode, d = expand_Bnode_and_RdfstarTriple(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
+                            # properties = []
+                            print("etsetest", result_subject, ifquotedBnode)
+                            if (not len(result_subject) == 0):
+                                if ifcollection == True:
+                                    result_subject.insert(0, "(")
+                                    result_subject.append(")")
+                                # elif subject in blanknode_dictionary:
+                                #     subject = "["+"".join(blanknode_dictionary[subject])+"]"
+                                elif ifquotedBnode:
+                                    pass
+                                else:
+                                    print("blanknodepropertylist", result_subject)
+                                    result_subject.insert(0, "[")
+                                    result_subject.append("]")
+                                subject = "".join(result_subject)
+                            else:
+                                if subject in blanknode_dictionary:
+                                #     subject = "["+"".join(blanknode_dictionary[subject])+"]"
+                                # else:
+                                #     subject = "[]"
+                                    pass
+                            if subject == "[]":
+                                subject = " _:"+thenode_id + " "
+                            properties = []
+
+
+                        if (isinstance(object, rdflib.term.URIRef)):
+                            object = "<"+str(object)+">"
+                        elif isinstance(object, rdflib.term.Literal):
+                            object = object._literal_n3(use_plain=True)
+                        elif (isinstance(object, rdflib.term.BNode) or isinstance(object, rdflib.term.RdfstarTriple)):
+                            thenode_id = str(object)
+                            result_object, ifcollection, ifquotedBnode, d = expand_Bnode_and_RdfstarTriple(object,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
+
+                            # print("etsetest2222222", result_object)
+                            if (not len(result_object) == 0):
+                                if ifcollection == True:
+                                    result_object.insert(0, "(")
+                                    result_object.append(")")
+                                # elif ifquotedBnode:
+                                # elif object in blanknode_dictionary:
+                                #     object = "["+"".join(blanknode_dictionary[object])+"]"
+                                elif ifquotedBnode:
+                                    pass
+                                else:
+                                    result_object.insert(0, "[")
+                                    result_object.append("]")
+                                object = "".join(result_object)
+                            else:
+                                if object in blanknode_dictionary:
+                                    object = "["+"".join(blanknode_dictionary[object])+"]"
+                                else:
+                                    object = "[]"
+                                #     pass
+                                # object = "[]"
+                            if object == "[]":
+                                object = " _:"+thenode_id + " "
+                            properties = []
+
+                        if(isinstance(predicate, rdflib.term.URIRef)):
+                            predicate = "<"+str(predicate)+">"
+
+                        output = subject+" "+predicate+" "+object+" ."+"\n"
+                        if output is not None:
+                            stream.write(output.encode())
+
+                    # else:
+                    #     pass
+
+            for g in self.contexts:
+
+                for s in g.subjects(predicate=RDF.type, object=RDFSTAR.QuotedStatement):
+                    # print(s)
+                    # print(
+                    #    ( g.value(s, RDF.subject),
+                    #    g.value(s, RDF.predicate),
+                    #   g.value(s, RDF.object))
+                    #   )
+
+                    subject = g.value(s, RDF.subject)
+                    predicate = g.value(s, RDF.predicate)
+                    object = g.value(s, RDF.object)
 
                     # print("typetest", subject, type(subject), "\n")
                     # print("current dict", dictionary, "\n")
                     properties = []
                     collection_or_not = False
                     quoted_Bnode_or_not = False
+                    # all_changed = True
+                    # while all_changed:
+                        # for s, p, o in g.triples((subject, None, None)):
+                        #     # oList = properties.get(p, [])
+                        #     # oList.append(o)
+                        #     if o in dictionary:
+                        #         properties.append(dictionary(o))
+                        #     else:
+                    # result, ifcollection = expand_Bnode(subject,g,dictionary,properties,collection_or_not)
+                    # if ifcollection == True:
+                    #     result.insert(0, "(")
+                    #     result.append(")")
+                    # else:
+                    #     result.insert(0, "[")
+                    #     result.append("]")
+                    # print("expand", result, "\n")
 
+                    # all_changed = False
+                    # while (all_changed==False):
+
+
+                    if isinstance(g.value(s, RDF.subject), rdflib.term.BNode):
+                        if subject in dictionary:
+                            subject = dictionary[g.value(s, RDF.subject)]
+                        # else:
+                        #     subject = "<"+str(subject)+">"
+
+                    if isinstance(g.value(s, RDF.object), rdflib.term.BNode):
+                        if object in dictionary:
+                            object = dictionary[g.value(s, RDF.object)]
+                        # else:
+                        #     object = "<"+str(object)+">"
+
+                    # predicate = "<"+str(predicate)+">"
+
+                    # print("before", subject, type(subject))
                     if (isinstance(subject, rdflib.term.URIRef)):
                         # print("tttttttttttuuuuuuuuuuuuuu")
                         subject = "<"+str(subject)+">"
-                    elif isinstance(subject, rdflib.term.Literal):
+                    elif (isinstance(subject, rdflib.term.Literal)):
                         subject = subject._literal_n3(use_plain=True)
-                    elif (isinstance(subject, rdflib.term.BNode) or isinstance(subject, rdflib.term.RdfstarTriple)):
-                        thenode_id = str(subject)
-                        print("tttttttttttuuuuuuuuuuuuuu22222222222222", subject)
+                    elif (isinstance(subject, rdflib.term.BNode)):
+                        bnode_id = str(subject)
+                        # print("tttttttttttuuuuuuuuuuuuuu22222222222222")
                         result_subject, ifcollection, ifquotedBnode, d = expand_Bnode_and_RdfstarTriple(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
-                        print("etsetest", result_subject, ifquotedBnode)
                         if (not len(result_subject) == 0):
                             if ifcollection == True:
                                 result_subject.insert(0, "(")
                                 result_subject.append(")")
-                            elif ifquotedBnode:
-                                pass
                             else:
-                                print("blanknodepropertylist", result_subject)
+                            # if ifquotedBnode == True:
+                            #     for x in range(0, len(result_subject)):
+                            #         if isinstance(result_subject[x], rdflib.term.URIRef):
+                            #             result_subject[x] = "<"+result_subject[x]+">"
+                            #     # print("ararr", result_subject)
+                            #     result_subject.insert(0, "<<")
+                            #     result_subject.append(">>")
+                            # else:
                                 result_subject.insert(0, "[")
                                 result_subject.append("]")
                             subject = "".join(result_subject)
                         else:
                             subject = "[]"
                         if subject == "[]":
-                            subject = " _:"+thenode_id + " "
+                            subject = " _:"+bnode_id + " "
 
 
                     if (isinstance(object, rdflib.term.URIRef)):
                         object = "<"+str(object)+">"
                     elif isinstance(object, rdflib.term.Literal):
                         object = object._literal_n3(use_plain=True)
-                    elif (isinstance(object, rdflib.term.BNode) or isinstance(object, rdflib.term.RdfstarTriple)):
-                        thenode_id = str(object)
+                    elif (isinstance(object, rdflib.term.BNode)):
+                        bnode_id = str(object)
                         result_object, ifcollection, ifquotedBnode, d = expand_Bnode_and_RdfstarTriple(object,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
-                        # print("etsetest2222222", result_object)
                         if (not len(result_object) == 0):
                             if ifcollection == True:
                                 result_object.insert(0, "(")
                                 result_object.append(")")
-                            # elif ifquotedBnode:
-                            elif ifquotedBnode:
-                                pass
                             else:
+                            # if ifquotedBnode == True:
+                            #     for x in range(0, len(result_subject)):
+                            #         if isinstance(result_subject[x], rdflib.term.URIRef):
+                            #             result_subject[x] = "<"+result_subject[x]+">"
+                            #     # print("ararr", result_subject)
+                            #     result_subject.insert(0, "<<")
+                            #     result_subject.append(">>")
+                            # else:
                                 result_object.insert(0, "[")
                                 result_object.append("]")
                             object = "".join(result_object)
                         else:
                             object = "[]"
                         if object == "[]":
-                            object = " _:"+thenode_id + " "
+                            object = " _:"+bnode_id + " "
 
 
                     if(isinstance(predicate, rdflib.term.URIRef)):
-                        predicate = "<"+str(predicate)+">"
+                        predicate = "<"+str(g.value(s, RDF.predicate))+">"
+                    elif isinstance(predicate, rdflib.term.Literal):
+                        predicate = predicate._literal_n3(use_plain=True)
+                    # print("adada", serialized_subject)
 
-                    output = subject+" "+predicate+" "+object+" ."+"\n"
-                    if output is not None:
-                        stream.write(output.encode())
+                    dictionary[s] = "<< "+str(subject)+ str(predicate)+str(object)+" >>"
 
-                # else:
-                #     pass
-
-        for g in self.contexts:
-
-            for s in g.subjects(predicate=RDF.type, object=RDFSTAR.QuotedStatement):
-                # print(s)
-                # print(
-                #    ( g.value(s, RDF.subject),
-                #    g.value(s, RDF.predicate),
-                #   g.value(s, RDF.object))
-                #   )
-
-                subject = g.value(s, RDF.subject)
-                predicate = g.value(s, RDF.predicate)
-                object = g.value(s, RDF.object)
-
-                # print("typetest", subject, type(subject), "\n")
-                # print("current dict", dictionary, "\n")
-                properties = []
-                collection_or_not = False
-                quoted_Bnode_or_not = False
-                # all_changed = True
-                # while all_changed:
-                    # for s, p, o in g.triples((subject, None, None)):
-                    #     # oList = properties.get(p, [])
-                    #     # oList.append(o)
-                    #     if o in dictionary:
-                    #         properties.append(dictionary(o))
-                    #     else:
-                # result, ifcollection = expand_Bnode(subject,g,dictionary,properties,collection_or_not)
-                # if ifcollection == True:
-                #     result.insert(0, "(")
-                #     result.append(")")
-                # else:
-                #     result.insert(0, "[")
-                #     result.append("]")
-                # print("expand", result, "\n")
-
-                # all_changed = False
-                # while (all_changed==False):
-
-
-                if isinstance(g.value(s, RDF.subject), rdflib.term.BNode):
-                    if subject in dictionary:
-                        subject = dictionary[g.value(s, RDF.subject)]
-                    # else:
-                    #     subject = "<"+str(subject)+">"
-
-                if isinstance(g.value(s, RDF.object), rdflib.term.BNode):
-                    if object in dictionary:
-                        object = dictionary[g.value(s, RDF.object)]
-                    # else:
-                    #     object = "<"+str(object)+">"
-
-                # predicate = "<"+str(predicate)+">"
-
-                # print("before", subject, type(subject))
-                if (isinstance(subject, rdflib.term.URIRef)):
-                    # print("tttttttttttuuuuuuuuuuuuuu")
-                    subject = "<"+str(subject)+">"
-                elif (isinstance(subject, rdflib.term.Literal)):
-                    subject = subject._literal_n3(use_plain=True)
-                elif (isinstance(subject, rdflib.term.BNode)):
-                    bnode_id = str(subject)
-                    # print("tttttttttttuuuuuuuuuuuuuu22222222222222")
-                    result_subject, ifcollection, ifquotedBnode, d = expand_Bnode_and_RdfstarTriple(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
-                    if (not len(result_subject) == 0):
-                        if ifcollection == True:
-                            result_subject.insert(0, "(")
-                            result_subject.append(")")
-                        else:
-                        # if ifquotedBnode == True:
-                        #     for x in range(0, len(result_subject)):
-                        #         if isinstance(result_subject[x], rdflib.term.URIRef):
-                        #             result_subject[x] = "<"+result_subject[x]+">"
-                        #     # print("ararr", result_subject)
-                        #     result_subject.insert(0, "<<")
-                        #     result_subject.append(">>")
-                        # else:
-                            result_subject.insert(0, "[")
-                            result_subject.append("]")
-                        subject = "".join(result_subject)
-                    else:
-                        subject = "[]"
-                    if subject == "[]":
-                        subject = " _:"+bnode_id + " "
-
-
-                if (isinstance(object, rdflib.term.URIRef)):
-                    object = "<"+str(object)+">"
-                elif isinstance(object, rdflib.term.Literal):
-                    object = object._literal_n3(use_plain=True)
-                elif (isinstance(object, rdflib.term.BNode)):
-                    bnode_id = str(object)
-                    result_object, ifcollection, ifquotedBnode, d = expand_Bnode_and_RdfstarTriple(object,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
-                    if (not len(result_object) == 0):
-                        if ifcollection == True:
-                            result_object.insert(0, "(")
-                            result_object.append(")")
-                        else:
-                        # if ifquotedBnode == True:
-                        #     for x in range(0, len(result_subject)):
-                        #         if isinstance(result_subject[x], rdflib.term.URIRef):
-                        #             result_subject[x] = "<"+result_subject[x]+">"
-                        #     # print("ararr", result_subject)
-                        #     result_subject.insert(0, "<<")
-                        #     result_subject.append(">>")
-                        # else:
-                            result_object.insert(0, "[")
-                            result_object.append("]")
-                        object = "".join(result_object)
-                    else:
-                        object = "[]"
-                    if object == "[]":
-                        object = " _:"+bnode_id + " "
-
-
-                if(isinstance(predicate, rdflib.term.URIRef)):
-                    predicate = "<"+str(g.value(s, RDF.predicate))+">"
-                elif isinstance(predicate, rdflib.term.Literal):
-                    predicate = predicate._literal_n3(use_plain=True)
-                # print("adada", serialized_subject)
-
-                dictionary[s] = "<< "+str(subject)+ str(predicate)+str(object)+" >>"
-
-                # output = subject+" "+predicate+" "+object+" ."+"\n"
-                # if output is not None:
-                #     stream.write(output.encode())
+                    # output = subject+" "+predicate+" "+object+" ."+"\n"
+                    # if output is not None:
+                    #     stream.write(output.encode())
 
         for g in self.contexts:
 
