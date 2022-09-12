@@ -81,10 +81,16 @@ class NtriplesStarSerializer(Serializer):
                         elif isinstance(p, rdflib.term.Literal):
                             p = p._literal_n3(use_plain=True)
 
+                        if isinstance(s, rdflib.term.BNode):
+                            s = "_:"+str(s)
+
                         if isinstance(o, rdflib.term.URIRef):
                             o = "<"+str(o)+">"
                         elif isinstance(o, rdflib.term.Literal):
                             o = o._literal_n3(use_plain=True)
+                        elif isinstance(o, rdflib.term.BNode):
+                            o = "_:"+str(o)
+
                         if not (node in blanknode_dictionary):
 
                             # if isinstance(p, rdflib.term.URIRef):
@@ -468,7 +474,8 @@ class NtriplesStarSerializer(Serializer):
                         #         print("retrestsetse")
                         #         subject = "_:"+str(subject)
                         #     # print("wearwra")
-                            subject = " _:"+thenode_id + " "
+                            # subject = " _:"+thenode_id + " "
+                            subject = " _:"+thenode_id
 
 
                     if (isinstance(object, rdflib.term.URIRef)):
@@ -497,7 +504,8 @@ class NtriplesStarSerializer(Serializer):
                         else:
                             object = "[]"
                         if object == "[]":
-                            object = " _:"+thenode_id + " "
+                            # object = " _:"+thenode_id + " "
+                            object = " _:"+thenode_id
 
 
                     if(isinstance(predicate, rdflib.term.URIRef)):
@@ -514,6 +522,7 @@ class NtriplesStarSerializer(Serializer):
                 # re1 = not s in blanknode_dictionary
                 # re2 = (s in blanknode_dictionary) & (len(blanknode_dictionary[s]) < 4)
                 if s in blanknode_dictionary:
+                    # print("test", blanknode_dictionary)
                     re1 = False
                     re2 = False
                     if len(blanknode_dictionary[s]) < 4:
@@ -569,12 +578,16 @@ class NtriplesStarSerializer(Serializer):
                                     result_subject.append("]")
                                 subject = "".join(result_subject)
                             else:
-                                if subject in blanknode_dictionary:
-                                    subject = "["+"".join(blanknode_dictionary[subject])+"]"
+                                if (subject in blanknode_dictionary):
+                                    if(len(blanknode_dictionary[subject])>2):
+                                        subject = "["+"".join(blanknode_dictionary[subject])+"]"
+                                    else:
+                                        subject = "[]"
                                 else:
                                     subject = "[]"
                             if subject == "[]":
-                                subject = " _:"+thenode_id + " "
+                                # subject = " _:"+thenode_id + " "
+                                subject = " _:"+thenode_id
                             properties = []
 
 
@@ -601,14 +614,18 @@ class NtriplesStarSerializer(Serializer):
                                     result_object.append("]")
                                 object = "".join(result_object)
                             else:
-                                if object in blanknode_dictionary:
-                                    object = "["+"".join(blanknode_dictionary[object])+"]"
+                                if (object in blanknode_dictionary):
+                                    if(len(blanknode_dictionary[object])>2):
+                                        object = "["+"".join(blanknode_dictionary[object])+"]"
+                                    else:
+                                        object = "[]"
                                 else:
                                     object = "[]"
                                 #     pass
                                 # object = "[]"
                             if object == "[]":
-                                object = " _:"+thenode_id + " "
+                                # object = " _:"+thenode_id + " "
+                                object = " _:"+thenode_id
                             properties = []
 
                         if(isinstance(predicate, rdflib.term.URIRef)):
@@ -620,264 +637,6 @@ class NtriplesStarSerializer(Serializer):
 
                     # else:
                     #     pass
-
-            for g in self.contexts:
-
-                for s in g.subjects(predicate=RDF.type, object=RDFSTAR.QuotedStatement):
-                    # print(s)
-                    # print(
-                    #    ( g.value(s, RDF.subject),
-                    #    g.value(s, RDF.predicate),
-                    #   g.value(s, RDF.object))
-                    #   )
-
-                    subject = g.value(s, RDF.subject)
-                    predicate = g.value(s, RDF.predicate)
-                    object = g.value(s, RDF.object)
-
-                    # print("typetest", subject, type(subject), "\n")
-                    # print("current dict", dictionary, "\n")
-                    properties = []
-                    collection_or_not = False
-                    quoted_Bnode_or_not = False
-                    # all_changed = True
-                    # while all_changed:
-                        # for s, p, o in g.triples((subject, None, None)):
-                        #     # oList = properties.get(p, [])
-                        #     # oList.append(o)
-                        #     if o in dictionary:
-                        #         properties.append(dictionary(o))
-                        #     else:
-                    # result, ifcollection = expand_Bnode(subject,g,dictionary,properties,collection_or_not)
-                    # if ifcollection == True:
-                    #     result.insert(0, "(")
-                    #     result.append(")")
-                    # else:
-                    #     result.insert(0, "[")
-                    #     result.append("]")
-                    # print("expand", result, "\n")
-
-                    # all_changed = False
-                    # while (all_changed==False):
-
-
-                    if isinstance(g.value(s, RDF.subject), rdflib.term.BNode):
-                        if subject in dictionary:
-                            subject = dictionary[g.value(s, RDF.subject)]
-                        # else:
-                        #     subject = "<"+str(subject)+">"
-
-                    if isinstance(g.value(s, RDF.object), rdflib.term.BNode):
-                        if object in dictionary:
-                            object = dictionary[g.value(s, RDF.object)]
-                        # else:
-                        #     object = "<"+str(object)+">"
-
-                    # predicate = "<"+str(predicate)+">"
-
-                    # print("before", subject, type(subject))
-                    if (isinstance(subject, rdflib.term.URIRef)):
-                        # print("tttttttttttuuuuuuuuuuuuuu")
-                        subject = "<"+str(subject)+">"
-                    elif (isinstance(subject, rdflib.term.Literal)):
-                        subject = subject._literal_n3(use_plain=True)
-                    elif (isinstance(subject, rdflib.term.BNode)):
-                        bnode_id = str(subject)
-                        # print("tttttttttttuuuuuuuuuuuuuu22222222222222")
-                        result_subject, ifcollection, ifquotedBnode, d = expand_Bnode_and_RdfstarTriple(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
-                        if (not len(result_subject) == 0):
-                            if ifcollection == True:
-                                result_subject.insert(0, "(")
-                                result_subject.append(")")
-                            else:
-                            # if ifquotedBnode == True:
-                            #     for x in range(0, len(result_subject)):
-                            #         if isinstance(result_subject[x], rdflib.term.URIRef):
-                            #             result_subject[x] = "<"+result_subject[x]+">"
-                            #     # print("ararr", result_subject)
-                            #     result_subject.insert(0, "<<")
-                            #     result_subject.append(">>")
-                            # else:
-                                result_subject.insert(0, "[")
-                                result_subject.append("]")
-                            subject = "".join(result_subject)
-                        else:
-                            subject = "[]"
-                        if subject == "[]":
-                            # subject = " _:"+bnode_id + " "
-                            subject = " _:"+bnode_id
-
-
-                    if (isinstance(object, rdflib.term.URIRef)):
-                        object = "<"+str(object)+">"
-                    elif isinstance(object, rdflib.term.Literal):
-                        object = object._literal_n3(use_plain=True)
-                    elif (isinstance(object, rdflib.term.BNode)):
-                        bnode_id = str(object)
-                        result_object, ifcollection, ifquotedBnode, d = expand_Bnode_and_RdfstarTriple(object,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
-                        if (not len(result_object) == 0):
-                            if ifcollection == True:
-                                result_object.insert(0, "(")
-                                result_object.append(")")
-                            else:
-                            # if ifquotedBnode == True:
-                            #     for x in range(0, len(result_subject)):
-                            #         if isinstance(result_subject[x], rdflib.term.URIRef):
-                            #             result_subject[x] = "<"+result_subject[x]+">"
-                            #     # print("ararr", result_subject)
-                            #     result_subject.insert(0, "<<")
-                            #     result_subject.append(">>")
-                            # else:
-                                result_object.insert(0, "[")
-                                result_object.append("]")
-                            object = "".join(result_object)
-                        else:
-                            object = "[]"
-                        if object == "[]":
-                            # object = " _:"+bnode_id + " "
-                            object = " _:"+bnode_id
-
-
-                    if(isinstance(predicate, rdflib.term.URIRef)):
-                        predicate = "<"+str(g.value(s, RDF.predicate))+">"
-                    elif isinstance(predicate, rdflib.term.Literal):
-                        predicate = predicate._literal_n3(use_plain=True)
-                    # print("adada", serialized_subject)
-
-                    dictionary[s] = "<< "+str(subject)+ str(predicate)+str(object)+" >>"
-
-                    # output = subject+" "+predicate+" "+object+" ."+"\n"
-                    # if output is not None:
-                    #     stream.write(output.encode())
-
-        for g in self.contexts:
-
-            for s in g.subjects(predicate=RDF.type, object=RDFSTAR.AssertedStatement):
-                # print(s)
-                # print(
-                #    ( g.value(s, RDF.subject),
-                #    g.value(s, RDF.predicate),
-                #   g.value(s, RDF.object))
-                #   )
-
-                subject = g.value(s, RDF.subject)
-                predicate = g.value(s, RDF.predicate)
-                object = g.value(s, RDF.object)
-
-                # print("typetest", subject, type(subject), "\n")
-                # print("current dict", dictionary, "\n")
-                properties = []
-                collection_or_not = False
-                quoted_Bnode_or_not = False
-                # all_changed = True
-                # while all_changed:
-                    # for s, p, o in g.triples((subject, None, None)):
-                    #     # oList = properties.get(p, [])
-                    #     # oList.append(o)
-                    #     if o in dictionary:
-                    #         properties.append(dictionary(o))
-                    #     else:
-                # result, ifcollection = expand_Bnode(subject,g,dictionary,properties,collection_or_not)
-                # if ifcollection == True:
-                #     result.insert(0, "(")
-                #     result.append(")")
-                # else:
-                #     result.insert(0, "[")
-                #     result.append("]")
-                # print("expand", result, "\n")
-
-                # all_changed = False
-                # while (all_changed==False):
-
-
-                if isinstance(g.value(s, RDF.subject), rdflib.term.BNode):
-                    if subject in dictionary:
-                        subject = dictionary[g.value(s, RDF.subject)]
-                    # else:
-                    #     subject = "<"+str(subject)+">"
-
-                if isinstance(g.value(s, RDF.object), rdflib.term.BNode):
-                    if object in dictionary:
-                        object = dictionary[g.value(s, RDF.object)]
-                    # else:
-                    #     object = "<"+str(object)+">"
-
-                # predicate = "<"+str(predicate)+">"
-
-                # print("before", subject, type(subject))
-                if (isinstance(subject, rdflib.term.URIRef)):
-                    # print("tttttttttttuuuuuuuuuuuuuu")
-                    subject = "<"+str(subject)+">"
-                elif isinstance(subject, rdflib.term.Literal):
-                    subject = subject._literal_n3(use_plain=True)
-                elif (isinstance(subject, rdflib.term.BNode)):
-                    bnode_id = str(subject)
-                    # print("tttttttttttuuuuuuuuuuuuuu22222222222222")
-                    result_subject, ifcollection, ifquotedBnode, d = expand_Bnode_and_RdfstarTriple(subject,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
-                    if (not len(result_subject) == 0):
-                        if ifcollection == True:
-                            result_subject.insert(0, "(")
-                            result_subject.append(")")
-                        else:
-                        # if ifquotedBnode == True:
-                        #     for x in range(0, len(result_subject)):
-                        #         if isinstance(result_subject[x], rdflib.term.URIRef):
-                        #             result_subject[x] = "<"+result_subject[x]+">"
-                        #     # print("ararr", result_subject)
-                        #     result_subject.insert(0, "<<")
-                        #     result_subject.append(">>")
-                        # else:
-                            result_subject.insert(0, "[")
-                            result_subject.append("]")
-                        subject = "".join(result_subject)
-                    else:
-                        subject = "[]"
-                    if subject == "[]":
-                        # subject = " _:"+bnode_id + " "
-                        subject = " _:"+bnode_id
-
-
-                if (isinstance(object, rdflib.term.URIRef)):
-                    object = "<"+str(object)+">"
-                elif isinstance(object, rdflib.term.Literal):
-                    object = object._literal_n3(use_plain=True)
-                elif (isinstance(object, rdflib.term.BNode)):
-                    bnode_id = str(object)
-                    result_object, ifcollection, ifquotedBnode, d = expand_Bnode_and_RdfstarTriple(object,g,dictionary,properties,collection_or_not, quoted_Bnode_or_not)
-                    if (not len(result_object) == 0):
-                        if ifcollection == True:
-                            result_object.insert(0, "(")
-                            result_object.append(")")
-                        else:
-                        # if ifquotedBnode == True:
-                        #     for x in range(0, len(result_subject)):
-                        #         if isinstance(result_subject[x], rdflib.term.URIRef):
-                        #             result_subject[x] = "<"+result_subject[x]+">"
-                        #     # print("ararr", result_subject)
-                        #     result_subject.insert(0, "<<")
-                        #     result_subject.append(">>")
-                        # else:
-                            result_object.insert(0, "[")
-                            result_object.append("]")
-                        object = "".join(result_object)
-                    else:
-                        object = "[]"
-                    if object == "[]":
-                        # object = " _:"+bnode_id + " "
-                        object = " _:"+bnode_id
-
-
-                if(isinstance(predicate, rdflib.term.URIRef)):
-                    predicate = "<"+str(g.value(s, RDF.predicate))+">"
-                elif isinstance(predicate, rdflib.term.Literal):
-                    predicate = predicate._literal_n3(use_plain=True)
-                # print("adada", serialized_subject)
-
-                dictionary[s] = "<< "+str(subject)+ str(predicate)+str(object)+" >>"
-
-                output = subject+" "+predicate+" "+object+" ."+"\n"
-                if output is not None:
-                    stream.write(output.encode())
 
     def _iri_or_bn(self, i_):
         if isinstance(i_, URIRef):
