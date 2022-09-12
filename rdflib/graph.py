@@ -432,16 +432,6 @@ class Graph(Node):
         self.__store.add((s, p, o), self, quoted=False)
         return self
 
-    def addStarTriple(self, rdfstartriple: Tuple[Node,Node, Node, Node]):
-        """Add a quoted triple with self as context"""
-        hashnode, s, p, o = rdfstartriple
-        assert isinstance(hashnode, Node), "hashnode %s must be an rdflib term" % (s,)
-        assert isinstance(s, Node), "Subject %s must be an rdflib term" % (s,)
-        assert isinstance(p, Node), "Predicate %s must be an rdflib term" % (p,)
-        assert isinstance(o, Node), "Object %s must be an rdflib term" % (o,)
-        self.__store.addStarTriple((hashnode, s, p, o), self, quoted=False)
-        return self
-
     def addN(self, quads: Iterable[Tuple[Node, Node, Node, Any]]):
         """Add a sequence of triple with context"""
 
@@ -508,25 +498,6 @@ class Graph(Node):
             for (_s, _p, _o), cg in self.__store.triples((s, p, o), context=self):
                 yield _s, _p, _o
 
-    def rdfstartriples(
-        self,
-        rdfstartriple: Tuple[Optional[IdentifiedNode],
-            Optional[IdentifiedNode], Union[None, Path, IdentifiedNode], Optional[Node]
-        ],
-    ) -> Iterable[Tuple[IdentifiedNode, IdentifiedNode, Union[IdentifiedNode, Path], Node]]:
-        """Generator over the triple store
-
-        Returns triples that match the given triple pattern. If triple pattern
-        does not provide a context, all contexts will be searched.
-        """
-        hashnode, s, p, o = rdfstartriple
-        #if isinstance(p, Path):
-        #     for _s, _o in p.eval(self, s, o):
-        #         yield _s, p, _o
-        # else:
-        print(self.__store.rdfstartriples((hashnode, s, p, o), context=self))
-        for (_hashnode, _s, _p, _o), cg in self.__store.rdfstartriples((hashnode, s, p, o), context=self):
-            yield _hashnode, _s, _p, _o
     def __getitem__(self, item):
         """
         A graph can be "sliced" as a shortcut for the triples method

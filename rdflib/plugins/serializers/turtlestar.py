@@ -151,7 +151,7 @@ class TurtlestarSerializer(Serializer):
                                     properties.append(")")
 
                         else:
-                            # print("sadasdasd", o, p, type(o), type(p))
+                            # print("sadasdasd", o, p, type(o), type(p) )
                             if ((not isinstance(o, rdflib.term.BNode)) & (not isinstance(o, rdflib.term.RdfstarTriple)) & ((not isinstance(p, rdflib.term.BNode)) & (not isinstance(p, rdflib.term.RdfstarTriple)))):
                                 pass
 

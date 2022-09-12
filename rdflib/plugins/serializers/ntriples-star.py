@@ -70,7 +70,7 @@ class NtriplesStarSerializer(Serializer):
 
         def update_dictionary_RdfstarTriple(node, g, dictionary, properties, collection_or_not, quoted_Bnode_or_not, blanknode_dictionary):
             quoted_Bnode_or_not = False
-            # print("update_dictionary_RdfstarTriple", node)
+            # print("update_dictionary_RdfstarTriple", node )
             if type(node) == rdflib.term.BNode:
                 for s, p, o in g.triples((node, None, None)):
                     if (isinstance(s, rdflib.term.BNode) & (not isinstance(o, rdflib.term.BNode)) & (not isinstance(o, rdflib.term.RdfstarTriple)) & ((not isinstance(p, rdflib.term.BNode)) & (not isinstance(p, rdflib.term.RdfstarTriple)))):
