@@ -445,7 +445,7 @@ class BNode(IdentifiedNode):
             # must be valid NCNames" _:[A-Za-z][A-Za-z0-9]*
             # http://www.w3.org/TR/2004/REC-rdf-testcases-20040210/#nodeID
         # type error: Incompatible return value type (got "Identifier", expected "BNode")
-        print("testbnode", cls, value)
+        # print("testbnode", cls, value)
         return Identifier.__new__(cls, value)  # type: ignore[return-value]
 
     def n3(self, namespace_manager: Optional["NamespaceManager"] = None) -> str:

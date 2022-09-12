@@ -44,9 +44,9 @@ register(
 # g.parse(data="test/turtle-star/test_rdfliteral.ttl", format = "ttl")
 # print(g.serialize(format = "ttl"))
 
-# g = Graph()
-# g.parse(data="test/turtle-star/turtle-star-syntax-basic-01.ttl", format = "ttls")
-# print(g.serialize(format = "ttlstar"))
+g = Graph()
+g.parse(data="test/turtle-star/turtle-star-syntax-basic-01.ttl", format = "ttls")
+print(g.serialize(format = "ttlstar"))
 
 g = Graph()
 g.parse("test/turtle-star/turtle-star-syntax-basic-02.ttl", format = "ttls")

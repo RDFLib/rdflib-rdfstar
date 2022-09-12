@@ -2260,16 +2260,16 @@ class RDFSink(object):
         uri: Optional[str] = None,
         why: Optional[Callable[[], None]] = None,
     ) -> BNode:
-        print("newBlankNode in RDFSink")
+        # print("newBlankNode in RDFSink")
         if isinstance(arg, Formula):
-            print("newBlankNode in Formula", arg, uri)
+            # print("newBlankNode in Formula", arg, uri)
             return arg.newBlankNode(uri)
         elif isinstance(arg, Graph) or arg is None:
-            print("newBlankNode in RDFSink Graph", arg, uri, self.uuid, self.counter,"n%sb%s" % (self.uuid, self.counter))
+            # print("newBlankNode in RDFSink Graph", arg, uri, self.uuid, self.counter,"n%sb%s" % (self.uuid, self.counter))
             self.counter += 1
             bn = BNode("n%sb%s" % (self.uuid, self.counter))
         else:
-            print("testsv24", arg, uri, str(arg[0]).split("#").pop().replace("_", "b"))
+            # print("testsv24", arg, uri, str(arg[0]).split("#").pop().replace("_", "b"))
             bn = BNode(str(arg[0]).split("#").pop().replace("_", "b"))
         return bn
 
@@ -2359,7 +2359,7 @@ class RDFSink(object):
         s = self.normalise(f, s)
         p = self.normalise(f, p)
         o = self.normalise(f, o)
-        print("testmakerdfstarStatement", hashnode, s,p,o)
+        # print("testmakerdfstarStatement", hashnode, s,p,o)
         if f == self.rootFormula:
             # print s, p, o, '.'
             self.graph.addStarTriple((hashnode, s, p, o))
