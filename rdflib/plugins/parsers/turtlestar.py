@@ -382,7 +382,7 @@ class FindVariables(Visitor):
     def quotation(self, var):
         qut = Reconstructor(turtle_lark).reconstruct(var) # replace here or replace later
         qut = qut.replace(";", "") #####################
-        # qut = qut.replace(" ", "") #qut = qut.strip()
+        qut = qut.replace(" ", "") #qut = qut.strip()
         # print("qqqqqqqqq", qut)
         if not (qut in quotation_list):
             quotation_list.append(qut)
@@ -390,6 +390,7 @@ class FindVariables(Visitor):
         vr = Reconstructor(turtle_lark).reconstruct(var)
         vr = vr.replace(";","")
         # vr = vr.replace(" ","")
+        # print(quotation_dict)
         quotation_dict[qut] = str(myHash(qut)) + "RdfstarTriple"
         qut_hash = ":" + str(myHash(qut))
         # try:
@@ -568,6 +569,7 @@ def RDFstarParsings(rdfstarstring):
         result = "".join(y)
         # print("ttttteeeeee", result)
         result = result.replace(" ", "")
+        # print("testparserhash",print(quotation_dict), result)
         if result in assertedtriplelist:
             test1 = "<<"+result+">>"
             if test1 in quotation_list:
@@ -588,6 +590,7 @@ def RDFstarParsings(rdfstarstring):
         if not (result in quotation_list):
             for z in range(0,len(y)):
                 if "<<" in y[z]:
+                    y[z] = y[z].replace(" ", "")
                     y[z] = "_:"+quotation_dict[y[z]]
             myvalue = str(myHash(result))
             # print("asrtrrrrrtt", myvalue)
@@ -659,7 +662,7 @@ def RDFstarParsings(rdfstarstring):
     if "PREFIX:" in constructors:
         constructors = constructors.replace("PREFIX:", "PREFIX :")
 
-    print("yes?", constructors)
+    print("input after preprocessing: ", constructors)
     constructors = bytes(constructors, 'utf-8')
     return constructors
 

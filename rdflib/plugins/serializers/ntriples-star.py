@@ -570,10 +570,9 @@ class NtriplesStarSerializer(Serializer):
                                 subject = "".join(result_subject)
                             else:
                                 if subject in blanknode_dictionary:
-                                #     subject = "["+"".join(blanknode_dictionary[subject])+"]"
-                                # else:
-                                #     subject = "[]"
-                                    pass
+                                    subject = "["+"".join(blanknode_dictionary[subject])+"]"
+                                else:
+                                    subject = "[]"
                             if subject == "[]":
                                 subject = " _:"+thenode_id + " "
                             properties = []
