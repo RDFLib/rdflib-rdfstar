@@ -421,6 +421,9 @@ class FindVariables(Visitor):
     def blank_node_property_list(self, var):
         # print("bnpl", (var.children[0]).children)
         object_list = ((var.children[0]).children)[1].children
+        # # print(Reconstructor(turtle_lark).reconstruct(var))
+        # if not "<<" in Reconstructor(turtle_lark).reconstruct(var):
+
         for x in range(0, len(object_list)):
             try:
                 if object_list[x].data == 'quotation':
@@ -433,7 +436,7 @@ class FindVariables(Visitor):
                     object_list[x] = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', hasht2)])])
                     # print("iriririri", object_list)
             except Exception as ex:
-                # print(ex, "blank node property list is not nested")
+                print(ex, "blank node property list is not nested")
                 object_list = ((var.children[0]).children)[1]
                 collection_quotation_reconstruct = Reconstructor(turtle_lark).reconstruct(object_list)
                 collection_quotation_reconstruct = collection_quotation_reconstruct.replace(";","")
@@ -494,29 +497,47 @@ class FindVariables(Visitor):
 
         appends1 = []
         tri = Reconstructor(turtle_lark).reconstruct(var)
-        # print("ttttttttttttttttttttttttttttt", tri,"\n" )
-        tri = tri.replace(";", "")
-        if not (tri in assertedtriplelist):
-            assertedtriplelist.append(tri)
-        for x in var.children:
-            if x.data == 'predicate_object_list':
-                xc = x.children
-                for y in xc:
-                    x2 = Reconstructor(turtle_lark).reconstruct(y)
-                    x2 = x2.replace(";","")
-                    # x2 = x2.replace(" ","")
-                    appends1.append(x2) # or push
-            else:
-            #   print("how to edit2", x)
-              anyquotationin = False
-              x1 = Reconstructor(turtle_lark).reconstruct(x)
-              x1 = x1.replace(";","")
-            #   x1 = x1.replace(" ","")
-            #   print("compareed", x1)
-              appends1.append(x1)
+        print("ttttttttttttttttttttttttttttt", tri,"\n" )
+        # if len(tri.split(";"))>2
+        if "[" in tri and not "<<" in tri:
+            vblist.append([tri])
+            # return
+        else:
+            tri = tri.replace(";", "")
+            if not (tri in assertedtriplelist):
+                assertedtriplelist.append(tri)
+            for x in var.children:
+                if x.data == 'predicate_object_list':
+                    xc = x.children
+                    for y in xc:
+                        try:
+                            x2 = Reconstructor(turtle_lark).reconstruct(y)
+                        # except erorr as e12:
+                        except:
+                            print("error:", Reconstructor(turtle_lark).reconstruct(var))
+                            # appends1.append(Reconstructor(turtle_lark).reconstruct(var)+"standardreification")
+                            # appends1.remove(appends1[0])
+                            appends1.pop(0)
+                            # appends1.append(" ")
+                            # appends1.append("\n")
+                            appends1.append("standard reification")
+                            appends1.append(Reconstructor(turtle_lark).reconstruct(var))
+                            appends1.append(" . \n")
+                            break
+                        x2 = x2.replace(";","")
+                        # x2 = x2.replace(" ","")
+                        appends1.append(x2) # or push
+                else:
+                    #   print("how to edit2", x)
+                    anyquotationin = False
+                    x1 = Reconstructor(turtle_lark).reconstruct(x)
+                    x1 = x1.replace(";","")
+                    #   x1 = x1.replace(" ","")
+                    #   print("compareed", x1)
+                    appends1.append(x1)
 
-        if not (appends1 in vblist):
-            vblist.append(appends1)
+            if not (appends1 in vblist):
+                vblist.append(appends1)
 
     def insidequotation(self, var):
         appends1 = []
@@ -559,70 +580,88 @@ def RDFstarParsings(rdfstarstring):
     quoted_or_not = False
     both_quoted_and_asserted = False
     tree = turtle_lark.parse(rdfstarstring)
+    print("larkparsertree", tree)
     at = FindVariables().visit(tree)
     # print("ascacascasc", vblist, quotation_dict, quotationreif)
     for y in vblist:
-        # print("warc3casca", y)
+        print("warc3casca", y)
         for element_index in range(0, len(y)):
             if (y[element_index][0] == "_") & (not (element_index == 0)):
                 y[element_index]=" "+y[element_index]
         result = "".join(y)
         # print("ttttteeeeee", result)
-        result = result.replace(" ", "")
-        # print("testparserhash",print(quotation_dict), result)
-        if result in assertedtriplelist:
-            test1 = "<<"+result+">>"
-            if test1 in quotation_list:
-                both_quoted_and_asserted = True
-            else:
-                both_quoted_and_asserted = False
-                quoted_or_not = False
+        # result = result.replace(" ", "")
+        if "standard reification" in result:
+            # for index
+            # for i in
+            # for x in range(0, len(y)):
+            #     y[x] += " ."
+            # result = "".join(y)
+            result = result.replace("standard reification", "")
+            constructors+=result
         else:
-            test2 = "<<"+result+">>"
-            if test2 in quotation_list:
-                both_quoted_and_asserted = False
-                quoted_or_not = True
-            else:
-                both_quoted_and_asserted = False
-                quoted_or_not = False
-        result = "<<"+result+">>"
-        # print("fixing bnode", result)
-        if not (result in quotation_list):
-            for z in range(0,len(y)):
-                if "<<" in y[z]:
-                    y[z] = y[z].replace(" ", "")
-                    y[z] = "_:"+quotation_dict[y[z]]
-            myvalue = str(myHash(result))
-            # print("asrtrrrrrtt", myvalue)
-            subject = y[0]
-            predicate = y[1]
-            object = y[2]
-            if both_quoted_and_asserted:
-                next_rdf_object = "_:" + str(myvalue) +"RdfstarTriple"+ '\n' + "    a rdfstar:AssertedStatement, rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
-            else:
-                if quoted_or_not:
-                    next_rdf_object = "_:" + str(myvalue) +"RdfstarTriple"+ '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+            result = result.replace(" ", "")
+            # print("testparserhash",print(quotation_dict), result)
+            if result in assertedtriplelist:
+                test1 = "<<"+result+">>"
+                if test1 in quotation_list:
+                    both_quoted_and_asserted = True
                 else:
-                    next_rdf_object = "_:" + str(myvalue) +"RdfstarTriple"+ '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
-                    # next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n" "[a rdfstar:QutotedStatement;\n rdf:subject :a ;\n rdf:predicate :b ;\n rdf:object :c ; ] :q :z "+".\n"
-            constructors+=next_rdf_object
-        else:
-            value = quotation_dict[result]
-            for z in range(0,len(y)):
-                if "<<" in y[z]:
-                    y[z] = "_:"+quotation_dict[y[z]]
-            subject = y[0]
-            predicate = y[1]
-            object = y[2]
-            if both_quoted_and_asserted:
-                next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement, rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                    both_quoted_and_asserted = False
+                    quoted_or_not = False
             else:
-                if quoted_or_not:
-                    next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                test2 = "<<"+result+">>"
+                if test2 in quotation_list:
+                    both_quoted_and_asserted = False
+                    quoted_or_not = True
                 else:
-                    next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
-                    # next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n" "[a rdfstar:QutotedStatement;\n rdf:subject :a ;\n rdf:predicate :b ;\n rdf:object :c ; ] :q :z "+".\n"
-            constructors+=next_rdf_object
+                    both_quoted_and_asserted = False
+                    quoted_or_not = False
+            result = "<<"+result+">>"
+            # print("fixing bnode", result)
+            if not (result in quotation_list):
+                for z in range(0,len(y)):
+                    if "<<" in y[z]:
+                        y[z] = y[z].replace(" ", "")
+                        y[z] = "_:"+quotation_dict[y[z]]
+                myvalue = str(myHash(result))
+                # print("asrtrrrrrtt", myvalue)
+                try:
+                    subject = y[0]
+                    predicate = y[1]
+                    object = y[2]
+                except:
+                    if len(y)==1:
+                        result2 = y[0]
+                        constructors+=result2
+                        constructors = constructors +".\n"
+                        continue
+                if both_quoted_and_asserted:
+                    next_rdf_object = "_:" + str(myvalue) +"RdfstarTriple"+ '\n' + "    a rdfstar:AssertedStatement, rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                else:
+                    if quoted_or_not:
+                        next_rdf_object = "_:" + str(myvalue) +"RdfstarTriple"+ '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                    else:
+                        next_rdf_object = "_:" + str(myvalue) +"RdfstarTriple"+ '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                        # next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n" "[a rdfstar:QutotedStatement;\n rdf:subject :a ;\n rdf:predicate :b ;\n rdf:object :c ; ] :q :z "+".\n"
+                constructors+=next_rdf_object
+            else:
+                value = quotation_dict[result]
+                for z in range(0,len(y)):
+                    if "<<" in y[z]:
+                        y[z] = "_:"+quotation_dict[y[z]]
+                subject = y[0]
+                predicate = y[1]
+                object = y[2]
+                if both_quoted_and_asserted:
+                    next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement, rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                else:
+                    if quoted_or_not:
+                        next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                    else:
+                        next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                        # next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n" "[a rdfstar:QutotedStatement;\n rdf:subject :a ;\n rdf:predicate :b ;\n rdf:object :c ; ] :q :z "+".\n"
+                constructors+=next_rdf_object
 
     for z in quotationannolist:
         result1 = "".join(z)
@@ -650,7 +689,8 @@ def RDFstarParsings(rdfstarstring):
         prefix_list[x] = Reconstructor(turtle_lark).reconstruct(prefix_list[x])
         constructors = prefix_list[x]+"\n"+constructors
 
-    constructors = "PREFIX rdfstar: <https://w3id.org/rdf-star/> \n"+constructors
+    if ((not ("PREFIX rdfstar: <https://w3id.org/rdf-star/>" in constructors)) and (not("PREFIX rdfstar:<https://w3id.org/rdf-star/>" in constructors))):
+        constructors = "PREFIX rdfstar: <https://w3id.org/rdf-star/> \n"+constructors
 
     constructors = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n"+constructors
 
