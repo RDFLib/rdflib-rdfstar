@@ -436,7 +436,7 @@ class FindVariables(Visitor):
                     object_list[x] = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', hasht2)])])
                     # print("iriririri", object_list)
             except Exception as ex:
-                print(ex, "blank node property list is not nested")
+                # print(ex, "blank node property list is not nested")
                 object_list = ((var.children[0]).children)[1]
                 collection_quotation_reconstruct = Reconstructor(turtle_lark).reconstruct(object_list)
                 collection_quotation_reconstruct = collection_quotation_reconstruct.replace(";","")
@@ -497,9 +497,9 @@ class FindVariables(Visitor):
 
         appends1 = []
         tri = Reconstructor(turtle_lark).reconstruct(var)
-        print("ttttttttttttttttttttttttttttt", tri,"\n" )
+        # print("ttttttttttttttttttttttttttttt", tri,"\n" )
         # if len(tri.split(";"))>2
-        if "[" in tri and not "<<" in tri:
+        if ("[" in tri) and (not "RdfstarTriple" in tri) and (not "<<" in tri):
             vblist.append([tri])
             # return
         else:
@@ -514,7 +514,7 @@ class FindVariables(Visitor):
                             x2 = Reconstructor(turtle_lark).reconstruct(y)
                         # except erorr as e12:
                         except:
-                            print("error:", Reconstructor(turtle_lark).reconstruct(var))
+                            # print("error:", Reconstructor(turtle_lark).reconstruct(var))
                             # appends1.append(Reconstructor(turtle_lark).reconstruct(var)+"standardreification")
                             # appends1.remove(appends1[0])
                             appends1.pop(0)
@@ -580,11 +580,11 @@ def RDFstarParsings(rdfstarstring):
     quoted_or_not = False
     both_quoted_and_asserted = False
     tree = turtle_lark.parse(rdfstarstring)
-    print("larkparsertree", tree)
+    # print("larkparsertree", tree)
     at = FindVariables().visit(tree)
     # print("ascacascasc", vblist, quotation_dict, quotationreif)
     for y in vblist:
-        print("warc3casca", y)
+        # print("warc3casca", y)
         for element_index in range(0, len(y)):
             if (y[element_index][0] == "_") & (not (element_index == 0)):
                 y[element_index]=" "+y[element_index]
@@ -623,6 +623,7 @@ def RDFstarParsings(rdfstarstring):
                 for z in range(0,len(y)):
                     if "<<" in y[z]:
                         y[z] = y[z].replace(" ", "")
+                        # print(quotation_dict[y[z]])
                         y[z] = "_:"+quotation_dict[y[z]]
                 myvalue = str(myHash(result))
                 # print("asrtrrrrrtt", myvalue)
