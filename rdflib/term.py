@@ -478,8 +478,8 @@ class BNode(IdentifiedNode):
 
 class RdfstarTriple(IdentifiedNode):
 
-    # thanks for JervenBolleman's example
-    # https://github.com/RDFLib/rdflib/issues/955
+    #  thanks for JervenBolleman's example
+    #  https://github.com/RDFLib/rdflib/issues/955
 
     """
     Triple: Needed for RDF*

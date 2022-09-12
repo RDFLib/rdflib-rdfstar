@@ -2409,8 +2409,8 @@ class RDFSink(object):
             if n in f.existentials:
                 return f.existentials[n]
 
-        # if isinstance(n, Var):
-        #    if f.universals.has_key(n):
+        #  if isinstance(n, Var):
+        #     if f.universals.has_key(n):
         #       return f.universals[n]
         #    f.universals[n] = f.newBlankNode()
         #    return f.universals[n]
