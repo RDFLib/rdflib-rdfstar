@@ -477,6 +477,10 @@ class BNode(IdentifiedNode):
         return RDFLibGenid(urljoin(authority, skolem))
 
 class RdfstarTriple(IdentifiedNode):
+
+    # thanks for JervenBolleman's example
+    # https://github.com/RDFLib/rdflib/issues/955
+
     """
     Triple: Needed for RDF*
     """
