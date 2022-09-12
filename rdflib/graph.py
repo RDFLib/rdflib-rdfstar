@@ -494,6 +494,7 @@ class Graph(Node):
             for _s, _o in p.eval(self, s, o):
                 yield _s, p, _o
         else:
+            # print("triples", self.__store.triples((s, p, o), context=self))
             for (_s, _p, _o), cg in self.__store.triples((s, p, o), context=self):
                 yield _s, _p, _o
 

@@ -310,6 +310,24 @@ class Store(object):
         subject, predicate, object = triple_pattern
 
     # variants of triples will be done if / when optimization is needed
+    def rdfstartriples(
+        self,
+        rdfstartriple_pattern: Tuple[Optional["IdentifiedNode"],
+            Optional["IdentifiedNode"], Optional["IdentifiedNode"], Optional["Node"]
+        ],
+        context=None,
+    ):
+        """
+        A generator over all the triples matching the pattern. Pattern can
+        include any objects for used for comparing against nodes in the store,
+        for example, REGEXTerm, URIRef, Literal, BNode, Variable, Graph,
+        QuotedGraph, Date? DateRange?
+
+        :param context: A conjunctive query can be indicated by either
+                        providing a value of None, or a specific context can be
+                        queries by passing a Graph instance (if store is context aware).
+        """
+        hashnode, subject, predicate, object = rdfstartriple_pattern
 
     def __len__(self, context=None):
         """

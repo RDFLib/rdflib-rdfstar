@@ -22,7 +22,9 @@ Copyright 2010, Gunnar A. Grimnes
 import codecs
 import os
 import re
+from smtplib import quotedata
 import sys
+import rdflib
 
 # importing typing for `typing.List` because `List`` is used for something else
 import typing
@@ -35,6 +37,7 @@ from rdflib.exceptions import ParserError
 from rdflib.graph import ConjunctiveGraph, Graph, QuotedGraph
 from rdflib.term import (
     _XSD_PFX,
+    RdfstarTriple,
     BNode,
     Identifier,
     Literal,
@@ -379,7 +382,7 @@ class FindVariables(Visitor):
     def quotation(self, var):
         qut = Reconstructor(turtle_lark).reconstruct(var) # replace here or replace later
         qut = qut.replace(";", "") #####################
-        # qut = qut.replace(" ", "") #qut = qut.strip()
+        qut = qut.replace(" ", "") #qut = qut.strip()
         # print("qqqqqqqqq", qut)
         if not (qut in quotation_list):
             quotation_list.append(qut)
@@ -387,7 +390,8 @@ class FindVariables(Visitor):
         vr = Reconstructor(turtle_lark).reconstruct(var)
         vr = vr.replace(";","")
         # vr = vr.replace(" ","")
-        quotation_dict[qut] = str(myHash(qut))
+        # print(quotation_dict)
+        quotation_dict[qut] = str(myHash(qut)) + "RdfstarTriple"
         qut_hash = ":" + str(myHash(qut))
         # try:
         id = quotation_dict.get(vr)
@@ -420,7 +424,7 @@ class FindVariables(Visitor):
         for x in range(0, len(object_list)):
             try:
                 if object_list[x].data == 'quotation':
-                    print("normal", object_list)
+                    # print("normal", object_list)
                     # print("fixing blank node property list:", object_list, "\n","\n")
                     collection_quotation_reconstruct = Reconstructor(turtle_lark).reconstruct(object_list[x])
                     collection_quotation_reconstruct = collection_quotation_reconstruct.replace(";","")
@@ -456,19 +460,19 @@ class FindVariables(Visitor):
         subjecthash = ""
 
         for x in var.children:
-            print(x)
+            # print(x)
             if x.data == "triples":
                 triple1 = Reconstructor(turtle_lark).reconstruct(x)
                 triple1 = triple1.replace(";","")
 
-                print(triple1)
+                # print(triple1)
                 triple1 = "<<"+triple1+">>"
-                subjecthash = "_:" + str(myHash(triple1))
-                print(subjecthash)
+                subjecthash = "_:" + str(myHash(triple1)) + "RdfstarTriple"
+                # print(subjecthash)
                 if not (triple1 in quotation_list):
                     quotation_list.append(triple1)
 
-                quotation_dict[triple1] = str(myHash(triple1))
+                quotation_dict[triple1] = str(myHash(triple1)) + "RdfstarTriple"
             elif x.data == "compoundanno":
                 for y in x.children:
                     if (y != "{|") & (y!= "|}"):
@@ -478,7 +482,7 @@ class FindVariables(Visitor):
                             count2+=1
                             z2 = Reconstructor(turtle_lark).reconstruct(z)
                             # z2 = z2.replace(";","")
-                            print("z",z2)
+                            # print("z",z2)
                             quotationtriple.append(z2)
                             if count2 ==2:
                                 quotationtriple.insert(0, subjecthash)
@@ -530,16 +534,17 @@ class FindVariables(Visitor):
     #     print("pn", self)
 
     def prefix_id(self, children):
-        print("prefix_id")
+        # print("prefix_id")
+        pass
 
     def sparql_prefix(self, children):
-        print("sparql_prefix", children)
+        # print("sparql_prefix", children)
         prefix_list.append(children)
 
     def base(self, children):
-        print("base")
+        # print("base")
         base_directive, base_iriref = children
-        print("base", base_directive, base_iriref)
+        # print("base", base_directive, base_iriref)
         # Workaround for lalr parser token ambiguity in python 2.7
         if base_directive.startswith('@') and base_directive != '@base':
             raise ValueError('Unexpected @base: ' + base_directive)
@@ -564,6 +569,7 @@ def RDFstarParsings(rdfstarstring):
         result = "".join(y)
         # print("ttttteeeeee", result)
         result = result.replace(" ", "")
+        # print("testparserhash",print(quotation_dict), result)
         if result in assertedtriplelist:
             test1 = "<<"+result+">>"
             if test1 in quotation_list:
@@ -584,6 +590,7 @@ def RDFstarParsings(rdfstarstring):
         if not (result in quotation_list):
             for z in range(0,len(y)):
                 if "<<" in y[z]:
+                    y[z] = y[z].replace(" ", "")
                     y[z] = "_:"+quotation_dict[y[z]]
             myvalue = str(myHash(result))
             # print("asrtrrrrrtt", myvalue)
@@ -591,12 +598,12 @@ def RDFstarParsings(rdfstarstring):
             predicate = y[1]
             object = y[2]
             if both_quoted_and_asserted:
-                next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:AssertedStatement, rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                next_rdf_object = "_:" + str(myvalue) +"RdfstarTriple"+ '\n' + "    a rdfstar:AssertedStatement, rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
             else:
                 if quoted_or_not:
-                    next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                    next_rdf_object = "_:" + str(myvalue) +"RdfstarTriple"+ '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
                 else:
-                    next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                    next_rdf_object = "_:" + str(myvalue) +"RdfstarTriple"+ '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
                     # next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n" "[a rdfstar:QutotedStatement;\n rdf:subject :a ;\n rdf:predicate :b ;\n rdf:object :c ; ] :q :z "+".\n"
             constructors+=next_rdf_object
         else:
@@ -630,12 +637,12 @@ def RDFstarParsings(rdfstarstring):
         predicate = z[1]
         object = z[2]
         if both_quoted_and_asserted:
-            next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement, rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+            next_rdf_object = "_:" + str(value) +"RdfstarTriple"+ '\n' + "    a rdfstar:AssertedStatement, rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
         else:
             if quoted_or_not:
-                next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                next_rdf_object = "_:" + str(value) +"RdfstarTriple"+ '\n' + "    a rdfstar:QuotedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
             else:
-                next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
+                next_rdf_object = "_:" + str(value) +"RdfstarTriple"+ '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
                 # next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n" + subject +" " +predicate +" " +object +".\n"
         constructors+=next_rdf_object
 
@@ -655,7 +662,7 @@ def RDFstarParsings(rdfstarstring):
     if "PREFIX:" in constructors:
         constructors = constructors.replace("PREFIX:", "PREFIX :")
 
-    print("yes?", constructors)
+    print("input after preprocessing: ", constructors)
     constructors = bytes(constructors, 'utf-8')
     return constructors
 
@@ -745,7 +752,7 @@ digitstring = re.compile(r"[0-9]+")  # Unsigned integer
 interesting = re.compile(r"""[\\\r\n\"\']""")
 langcode = re.compile(r"[a-zA-Z0-9]+(-[a-zA-Z0-9]+)*")
 
-
+quoted_triple_list = []
 class SinkParser:
     def __init__(
         self,
@@ -777,6 +784,7 @@ class SinkParser:
         self.keywords = ["a", "this", "bind", "has", "is", "of", "true", "false"]
         self.keywordsSet = 0  # Then only can others be considered qnames
         self._anonymousNodes: Dict[str, Node] = {}
+        self._rdfstartripleNodes: Dict[str, Node] = {}
         # Dict of anon nodes already declared ln: Term
         self._variables: Dict[Identifier, Identifier] = {}
         self._parentVariables: Dict[Identifier, Identifier] = {}
@@ -870,11 +878,10 @@ class SinkParser:
             j = self.skipSpace(s, i)
             if j < 0:
                 return
-
             i = self.directiveOrStatement(s, j)
             if i < 0:
                 # print("# next char: %s" % s[j-5:j+5])
-                print("asdadasd", i, j)
+                # print("asdadasd", i, j)
                 self.BadSyntax(s, j, "expected directive or statement")
 
     def directiveOrStatement(self, argstr: str, h: int) -> int:
@@ -891,7 +898,6 @@ class SinkParser:
         j = self.directive(argstr, i)
         if j >= 0:
             return self.checkDot(argstr, j)
-
         j = self.statement(argstr, i)
         if j >= 0:
             return self.checkDot(argstr, j)
@@ -1132,6 +1138,11 @@ class SinkParser:
         # print "# Parser output: ", `quadruple`
         self._store.makeStatement(quadruple, why=self._reason2)
 
+    def makerdfstarStatement(self, quadruple):
+                   # $$$$$$$$$$$$$$$$$$$$$
+                   # print "# Parser output: ", `quadruple`
+        self._store.makerdfstarStatement(quadruple, why=self._reason2)
+
     def statement(self, argstr: str, i: int) -> int:
         r: typing.List[Any] = []
         i = self.object(argstr, i, r)  # Allow literal for subject - extends RDF
@@ -1265,6 +1276,16 @@ class SinkParser:
 
     def anonymousNode(self, ln: str):
         """Remember or generate a term for one of these _: anonymous nodes"""
+        # print("anonymousNode", self._anonymousNodes.get(ln, None), self._context, self._reason2)
+        if ("RdfstarTriple" in ln):
+            # print("new object")
+            # ln = ln.replace("RdfstarTriple", "")
+            term = self._rdfstartripleNodes.get(ln, None)
+            if term is not None:
+                return term
+            term = self._store.newRdfstarTriple(self._context, why=self._reason2, hashvalue = ln)
+            self._rdfstartripleNodes[ln] = term
+            return term
         term = self._anonymousNodes.get(ln, None)
         if term is not None:
             return term
@@ -1316,7 +1337,6 @@ class SinkParser:
 
             if subj is None:
                 subj = self.blankNode(uri=bnodeID)
-
             i = self.property_list(argstr, j, subj)
             if i < 0:
                 self.BadSyntax(argstr, j, "property_list expected")
@@ -1390,7 +1410,6 @@ class SinkParser:
                     if argstr[i] == "}":
                         j = i + 1
                         break
-
                     j = self.directiveOrStatement(argstr, i)
                     if j < 0:
                         self.BadSyntax(argstr, i, "expected statement or '}'")
@@ -1455,10 +1474,47 @@ class SinkParser:
 
         return -1
 
+    def addingquotedRdfstarTriple(self, quoted_triple_list, dira):
+        if quoted_triple_list[0] == rdflib.term.URIRef('https://w3id.org/rdf-star/AssertedStatement'):
+            if quoted_triple_list[1] == rdflib.term.URIRef('https://w3id.org/rdf-star/QuotedStatement'):
+                if dira == "->":
+                    self.makeStatement((self._context, quoted_triple_list[4], quoted_triple_list[3], quoted_triple_list[5]))
+                    quoted_triple_list[2].setSubject(quoted_triple_list[3])
+                    quoted_triple_list[2].setPredicate(quoted_triple_list[4])
+                    quoted_triple_list[2].setObject(quoted_triple_list[5])
+
+                else:
+                    self.makeStatement((self._context, quoted_triple_list[4], quoted_triple_list[5], quoted_triple_list[3]))
+                    # quoted_triple_list[2].setSubject(quoted_triple_list[3])
+                    # quoted_triple_list[2].setPredicate(quoted_triple_list[4])
+                    # quoted_triple_list[2].setObject(quoted_triple_list[5])
+                    quoted_triple_list[2].setSubject(quoted_triple_list[4])
+                    quoted_triple_list[2].setPredicate(quoted_triple_list[5])
+                    quoted_triple_list[2].setObject(quoted_triple_list[6])
+
+            else:
+                if dira == "->":
+                    self.makeStatement((self._context, quoted_triple_list[2], quoted_triple_list[1], quoted_triple_list[3]))
+                else:
+                    self.makeStatement((self._context, quoted_triple_list[2], quoted_triple_list[3], quoted_triple_list[1]))
+        else:
+            if dira == "->":
+                # print("making statement")
+                quoted_triple_list[1].setSubject(quoted_triple_list[2])
+                quoted_triple_list[1].setPredicate(quoted_triple_list[3])
+                quoted_triple_list[1].setObject(quoted_triple_list[4])
+
+            else:
+                quoted_triple_list[1].setSubject(quoted_triple_list[2])
+                quoted_triple_list[1].setPredicate(quoted_triple_list[3])
+                quoted_triple_list[1].setObject(quoted_triple_list[4])
+                # self.makerdfstarStatement((self._context,quoted_triple_list[1], quoted_triple_list[3], quoted_triple_list[4], quoted_triple_list[2])) # what if don't change to str
+
     def property_list(self, argstr: str, i: int, subj):
         """Parse property list
         Leaves the terminating punctuation in the buffer
         """
+        global quoted_triple_list
         while 1:
             while 1:  # skip repeat ;
                 j = self.skipSpace(argstr, i)
@@ -1475,6 +1531,7 @@ class SinkParser:
                     self.BadSyntax(argstr, j, "Found in ':-' in Turtle mode")
                 i = j + 2
                 res: typing.List[Any] = []
+                # print("node in propertylist", self.node(argstr, i, res, subj))
                 j = self.node(argstr, i, res, subj)
                 if j < 0:
                     self.BadSyntax(argstr, i, "bad {} or () or [] node after :- ")
@@ -1487,15 +1544,40 @@ class SinkParser:
                 return i  # void but valid
 
             objs: typing.List[Any] = []
+
             i = self.objectList(argstr, j, objs)
+            # print("objectList in propertylist", objs)
             if i < 0:
                 self.BadSyntax(argstr, j, "objectList expected")
+
+            # assertedtriple = False
+            # quotedtriple = False
+            # assertedtriple_s_p_o = []
+            # quotedtriple_hashnode_s_p_o = []
+            # for obj in objs:
+            #     dira, sym = v[0]
+            #     print("test make statement objsssss", sym, subj, obj)
+            #     if "RdfstarTriple" in subj:
+
             for obj in objs:
                 dira, sym = v[0]
-                if dira == "->":
-                    self.makeStatement((self._context, sym, subj, obj))
+                if "RdfstarTriple" in subj:
+                    # print("asdasdasd", obj)
+                    if "rdf-star" in str(obj):
+                        if len(quoted_triple_list) > 2:
+                            quoted_triple_list = []
+                    quoted_triple_list.append(obj)
+                    if (rdflib.term.URIRef('https://w3id.org/rdf-star/QuotedStatement') in quoted_triple_list) & (not (subj in quoted_triple_list)):
+                        quoted_triple_list.append(subj)
+                    if "#object" in sym:
+                        # print("asdasdasd", quoted_triple_list)
+                        self.addingquotedRdfstarTriple(quoted_triple_list, dira)
                 else:
-                    self.makeStatement((self._context, sym, obj, subj))
+                    if dira == "->":
+                        # print("tests ->", self._context, sym, subj, obj)
+                        self.makeStatement((self._context, sym, subj, obj))
+                    else:
+                        self.makeStatement((self._context, sym, obj, subj))
 
             j = self.skipSpace(argstr, i)
             if j < 0:
@@ -1531,6 +1613,7 @@ class SinkParser:
                 self.BadSyntax(argstr, i, "bad list content")
 
     def objectList(self, argstr: str, i: int, res: typing.List[Any]) -> int:
+        # print("object in objectList")
         i = self.object(argstr, i, res)
         if i < 0:
             return -1
@@ -1574,7 +1657,9 @@ class SinkParser:
                 try:
                     ns = self._bindings[pfx]
                 except KeyError:
+                    # print("testuri2", pfx, ln)
                     if pfx == "_":  # Magic prefix 2001/05/30, can be changed
+                        # print("anonymousNode in uriref2")
                         res.append(self.anonymousNode(ln))
                         return j
                     if not self.turtle and pfx == "":
@@ -1816,6 +1901,7 @@ class SinkParser:
             return -1
 
     def object(self, argstr: str, i: int, res):
+        # print("subject in object")
         j = self.subject(argstr, i, res)
         if j >= 0:
             return j
@@ -1844,6 +1930,7 @@ class SinkParser:
                 return -1
 
     def nodeOrLiteral(self, argstr: str, i: int, res):
+        # print("node in nodeOrLiteral")
         j = self.node(argstr, i, res)
         startline = self.lines  # Remember where for error messages
         if j >= 0:
@@ -1904,6 +1991,7 @@ class SinkParser:
                     j = i
                 if argstr[j : j + 2] == "^^":
                     res2: typing.List[Any] = []
+                    # print("nodeorLiteral")
                     j = self.uri_ref2(argstr, j + 2, res2)  # Read datatype URI
                     dt = res2[0]
                 res.append(self._store.newLiteral(s, dt, lang))
@@ -2116,12 +2204,22 @@ class Formula(object):
         return BNode("_:Formula%s" % self.number)
 
     def newBlankNode(self, uri=None, why=None):
+        # print("newBlankNode in Formula")
         if uri is None:
             self.counter += 1
             bn = BNode("f%sb%s" % (self.uuid, self.counter))
         else:
             bn = BNode(uri.split("#").pop().replace("_", "b"))
         return bn
+
+    def newRdfstarTriple(self, hashvalue, uri=None, why=None):
+        # print("newRdfstarTriple in Formula")
+        if uri is None:
+            # self.counter += 1
+            rdfstartriple = RdfstarTriple(hashvalue = hashvalue)
+        else:
+            rdfstartriple = RdfstarTriple(hashvalue = hashvalue)
+        return rdfstartriple
 
     def newUniversal(self, uri, why=None):
         return Variable(uri.split("#").pop())
@@ -2165,14 +2263,42 @@ class RDFSink(object):
         uri: Optional[str] = None,
         why: Optional[Callable[[], None]] = None,
     ) -> BNode:
+        # print("newBlankNode in RDFSink")
         if isinstance(arg, Formula):
+            # print("newBlankNode in Formula", arg, uri)
             return arg.newBlankNode(uri)
         elif isinstance(arg, Graph) or arg is None:
+            # print("newBlankNode in RDFSink Graph", arg, uri, self.uuid, self.counter,"n%sb%s" % (self.uuid, self.counter))
             self.counter += 1
             bn = BNode("n%sb%s" % (self.uuid, self.counter))
         else:
+            # print("testsv24", arg, uri, str(arg[0]).split("#").pop().replace("_", "b"))
             bn = BNode(str(arg[0]).split("#").pop().replace("_", "b"))
         return bn
+
+    def newRdfstarTriple(
+        self,
+        # hashvalue: Optional[str],
+        # arg: Optional[Union[Formula, Graph, Any]] = None,
+        # uri: Optional[str] = None,
+        arg: Optional[Union[Formula, Graph, Any]] = None,
+        uri: Optional[str] = None,
+        why: Optional[Callable[[], None]] = None,
+        hashvalue: Optional[str] = None
+    ) -> RdfstarTriple:
+        # print("newRdflibRdfstartriple in Formula")
+        if isinstance(arg, Formula):
+            # print("testsv2", arg, uri)
+            return arg.newRdfstarTriple(hashvalue = hashvalue)
+        elif isinstance(arg, Graph) or arg is None:
+            # print("newRdflibRdfstartriple", hashvalue)
+            # self.counter += 1
+            rdfstartriple = RdfstarTriple(hashvalue =hashvalue)
+        else:
+            # print("newRdflibRdfstartriple",hashvalue)
+            # print("testsv24", arg, uri, str(arg[0]).split("#").pop().replace("_", "rdfstartriple"))
+            rdfstartriple = RdfstarTriple(hashvalue =hashvalue)
+        return rdfstartriple
 
     def newLiteral(self, s: str, dt: Optional[URIRef], lang: Optional[str]) -> Literal:
         if dt:
@@ -2181,6 +2307,7 @@ class RDFSink(object):
             return Literal(s, lang=lang)
 
     def newList(self, n: typing.List[Any], f: Optional[Formula]):
+        # print("testnewlist")
         nil = self.newSymbol("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil")
         if not n:
             return nil
@@ -2205,6 +2332,7 @@ class RDFSink(object):
         return ":".join(repr(n) for n in args)
 
     def makeStatement(self, quadruple, why=None) -> None:
+        # print("testmakeStatement", quadruple)
         f, p, s, o = quadruple
 
         if hasattr(p, "formula"):
@@ -2213,14 +2341,35 @@ class RDFSink(object):
         s = self.normalise(f, s)
         p = self.normalise(f, p)
         o = self.normalise(f, o)
-
         if f == self.rootFormula:
             # print s, p, o, '.'
             self.graph.add((s, p, o))
         elif isinstance(f, Formula):
+            # print("quotedgraph added")
             f.quotedgraph.add((s, p, o))
         else:
             f.add((s, p, o))
+
+        # return str(quadruple)
+
+    def makerdfstarStatement(self, quadruple, why=None) -> None:
+        # print("testmakeStatement", quadruple)
+        f, hashnode, p, s, o = quadruple
+
+        if hasattr(p, "formula"):
+            raise ParserError("Formula used as predicate")
+
+        s = self.normalise(f, s)
+        p = self.normalise(f, p)
+        o = self.normalise(f, o)
+        # print("testmakerdfstarStatement", hashnode, s,p,o)
+        if f == self.rootFormula:
+            # print s, p, o, '.'
+            self.graph.addStarTriple((hashnode, s, p, o))
+        elif isinstance(f, Formula):
+            f.quotedgraph.addStarTriple((hashnode, s, p, o))
+        else:
+            f.addStarTriple((hashnode, s, p, o))
 
         # return str(quadruple)
 
