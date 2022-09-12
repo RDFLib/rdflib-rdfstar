@@ -474,7 +474,8 @@ class TurtlestarSerializer(Serializer):
                         #         print("retrestsetse")
                         #         subject = "_:"+str(subject)
                         #     # print("wearwra")
-                            subject = " _:"+thenode_id + " "
+                            # subject = " _:"+thenode_id + " "
+                            subject = "_:"+thenode_id
 
 
                     if (isinstance(object, rdflib.term.URIRef)):
@@ -503,7 +504,8 @@ class TurtlestarSerializer(Serializer):
                         else:
                             object = "[]"
                         if object == "[]":
-                            object = " _:"+thenode_id + " "
+                            # object = " _:"+thenode_id + " "
+                            object = "_:"+thenode_id
 
 
                     if(isinstance(predicate, rdflib.term.URIRef)):
@@ -583,7 +585,8 @@ class TurtlestarSerializer(Serializer):
                                 else:
                                     subject = "[]"
                             if subject == "[]":
-                                subject = " _:"+thenode_id + " "
+                                # subject = " _:"+thenode_id + " "
+                                subject = "_:"+thenode_id
                             properties = []
 
 
@@ -620,7 +623,8 @@ class TurtlestarSerializer(Serializer):
                                 #     pass
                                 # object = "[]"
                             if object == "[]":
-                                object = " _:"+thenode_id + " "
+                                # object = " _:"+thenode_id + " "
+                                object = "_:"+thenode_id
                             properties = []
 
                         if(isinstance(predicate, rdflib.term.URIRef)):

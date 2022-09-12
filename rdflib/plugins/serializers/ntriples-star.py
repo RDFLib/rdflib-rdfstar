@@ -704,7 +704,8 @@ class NtriplesStarSerializer(Serializer):
                         else:
                             subject = "[]"
                         if subject == "[]":
-                            subject = " _:"+bnode_id + " "
+                            # subject = " _:"+bnode_id + " "
+                            subject = " _:"+bnode_id
 
 
                     if (isinstance(object, rdflib.term.URIRef)):
@@ -733,7 +734,8 @@ class NtriplesStarSerializer(Serializer):
                         else:
                             object = "[]"
                         if object == "[]":
-                            object = " _:"+bnode_id + " "
+                            # object = " _:"+bnode_id + " "
+                            object = " _:"+bnode_id
 
 
                     if(isinstance(predicate, rdflib.term.URIRef)):
@@ -831,7 +833,8 @@ class NtriplesStarSerializer(Serializer):
                     else:
                         subject = "[]"
                     if subject == "[]":
-                        subject = " _:"+bnode_id + " "
+                        # subject = " _:"+bnode_id + " "
+                        subject = " _:"+bnode_id
 
 
                 if (isinstance(object, rdflib.term.URIRef)):
@@ -860,7 +863,8 @@ class NtriplesStarSerializer(Serializer):
                     else:
                         object = "[]"
                     if object == "[]":
-                        object = " _:"+bnode_id + " "
+                        # object = " _:"+bnode_id + " "
+                        object = " _:"+bnode_id
 
 
                 if(isinstance(predicate, rdflib.term.URIRef)):
