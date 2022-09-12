@@ -20,3 +20,4 @@ PREFIX rdfstar: <https://w3id.org/rdf-star/>
     rdf:predicate <http://example/r> ;
     rdf:object <http://example/z> ;]
 .
+[ <http://a.example/p1> [ <http://a.example/p2> <http://a.example/o2> ] ; <http://a.example/p> <http://a.example/o> ].

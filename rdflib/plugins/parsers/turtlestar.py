@@ -500,6 +500,7 @@ class FindVariables(Visitor):
         # print("ttttttttttttttttttttttttttttt", tri,"\n" )
         # if len(tri.split(";"))>2
         if ("[" in tri) and (not "RdfstarTriple" in tri) and (not "<<" in tri):
+            # print("afwawf",tri)
             vblist.append([tri])
             # return
         else:
@@ -528,10 +529,10 @@ class FindVariables(Visitor):
                         # x2 = x2.replace(" ","")
                         appends1.append(x2) # or push
                 else:
-                    #   print("how to edit2", x)
+                    # print("how to edit2", x)
                     anyquotationin = False
                     x1 = Reconstructor(turtle_lark).reconstruct(x)
-                    x1 = x1.replace(";","")
+                    # x1 = x1.replace(";","")
                     #   x1 = x1.replace(" ","")
                     #   print("compareed", x1)
                     appends1.append(x1)
@@ -634,6 +635,7 @@ def RDFstarParsings(rdfstarstring):
                 except:
                     if len(y)==1:
                         result2 = y[0]
+                        print(";;;;;;;;;", result2)
                         constructors+=result2
                         constructors = constructors +".\n"
                         continue
