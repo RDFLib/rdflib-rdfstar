@@ -433,7 +433,7 @@ class FindVariables(Visitor):
         for x in range(0, len(object_list)):
             try:
                 if object_list[x].data == 'quotation':
-                    print("normal", object_list)
+                    # print("normal", object_list)
                     # print("fixing blank node property list:", object_list, "\n","\n")
                     collection_quotation_reconstruct = Reconstructor(trig_lark).reconstruct(object_list[x])
                     collection_quotation_reconstruct = collection_quotation_reconstruct.replace(";","")
@@ -469,15 +469,15 @@ class FindVariables(Visitor):
         subjecthash = ""
 
         for x in var.children:
-            print(x)
+            # print(x)
             if x.data == "triples":
                 triple1 = Reconstructor(trig_lark).reconstruct(x)
                 triple1 = triple1.replace(";","")
 
-                print(triple1)
+                # print(triple1)
                 triple1 = "<<"+triple1+">>"
                 subjecthash = "_:" + str(myHash(triple1)) + "RdfstarTriple"
-                print(subjecthash)
+                # print(subjecthash)
                 if not (triple1 in quotation_list):
                     quotation_list.append(triple1)
 
@@ -491,7 +491,7 @@ class FindVariables(Visitor):
                             count2+=1
                             z2 = Reconstructor(trig_lark).reconstruct(z)
                             # z2 = z2.replace(";","")
-                            print("z",z2)
+                            # print("z",z2)
                             quotationtriple.append(z2)
                             if count2 ==2:
                                 quotationtriple.insert(0, subjecthash)
@@ -633,7 +633,8 @@ def RDFstarParsings(rdfstarstring):
             except:
                 if len(y)==1:
                     result2 = y[0]
-                    print(";;;;;;;;;", result2)
+                    # print(";;;;;;;;;", result2)
+
                     constructors+=result2
                     constructors = constructors +".\n"
                     continue
