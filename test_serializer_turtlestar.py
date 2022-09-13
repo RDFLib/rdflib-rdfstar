@@ -46,7 +46,7 @@ register(
 
 # g = Graph()
 # g.parse(data="test/turtle-star/test1234.ttl", format = "ttls")
-# # print(g.serialize(format = "ttlstar"))
+# print(g.serialize(format = "ttlstar"))
 
 g = Graph()
 g.parse(data="test/turtle-star/turtle-star-syntax-basic-01.ttl", format = "ttls")
