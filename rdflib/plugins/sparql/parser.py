@@ -26,11 +26,12 @@ from pyparsing import CaselessKeyword as Keyword  # watch out :)
 
 # from pyparsing import Keyword as CaseSensitiveKeyword
 
-# from .parserutils import Comp, Param, ParamList
+from .parserutils import Comp, Param, ParamList
 
-from parserutils import Comp, Param, ParamList
+# from parserutils import Comp, Param, ParamList
 
-import operators as op
+# import operators as op
+from . import operators as op
 from rdflib.compat import decodeUnicodeEscape
 
 import rdflib
@@ -455,8 +456,9 @@ GraphOrDefault = ParamList("graph", Keyword("DEFAULT")) | Optional(
 
 # Inside a values clause the EmbeddedTriple must be fully resolvable.
 KnownEmbTP = Suppress('<<') + iri + (iri | A) + (iri | RDFLiteral | NumericLiteral | BooleanLiteral) + Suppress('>>')
+# print("sadasd", PN_PREFIX)
 KnownEmbTP.setParseAction(lambda x: RdfstarTriple(myHash("<<"+":"+str(x[0]["localname"])+":"+str(x[1]["localname"])+":"+str(x[2]["localname"])+">>") + "RdfstarTriple"
-                 )if ("prefix" not in x and "<" not in str(x[0]["localname"])) else lambda x:
+                 )if ((not("prefix" in x[0])) and (not('<' in x[0]["localname"]))) else
                      RdfstarTriple(myHash("<<"+str(x[0]["prefix"])+":"+str(x[0]["localname"])+str(x[0]["prefix"])+":"+str(x[1]["localname"])+str(x[0]["prefix"])+":"+str(x[2]["localname"])+">>") + "RdfstarTriple"
                  ))
 
@@ -485,11 +487,48 @@ GraphNode = VarOrTerm | TriplesNode
 #VarOrBlankNodeOrIriOrLitOrEmbTP <<= Var | BlankNode | iri | RDFLiteral | NumericLiteral | BooleanLiteral | VarOrBlankNodeOrIriOrLitOrEmbTP
 VarOrBlankNodeOrIriOrLitOrEmbTP = Var | BlankNode | iri | RDFLiteral | NumericLiteral | BooleanLiteral
 
+def EmbTPparseAction():
+    def parseAction(string, loc, x):
+        # print()
+        print("herer", string, loc, x[0], x)
+
+        if not type(x[0]) == rdflib.term.Variable:
+            if (not("prefix" in x[0])and (not('<' in (x[0])["localname"]))):
+                x0value = ":"+str(x[0]["localname"])
+            else:
+                x0value = str(x[0]["prefix"])+":"+str(x[0]["localname"])
+        else:
+            x0value = "?"+str(x[0]) # +"?"
+
+        if not type(x[1]) == rdflib.term.Variable:
+            if (not("prefix" in x[1])and (not('<' in (x[1])["localname"]))):
+                x1value = ":"+str(x[1]["localname"])
+            else:
+                x1value = str(x[1]["prefix"])+":"+str(x[1]["localname"])
+        else:
+            x1value = "?"+str(x[1]) # +"?"
+
+        if not type(x[2]) == rdflib.term.Variable:
+            if (not("prefix" in x[2])and (not('<' in (x[2])["localname"]))):
+                x2value = ":"+str(x[2]["localname"])
+            else:
+                x2value = str(x[2]["prefix"])+":"+str(x[2]["localname"])
+        else:
+            x2value = "?"+str(x[2]) # +"?"
+
+        return RdfstarTriple(myHash("<<"+x0value+x1value+x2value+">>") + "RdfstarTriple")
+        # else:
+        #     return RdfstarTriple(myHash("<<"+str(x[0]["prefix"])+":"+str(x[0]["localname"])+str(x[0]["prefix"])+":"+str(x[1]["localname"])+str(x[0]["prefix"])+":"+str(x[2]["localname"])+">>") + "RdfstarTriple")
+    # RdfstarTriple(myHash("<<"+":"+str(x[0]["localname"])+":"+str(x[1]["localname"])+":"+str(x[2]["localname"])+">>") + "RdfstarTriple"
+    #              )if ((not("prefix" in x[0]))
+    #              and (not('<' in (x[0])["localname"]))) else
+    #                  RdfstarTriple(myHash("<<"+str(x[0]["prefix"])+":"+str(x[0]["localname"])+str(x[0]["prefix"])+":"+str(x[1]["localname"])+str(x[0]["prefix"])+":"+str(x[2]["localname"])+">>") + "RdfstarTriple"
+    #              )
+
+    return parseAction
+
 EmbTP = Suppress('<<') + VarOrBlankNodeOrIriOrLitOrEmbTP + Verb + VarOrBlankNodeOrIriOrLitOrEmbTP + Suppress('>>')
-EmbTP.setParseAction(lambda x: RdfstarTriple(myHash("<<"+":"+str(x[0]["localname"])+":"+str(x[1]["localname"])+":"+str(x[2]["localname"])+">>") + "RdfstarTriple"
-                 )if ("prefix" not in x and "<" not in str(x[0]["localname"])) else lambda x:
-                     RdfstarTriple(myHash("<<"+str(x[0]["prefix"])+":"+str(x[0]["localname"])+str(x[0]["prefix"])+":"+str(x[1]["localname"])+str(x[0]["prefix"])+":"+str(x[2]["localname"])+">>") + "RdfstarTriple"
-                 ))
+EmbTP.setParseAction(EmbTPparseAction())
 
 VarOrTermOrEmbTP = Var | GraphTerm | EmbTP
 
@@ -1598,8 +1637,7 @@ if __name__ == "__main__":
 
     DEBUG = True
     try:
-        q = Query.parseString("PREFIX :       <http://example/> SELECT * {<<:a :b :c>> ?p ?o}"
-)
+        q = Query.parseString(sys.argv[1])
         print("\nSyntax Tree:\n")
         print(q)
     except ParseException as err:

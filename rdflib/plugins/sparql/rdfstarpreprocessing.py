@@ -1,75 +1,20 @@
-from tkinter import N
-import pytest
-
-from pathlib import Path
-from shutil import copyfile
-from tempfile import TemporaryDirectory
-
-from rdflib.exceptions import ParserError
-
-from rdflib import Graph
-from rdflib.util import guess_format
-
-
-from rdflib.plugin import register
-from rdflib.parser import Parser
-from rdflib.serializer import Serializer
-
-import rdflib
-from rdflib import URIRef
-from rdflib.namespace import RDF
-from rdflib.namespace import FOAF
-
-register(
-    "ttls",
-    Parser,
-    "rdflib.plugins.parsers.turtlestar",
-    "TurtleParser",
-)
-
-register(
-    "ttlstar",
-    Serializer,
-    "rdflib.plugins.serializers.turtlestar",
-    "TurtlestarSerializer"
-)
-
-g = Graph()
-g.parse(data="test/sparql-star/data-1.ttl", format = "ttls")
-for x in g.triples((None, None, None)):
-    print("rdfstar", x)
-    print(x[0].subject())
-# q = "SELECT * { <<:a :b :c>> ?p ?o }"
-res = g.query("PREFIX :       <http://example/> SELECT * { <<:a :b :c>> ?p ?o }")
-print(list(res))
-res = g.query("PREFIX :       <http://example/> SELECT * {<<?s :b :c>> ?p ?o}")
-print(list(res))
-res = g.query("PREFIX :       <http://example/>SELECT * {<<:a ?p :c>> ?q :z .}")
-print(list(res))
-res = g.query("PREFIX :       <http://example/>SELECT * {<<:a :b ?o>> ?q :z .}")
-print(list(res))
-res = g.query("PREFIX :       <http://example/>SELECT * {<<?a ?b :nomatch >> ?q :z .}")
-print(list(res))
-
-# f = open("test/sparql-star/sparql-star-basic-2-data-1-reified.rq", "rb")
-# sparqlbytes = f.read()
-# f.close()
+sparqlbytes_processing = "PREFIX rdf:       <http://www.rdf/example/> \n PREFIX :       <http://example/> \n SELECT * {<<:a :b :c>> ?p ?o}"
 # sparqlbytes_processing = sparqlbytes.decode("utf-8")
 
-# import re
-# import lark
-# import hashlib
-# from lark import (
-#     Lark,
-#     Transformer,
-#     Tree,
-# )
-# from lark.visitors import Visitor
-# from lark.reconstruct import Reconstructor
+import re
+import lark
+import hashlib
+from lark import (
+    Lark,
+    Transformer,
+    Tree,
+)
+from lark.visitors import Visitor
+from lark.reconstruct import Reconstructor
 
-# from lark.lexer import (
-#     Token,
-# )
+from lark.lexer import (
+    Token,
+)
 
 # from pymantic.compat import (
 #     binary_type,
@@ -350,67 +295,67 @@ COMMENT: "#" /[^\n]/*
 %ignore COMMENT
 """
 
-# sparql_lark = Lark(grammar, start="queryunit", parser="lalr", maybe_placeholders=False)
+sparql_lark = Lark(grammar, start="queryunit", parser="lalr", maybe_placeholders=False)
 
-# class Print_Tree(Visitor):
-#     def print_quotation(self, tree):
-#         assert tree.data == "quotation"
-#         print(tree.children)
+class Print_Tree(Visitor):
+    def print_quotation(self, tree):
+        assert tree.data == "quotation"
+        print(tree.children)
 
-# from lark import Visitor, v_args
+from lark import Visitor, v_args
 
-# tree = sparql_lark.parse(sparqlbytes_processing)
-# quotation_dict = []
-# quotationreif = []
+tree = sparql_lark.parse(sparqlbytes_processing)
+quotation_dict = []
+quotationreif = []
+prefix_dictionary = dict()
+def myHash(text:str):
+  return str(hashlib.md5(text.encode('utf-8')).hexdigest())
 
-# def myHash(text:str):
-#   return str(hashlib.md5(text.encode('utf-8')).hexdigest())
+print(tree)
+class FindVariables(Visitor):
+    def __init__(self):
+        super().__init__()
+        # self.quotation_list = []
+        self.variable_list = []
 
-# print(tree)
-# class FindVariables(Visitor):
-#     def __init__(self):
-#         super().__init__()
-#         # self.quotation_list = []
-#         self.variable_list = []
+    # def quotation(self, var):
 
-#     def quotation(self, var):
+    #     qut = Reconstructor(sparql_lark).reconstruct(var) # replace here or replace later
+    #     print("qqqqqqqqqqqqqqqqqqqqqqqqqqq", qut,"\n" )
+    #     qut = qut.replace(";", "") #####################
+    #     # qut = qut.replace(" ", "") #qut = qut.strip()
+    #     if not (qut in sparql_lark):
+    #         sparql_lark.append(qut)
 
-#         qut = Reconstructor(sparql_lark).reconstruct(var) # replace here or replace later
-#         print("qqqqqqqqqqqqqqqqqqqqqqqqqqq", qut,"\n" )
-#         qut = qut.replace(";", "") #####################
-#         # qut = qut.replace(" ", "") #qut = qut.strip()
-#         if not (qut in sparql_lark):
-#             sparql_lark.append(qut)
+    #     vr = Reconstructor(sparql_lark).reconstruct(var)
+    #     vr = vr.replace(";","")
+    #     # vr = vr.replace(" ","")
+    #     sparql_lark[qut] = str(myHash(qut))
+    #     qut_hash = ":" + str(myHash(qut))
+    #     # try:
+    #     id = quotation_dict.get(vr)
+    #     for x in quotation_dict:
+    #         if x in vr:
+    #             # print("replace", x, ":"+quotation_dict.get(x))
+    #             vr = vr.replace(x, ":"+quotation_dict.get(x))
+    #             vr = vr.replace("<<", "")
+    #             vr = vr.replace(">>", "")
+    #             output = vr.split(":") # what if not :? directly url? if and else?
+    #             output.pop(0)
+    #             oa1 = Reconstructor(sparql_lark).reconstruct(var)
+    #             oa1 = oa1.replace(";","")
+    #             # oa1 = oa1.replace(" ","")
+    #             output.append(oa1)
+    #             # print(quotationreif)
+    #             if (not (output in quotationreif)):
+    #                 quotationreif.append(output)
 
-#         vr = Reconstructor(sparql_lark).reconstruct(var)
-#         vr = vr.replace(";","")
-#         # vr = vr.replace(" ","")
-#         sparql_lark[qut] = str(myHash(qut))
-#         qut_hash = ":" + str(myHash(qut))
-#         # try:
-#         id = quotation_dict.get(vr)
-#         for x in quotation_dict:
-#             if x in vr:
-#                 # print("replace", x, ":"+quotation_dict.get(x))
-#                 vr = vr.replace(x, ":"+quotation_dict.get(x))
-#                 vr = vr.replace("<<", "")
-#                 vr = vr.replace(">>", "")
-#                 output = vr.split(":") # what if not :? directly url? if and else?
-#                 output.pop(0)
-#                 oa1 = Reconstructor(sparql_lark).reconstruct(var)
-#                 oa1 = oa1.replace(";","")
-#                 # oa1 = oa1.replace(" ","")
-#                 output.append(oa1)
-#                 # print(quotationreif)
-#                 if (not (output in quotationreif)):
-#                     quotationreif.append(output)
+    #     print("fixing quotation before",var)
+    #     var = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', qut_hash)])])
+    #     print("fixing quotation",var)
 
-        # print("fixing quotation before",var)
-        # var = Tree('iri', [Tree('prefixed_name', [Token('PNAME_LN', qut_hash)])])
-        # print("fixing quotation",var)
-
-        ##################
-        #########################
+    #     #################
+    #     ########################
 
     # def blank_node_property_list(self, var):
     #     # print("bnpl", (var.children[0]).children)
@@ -419,7 +364,7 @@ COMMENT: "#" /[^\n]/*
     #         try:
     #             if object_list[x].data == 'quotation':
     #                 # print("fixing blank node property list:", object_list, "\n","\n")
-    #                 collection_quotation_reconstruct = Reconstructor(turtle_lark).reconstruct(object_list[x])
+    #                 collection_quotation_reconstruct = Reconstructor(sparql_lark).reconstruct(object_list[x])
     #                 collection_quotation_reconstruct = collection_quotation_reconstruct.replace(";","")
     #                 t2 = quotation_dict[collection_quotation_reconstruct]
     #                 hasht2 = "_:" + t2
@@ -431,7 +376,7 @@ COMMENT: "#" /[^\n]/*
     #     for x in range(0, len(var.children)):
     #         if var.children[x].data == 'quotation':
     #             # print("fixing collection:", x, "\n","\n")
-    #             collection_quotation_reconstruct = Reconstructor(turtle_lark).reconstruct(var.children[x])
+    #             collection_quotation_reconstruct = Reconstructor(sparql_lark).reconstruct(var.children[x])
     #             collection_quotation_reconstruct = collection_quotation_reconstruct.replace(";","")
     #             t2 = quotation_dict[collection_quotation_reconstruct]
     #             hasht2 = "_:" + t2
@@ -445,7 +390,7 @@ COMMENT: "#" /[^\n]/*
     #     for x in var.children:
     #         print(x)
     #         if x.data == "triples":
-    #             triple1 = Reconstructor(turtle_lark).reconstruct(x)
+    #             triple1 = Reconstructor(sparql_lark).reconstruct(x)
     #             triple1 = triple1.replace(";","")
 
     #             print(triple1)
@@ -461,7 +406,7 @@ COMMENT: "#" /[^\n]/*
     #                     quotationtriple = []
     #                     for z in y.children:
     #                         count2+=1
-    #                         z2 = Reconstructor(turtle_lark).reconstruct(z)
+    #                         z2 = Reconstructor(sparql_lark).reconstruct(z)
     #                         # z2 = z2.replace(";","")
     #                         print("z",z2)
     #                         quotationtriple.append(z2)
@@ -474,7 +419,7 @@ COMMENT: "#" /[^\n]/*
     # def triples(self, var):
 
     #     appends1 = []
-    #     tri = Reconstructor(turtle_lark).reconstruct(var)
+    #     tri = Reconstructor(sparql_lark).reconstruct(var)
     #     print("ttttttttttttttttttttttttttttt", tri,"\n" )
     #     tri = tri.replace(";", "")
     #     if not (tri in assertedtriplelist):
@@ -484,14 +429,14 @@ COMMENT: "#" /[^\n]/*
     #         if x.data == 'predicate_object_list':
     #             xc = x.children
     #             for y in xc:
-    #                 x2 = Reconstructor(turtle_lark).reconstruct(y)
+    #                 x2 = Reconstructor(sparql_lark).reconstruct(y)
     #                 x2 = x2.replace(";","")
     #                 # x2 = x2.replace(" ","")
     #                 appends1.append(x2) # or push
     #         else:
     #           print("how to edit2", x)
     #           anyquotationin = False
-    #           x1 = Reconstructor(turtle_lark).reconstruct(x)
+    #           x1 = Reconstructor(sparql_lark).reconstruct(x)
     #           x1 = x1.replace(";","")
     #         #   x1 = x1.replace(" ","")
     #           print("compareed", x1)
@@ -503,7 +448,7 @@ COMMENT: "#" /[^\n]/*
     # def insidequotation(self, var):
     #     appends1 = []
     #     for x in var.children:
-    #         x1 = Reconstructor(turtle_lark).reconstruct(x)
+    #         x1 = Reconstructor(sparql_lark).reconstruct(x)
     #         x1 = x1.replace(";","")
     #         # x1 = x1.replace(" ","")
     #         appends1.append(x1)
@@ -511,12 +456,20 @@ COMMENT: "#" /[^\n]/*
     #     if not (appends1 in vblist):
     #         vblist.append(appends1)
 
-    # def prefixed_name(self, children):
-    #     print("prefixed_name")
-    #     # pname, = children
-    #     print("pn", children)
-    #     # ns, _, ln = pname.partition(':')
-    #     # return self.make_named_node(self.prefixes[ns] + decode_literal(ln))
+    def prefixdecl(self, children):
+        print("Sdasd", (children.children))
+        vr = Reconstructor(sparql_lark).reconstruct(children)
+        print("sadadasd", vr)
+        prefix_dictionary[str(children.children[0])] = str(children.children[1])
+        # self.children = Tree()
+        # self.children.children = self.children
+
+    def prefixed_name(self, children):
+        print("prefixed_name")
+        # pname, = children
+        print("pn", children)
+        # ns, _, ln = pname.partition(':')
+        # return self.make_named_node(self.prefixes[ns] + decode_literal(ln))
 
     # def prefix_id(self, children):
     #     print("prefix_id")
@@ -532,14 +485,33 @@ COMMENT: "#" /[^\n]/*
     #     print("sparql_prefix", children)
     #     prefix_list.append(children)
 
-    # def base(self, children):
-    #     print("base")
-    #     base_directive, base_iriref = children
-    #     print("base", base_directive, base_iriref)
-    #     # Workaround for lalr parser token ambiguity in python 2.7
-    #     if base_directive.startswith('@') and base_directive != '@base':
-    #         raise ValueError('Unexpected @base: ' + base_directive)
+    def base(self, children):
+        print("base")
+        base_directive, base_iriref = children
+        print("base", base_directive, base_iriref)
+        # Workaround for lalr parser token ambiguity in python 2.7
+        if base_directive.startswith('@') and base_directive != '@base':
+            raise ValueError('Unexpected @base: ' + base_directive)
 
-# at = FindVariables().visit(tree)
+at = FindVariables().visit(tree)
+# print(prefix_dictionary)
+sparql = Reconstructor(sparql_lark).reconstruct(tree)
+print(sparql)
+for z in prefix_dictionary:
+    replace = "PREFIX" + z + prefix_dictionary[z]
+    replace1 = "PREFIX" + " "+ z + prefix_dictionary[z]
+    replace2 = "PREFIX" + z + " " +prefix_dictionary[z]
+    replace3 = "PREFIX" +" "+ z+ " " + prefix_dictionary[z]
+    # print(replace)
+    print(sparqlbytes_processing)
+    sparql = sparql.replace(replace, "")
+    sparql = sparql.replace(replace1, "")
+    sparql = sparql.replace(replace2, "")
+    sparql = sparql.replace(replace3, "")
+    pd = prefix_dictionary[z].strip("<")
+    pd = pd.strip(">")
+    sparql = sparql.replace(z, pd)
+
+print("reer", sparql)
 # res = g.query("SELECT * { <<:a :b :c>> ?p ?o }")
 # print(list(res))

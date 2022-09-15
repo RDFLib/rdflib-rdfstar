@@ -53,6 +53,7 @@ __all__ = [
     "BNode",
     "IdentifiedNode",
     "Literal",
+    "RdfstarTriple"
     "Variable",
     "Namespace",
     "Dataset",
@@ -156,7 +157,7 @@ In particular, this determines how the rich comparison operators for
 Literal work, eq, __neq__, __lt__, etc.
 """
 
-from rdflib.term import URIRef, BNode, IdentifiedNode, Literal, Variable
+from rdflib.term import URIRef, BNode, IdentifiedNode, Literal, RdfstarTriple, Variable
 
 from rdflib.graph import Dataset, Graph, ConjunctiveGraph
 

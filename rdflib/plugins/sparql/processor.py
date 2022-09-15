@@ -78,7 +78,9 @@ class SPARQLProcessor(Processor):
 
         if not isinstance(strOrQuery, Query):
             parsetree = parseQuery(strOrQuery)
+            print("test1", parsetree)
             query = translateQuery(parsetree, base, initNs)
+            print("test2", query)
         else:
             query = strOrQuery
         return evalQuery(self.graph, query, initBindings, base)

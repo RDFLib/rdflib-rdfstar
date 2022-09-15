@@ -553,18 +553,18 @@ class RdfstarTriple(IdentifiedNode):
         self._hashvalueid = hashvalueid
 
 
-    # def __ne__(self, other):
-    #     return not self.__eq__(other)
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
-    # def __eq__(self, other):
-    #     if (not isinstance(other, self.__class__)):
-    #         return False
-    #     return self._subject == other._subject and  \
-    #            self._predicate == other._predicate and \
-    #            self._object == other._object
+    def __eq__(self, other):
+        if (not isinstance(other, self.__class__)):
+            return False
+        return self._subject == other._subject and  \
+               self._predicate == other._predicate and \
+               self._object == other._object
 
-    # def __hash__(self):
-    #     return hash(self._subject) | hash(self._predicate) | hash(self._object)
+    def __hash__(self):
+        return hash(self._subject) | hash(self._predicate) | hash(self._object)
 
 class Literal(Identifier):
     __doc__ = """

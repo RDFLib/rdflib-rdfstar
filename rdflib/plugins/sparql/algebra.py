@@ -11,7 +11,7 @@ import collections
 
 from functools import reduce
 
-from rdflib import Literal, Variable, URIRef, BNode
+from rdflib import Literal, Variable, URIRef, BNode, RdfstarTriple
 
 from rdflib.plugins.sparql.sparql import Prologue, Query, Update
 from rdflib.plugins.sparql.parserutils import CompValue, Expr
@@ -154,9 +154,25 @@ def translatePName(p, prologue):
             return Literal(
                 p.string, lang=p.lang, datatype=prologue.absolutize(p.datatype)
             )
-    elif isinstance(p, URIRef):
-        return prologue.absolutize(p)
 
+    elif isinstance(p, URIRef):
+        print("URIREF", p)
+        return prologue.absolutize(p)
+    elif isinstance(p, RdfstarTriple):
+        print("rdfstartriple")
+        trSub = translatePName(p.subject(), prologue)
+        trPred = translatePName(p.predicate(), prologue)
+        trObj = translatePName(p.object(), prologue)
+        print(p.subject(), p.predicate(), p.object())
+        if trSub is not None:
+            p.setSubject(trSub)
+        if trPred is not None:
+            p.setPredicate(trPred)
+        if trObj is not None:
+            p.setObject(trObj)
+
+def EmpTP(p, o):
+    return CompValue('EmpTP', var=o)
 
 def translatePath(p):
     """
@@ -313,6 +329,8 @@ def translateGroupGraphPattern(graphPattern):
             G = Join(p1=G, p2=p)
         elif p.name == "Bind":
             G = Extend(G, p.expr, p.var)
+        elif p.name == "EmpTP":
+            G = Project(p, p.o)
 
         else:
             raise Exception(
@@ -349,8 +367,11 @@ def _traverse(e, visitPre=lambda n: None, visitPost=lambda n: None):
         return tuple([_traverse(x, visitPre, visitPost) for x in e])
 
     elif isinstance(e, CompValue):
-        for k, val in e.items():
-            e[k] = _traverse(val, visitPre, visitPost)
+        if e.name != 'EmpTP':
+            for k, val in e.items():
+                e[k] = _traverse(val, visitPre, visitPost)
+        else:
+            raise Exception("Sparql star not tied into the algebra jet")
 
     _e = visitPost(e)
     if _e is not None:
@@ -378,6 +399,8 @@ def _traverseAgg(e, visitor=lambda n, v: None):
 
     return visitor(e, res)
 
+def translateEmbTP(u):
+    return u
 
 def traverse(tree, visitPre=lambda n: None, visitPost=lambda n: None, complete=None):
     """

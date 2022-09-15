@@ -47,7 +47,7 @@ from rdflib.plugins.sparql.evalutils import (
 from rdflib.plugins.sparql.aggregates import Aggregator
 from rdflib.plugins.sparql import parser
 from rdflib.term import Identifier
-
+import rdflib
 
 def evalBGP(ctx: QueryContext, bgp: List[Any]):
     """
@@ -59,13 +59,28 @@ def evalBGP(ctx: QueryContext, bgp: List[Any]):
         return
 
     s, p, o = bgp[0]
-
+    print("BGPSPO", s, p ,o, bgp, type(p), ctx)
+    # p = rdflib.term.Variable('r')
+    # o = rdflib.term.Variable('z')
     _s = ctx[s]
     _p = ctx[p]
     _o = ctx[o]
-
+    # _s.setSubject("http://example/a")
+    # _s.setPredicate("http://example/b")
+    # _s.setObject("http://example/c")
+    print("324324", _s.subject())
+    print("ctx_s_p_o", _s, _p, _o)
+    print("hello", ctx.graph.triples((None, None, None)), ctx.solution())
+    for x,y,z in ctx.graph.triples((None, None, None)):
+        # print(str(x), str(_s))
+        if (str(x)==str(_s)):
+            _s = x
+        if (str(z)==str(_o)):
+            _o = z
     for ss, sp, so in ctx.graph.triples((_s, _p, _o)):
+        print("ssspso", ss, sp, so)
         if None in (_s, _p, _o):
+            print("on=")
             c = ctx.push()
         else:
             c = ctx
@@ -243,12 +258,13 @@ def evalPart(ctx: QueryContext, part: CompValue):
             pass  # the given custome-function did not handle this part
 
     if part.name == "BGP":
+        print("BGP")
         # Reorder triples patterns by number of bound nodes in the current ctx
         # Do patterns with more bound nodes first
         triples = sorted(
             part.triples, key=lambda t: len([n for n in t if ctx[n] is None])
         )
-
+        print("triples")
         return evalBGP(ctx, triples)
     elif part.name == "Filter":
         return evalFilter(ctx, part)
@@ -284,6 +300,7 @@ def evalPart(ctx: QueryContext, part: CompValue):
         return evalAggregateJoin(ctx, part)
 
     elif part.name == "SelectQuery":
+        print("select")
         return evalSelectQuery(ctx, part)
     elif part.name == "AskQuery":
         return evalAskQuery(ctx, part)
@@ -518,6 +535,7 @@ def evalSelectQuery(ctx: QueryContext, query):
 
     res = {}
     res["type_"] = "SELECT"
+    print(ctx, query.p)
     res["bindings"] = evalPart(ctx, query.p)
     res["vars_"] = query.PV
     return res
@@ -561,8 +579,9 @@ def evalQuery(graph, query, initBindings, base=None):
 
     ctx.prologue = query.prologue
     main = query.algebra
-
+    print("sadfasd")
     if main.datasetClause:
+        print("sadasdsad")
         if ctx.dataset is None:
             raise Exception(
                 "Non-conjunctive-graph doesn't know about "
@@ -574,8 +593,9 @@ def evalQuery(graph, query, initBindings, base=None):
         firstDefault = False
         for d in main.datasetClause:
             if d.default:
-
+                print("default")
                 if firstDefault:
+                    print("whjat")
                     # replace current default graph
                     dg = ctx.dataset.get_context(BNode())
                     ctx = ctx.pushGraph(dg)
@@ -584,6 +604,7 @@ def evalQuery(graph, query, initBindings, base=None):
                 ctx.load(d.default, default=True)
 
             elif d.named:
+                print("named?")
                 g = d.named
                 ctx.load(g, default=False)
 
