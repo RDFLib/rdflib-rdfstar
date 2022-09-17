@@ -493,30 +493,44 @@ def EmbTPparseAction():
         print("herer", string, loc, x[0], x)
 
         if not type(x[0]) == rdflib.term.Variable:
-            if (not("prefix" in x[0])and (not('<' in (x[0])["localname"]))):
-                x0value = ":"+str(x[0]["localname"])
-            else:
-                x0value = str(x[0]["prefix"])+":"+str(x[0]["localname"])
+            print(x)
+            # if (not("prefix" in x[0])and (not('<' in (x[0])["localname"]))):
+            #     x0value = ":"+str(x[0]["localname"])
+            # else:
+            #     x0value = str(x[0]["prefix"])+":"+str(x[0]["localname"])
+            # setx0 = str(x[0])
+            x0value = str(x[0])
         else:
+            # setx0 = "?"+str(x[0])
             x0value = "?"+str(x[0]) # +"?"
 
         if not type(x[1]) == rdflib.term.Variable:
-            if (not("prefix" in x[1])and (not('<' in (x[1])["localname"]))):
-                x1value = ":"+str(x[1]["localname"])
-            else:
-                x1value = str(x[1]["prefix"])+":"+str(x[1]["localname"])
+            # if (not("prefix" in x[1])and (not('<' in (x[1])["localname"]))):
+            #     x1value = ":"+str(x[1]["localname"])
+            # else:
+            #     x1value = str(x[1]["prefix"])+":"+str(x[1]["localname"])
+            x1value = str(x[1])
+            # setx1 = str(x[1])
         else:
             x1value = "?"+str(x[1]) # +"?"
+            # setx1 = "?"+str(x[1])
 
         if not type(x[2]) == rdflib.term.Variable:
-            if (not("prefix" in x[2])and (not('<' in (x[2])["localname"]))):
-                x2value = ":"+str(x[2]["localname"])
-            else:
-                x2value = str(x[2]["prefix"])+":"+str(x[2]["localname"])
+            # if (not("prefix" in x[2])and (not('<' in (x[2])["localname"]))):
+            #     x2value = ":"+str(x[2]["localname"])
+            # else:
+            #     x2value = str(x[2]["prefix"])+":"+str(x[2]["localname"])
+            x2value = str(x[2])
+            # setx2 = str(x[2])
         else:
             x2value = "?"+str(x[2]) # +"?"
+            # setx2 = "?"+str(x[2])
 
-        return RdfstarTriple(myHash("<<"+x0value+x1value+x2value+">>") + "RdfstarTriple")
+        newreturnrdfstartriple = RdfstarTriple(myHash("<<"+"<"+x0value+">"+"<"+x1value+">"+"<"+x2value+">"+">>") + "RdfstarTriple")
+        newreturnrdfstartriple.setSubject(x0value)
+        newreturnrdfstartriple.setPredicate(x1value)
+        newreturnrdfstartriple.setObject(x2value)
+        return newreturnrdfstartriple
         # else:
         #     return RdfstarTriple(myHash("<<"+str(x[0]["prefix"])+":"+str(x[0]["localname"])+str(x[0]["prefix"])+":"+str(x[1]["localname"])+str(x[0]["prefix"])+":"+str(x[2]["localname"])+">>") + "RdfstarTriple")
     # RdfstarTriple(myHash("<<"+":"+str(x[0]["localname"])+":"+str(x[1]["localname"])+":"+str(x[2]["localname"])+">>") + "RdfstarTriple"

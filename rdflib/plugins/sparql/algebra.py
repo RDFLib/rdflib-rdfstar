@@ -159,11 +159,11 @@ def translatePName(p, prologue):
         print("URIREF", p)
         return prologue.absolutize(p)
     elif isinstance(p, RdfstarTriple):
-        print("rdfstartriple")
+        print("rdfstartriple123123123123123123", "\n")
         trSub = translatePName(p.subject(), prologue)
         trPred = translatePName(p.predicate(), prologue)
         trObj = translatePName(p.object(), prologue)
-        print(p.subject(), p.predicate(), p.object())
+        print("SAdasdasdasdasd\n",trSub, trPred, trObj)
         if trSub is not None:
             p.setSubject(trSub)
         if trPred is not None:

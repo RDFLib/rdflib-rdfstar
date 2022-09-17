@@ -5,7 +5,7 @@ These should be automatically registered with RDFLib
 
 """
 
-
+from rdflib.plugins.sparql.rdfstarpreprocessing import Preprocessingqueryintordfstar
 from rdflib.query import Processor, Result, UpdateProcessor
 
 from rdflib.plugins.sparql.sparql import Query
@@ -77,6 +77,8 @@ class SPARQLProcessor(Processor):
         """
 
         if not isinstance(strOrQuery, Query):
+            print("sparql", Preprocessingqueryintordfstar(strOrQuery))
+            strOrQuery = Preprocessingqueryintordfstar(strOrQuery)
             parsetree = parseQuery(strOrQuery)
             print("test1", parsetree)
             query = translateQuery(parsetree, base, initNs)
