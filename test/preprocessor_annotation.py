@@ -210,12 +210,12 @@ COMMENT: "#" /[^\n]/*
 
 turtle_lark = Lark(grammar, start="turtle_doc", parser="lalr", maybe_placeholders=False)
 
-f = open("turtlestar-evaluation/turtle-star-eval-quoted-annotation-3.ttl", "rb")
+f = open("turtlestar-evaluation/turtle-star-eval-annotation-2.ttl", "rb")
 rdbytes = f.read()
 f.close()
 rdbytes_processing = rdbytes.decode("utf-8")
 
-f1 = open("turtlestar-evaluation/turtle-star-eval-quoted-annotation-2.ttl", "rb")
+f1 = open("turtlestar-evaluation/turtle-star-eval-annotation-5.ttl", "rb")
 rdbytes1 = f1.read()
 f1.close()
 rdbytes_processing1 = rdbytes1.decode("utf-8")

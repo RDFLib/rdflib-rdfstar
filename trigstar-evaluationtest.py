@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 
 from rdflib.exceptions import ParserError
 
-from rdflib import Graph
+from rdflib import Graph, ConjunctiveGraph
 from rdflib.util import guess_format
 
 
@@ -48,39 +48,39 @@ register(
 # g.parse(data="test/trig-star/test1234.trig", format = "trigs")
 # print(g.serialize(format = "trigstar"))
 
-g = Graph()
+g = ConjunctiveGraph()
 g.parse(data="test/trigstar-evaluation/trig-star-eval-01.trig", format = "trigs")
 print(g.serialize(format = "trigstar"))
 
-g = Graph()
+g = ConjunctiveGraph()
 g.parse("test/trigstar-evaluation/trig-star-eval-02.trig", format = "trigs")
 print(g.serialize(format = "trigstar"))
 
-g = Graph()
+g = ConjunctiveGraph()
 g.parse("test/trigstar-evaluation/trig-star-eval-bnode-1.trig", format = "trigs")
-print(g.serialize(format = "trigstar"))
+print(g.serialize(format = "trig"))
 
-g = Graph()
+g = ConjunctiveGraph()
 g.parse("test/trigstar-evaluation/trig-star-eval-bnode-2.trig", format = "trigs")
-print(g.serialize(format = "trigstar"))
+print(g.serialize(format = "trig"))
 
-g = Graph()
+g = ConjunctiveGraph()
 g.parse("test/trigstar-evaluation/trig-star-eval-annotation-1.trig", format = "trigs")
-print(g.serialize(format = "trigstar"))
+print(g.serialize(format = "trig"))
 
-g = Graph()
+g = ConjunctiveGraph()
 g.parse("test/trigstar-evaluation/trig-star-eval-annotation-2.trig", format = "trigs")
 print(g.serialize(format = "trigstar"))
 
-g = Graph()
+g = ConjunctiveGraph()
 g.parse("test/trigstar-evaluation/trig-star-eval-annotation-3.trig", format = "trigs")
 print(g.serialize(format = "trigstar"))
 
-g = Graph()
+g = ConjunctiveGraph()
 g.parse("test/trigstar-evaluation/trig-star-eval-annotation-4.trig", format = "trigs")
 print(g.serialize(format = "trigstar"))
 
-g = Graph()
+g = ConjunctiveGraph()
 g.parse("test/trigstar-evaluation/trig-star-eval-annotation-5.trig", format = "trigs")
 print(g.serialize(format = "trigstar"))
 
@@ -88,14 +88,14 @@ print(g.serialize(format = "trigstar"))
 # g.parse("test/trigstar-evaluation/trig-star-eval-syntax-bnode-03.trig", format = "trigs")
 # print(g.serialize(format = "trigstar"))
 
-g = Graph()
+g = ConjunctiveGraph()
 g.parse("test/trigstar-evaluation/trig-star-eval-quoted-annotation-1.trig", format = "trigs")
 print(g.serialize(format = "trigstar"))
 
-g = Graph()
+g = ConjunctiveGraph()
 g.parse("test/trigstar-evaluation/trig-star-eval-quoted-annotation-2.trig", format = "trigs")
 print(g.serialize(format = "trigstar"))
 
-g = Graph()
+g = ConjunctiveGraph()
 g.parse("test/trigstar-evaluation/trig-star-eval-quoted-annotation-3.trig", format = "trigs")
 print(g.serialize(format = "trigstar"))

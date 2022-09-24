@@ -3,7 +3,7 @@ HextuplesSerializer RDF graph serializer for RDFLib.
 See <https://github.com/ontola/hextuples> for details about the format.
 """
 # from this import d
-from typing import IO, Optional, Type, Union
+from typing import IO, Optional, Type, Union, TYPE_CHECKING
 import json
 from rdflib.graph import Graph, ConjunctiveGraph
 from rdflib.term import Literal, URIRef, Node, BNode, RdfstarTriple
@@ -12,7 +12,7 @@ from rdflib.namespace import RDF, XSD
 import warnings
 import rdflib
 import hashlib
-
+# from typing import IO, TYPE_CHECKING, Optional, Union
 def myHash(text:str):
   return str(hashlib.md5(text.encode('utf-8')).hexdigest())
 
@@ -25,20 +25,38 @@ class TrigstarSerializer(Serializer):
     Serializes RDF graphs to NTriples format.
     """
 
+    # def __init__(self, store: Union[Graph, ConjunctiveGraph]):
+    #     self.default_context: Optional[Node]
+    #     self.graph_type: Type[Graph]
+    #     if isinstance(store, ConjunctiveGraph):
+    #         self.graph_type = ConjunctiveGraph
+    #         self.contexts = list(store.contexts())
+    #         if store.default_context:
+    #             self.default_context = store.default_context
+    #             self.contexts.append(store.default_context)
+    #         else:
+    #             self.default_context = None
+    #     else:
+    #         self.graph_type = Graph
+    #         self.contexts = [store]
+    #         self.default_context = None
+
+    #     Serializer.__init__(self, store)
+
     def __init__(self, store: Union[Graph, ConjunctiveGraph]):
         self.default_context: Optional[Node]
-        self.graph_type: Type[Graph]
-        if isinstance(store, ConjunctiveGraph):
-            self.graph_type = ConjunctiveGraph
+        # print("init", list(store.contexts()))
+        if store.context_aware:
+            if TYPE_CHECKING:
+                assert isinstance(store, ConjunctiveGraph)
             self.contexts = list(store.contexts())
+            # print("sadasd", [store])
+            self.default_context = store.default_context.identifier
             if store.default_context:
-                self.default_context = store.default_context
                 self.contexts.append(store.default_context)
-            else:
-                self.default_context = None
         else:
-            self.graph_type = Graph
             self.contexts = [store]
+            # print("asdasdas", store.default_context.identifier)
             self.default_context = None
 
         Serializer.__init__(self, store)
@@ -72,6 +90,7 @@ class TrigstarSerializer(Serializer):
         result_subject = ""
         result_object = ""
         output = ""
+        # print("tetetetetete", self.contexts)
         def update_dictionary_RdfstarTriple(node, g, dictionary, properties, collection_or_not, quoted_Bnode_or_not, blanknode_dictionary):
             quoted_Bnode_or_not = False
             # print("update_dictionary_RdfstarTriple", node)
@@ -426,9 +445,9 @@ class TrigstarSerializer(Serializer):
 
         # this loop is for updating the quoted triple dictionary and blank node dictionary
         for g in self.contexts:
-
+            # print("id\n\n\n\n", g.identifier)
             for s,p,o in g.triples((None, None, None)):
-
+                print("herherherhehr\n\n\n\n\n\n", s, p ,o)
                 if (isinstance(s, rdflib.term.BNode) & (isinstance(o, rdflib.term.BNode)  or isinstance(o, rdflib.term.RdfstarTriple) or isinstance(p, rdflib.term.BNode) or isinstance(p, rdflib.term.RdfstarTriple))):
                     pass
                 elif("http://www.w3.org/1999/02/22-rdf-syntax-ns#first" in p or "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" in p):
@@ -635,12 +654,16 @@ class TrigstarSerializer(Serializer):
                         if(isinstance(predicate, rdflib.term.URIRef)):
                             predicate = "<"+str(predicate)+">"
 
-                        output = output+subject+" "+predicate+" "+object+" ."+"\n"
+                        output = subject+" "+predicate+" "+object+" <"+str(g.identifier)+"> "" ."+"\n"
+
                         # if output is not None:
-                        #     stream.write(output.encode())
-        if output is not None:
-            output = "_:"+str(myHash(output))+ "{\n"+ output + "}"
-            stream.write(output.encode())
+                        # stream.write(output.encode())
+                        # print(output, "output")
+                        if output is not None:
+                            stream.write(output.encode())
+        # if output is not None:
+        #     output = "_:"+str(myHash(output))+ "{\n"+ output + "}"
+        #     stream.write(output.encode())
 
     def _iri_or_bn(self, i_):
         if isinstance(i_, URIRef):

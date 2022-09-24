@@ -20,6 +20,7 @@ class TrigSerializer(TurtleSerializer):
     indentString = 4 * " "
 
     def __init__(self, store: Union[Graph, ConjunctiveGraph]):
+        print("init", list(store.contexts()))
         self.default_context: Optional[Node]
         if store.context_aware:
             if TYPE_CHECKING:
@@ -76,12 +77,13 @@ class TrigSerializer(TurtleSerializer):
         self.preprocess()
 
         self.startDocument()
-
+        print("start\n\n\n\n\n")
         firstTime = True
+        print("start\n\n\n\n\ndasdasd", self._contexts.items())
         for store, (ordered_subjects, subjects, ref) in self._contexts.items():
             if not ordered_subjects:
                 continue
-
+            print(store, (ordered_subjects, subjects, ref))
             self._references = ref
             self._serialized = {}
             self.store = store
@@ -90,6 +92,7 @@ class TrigSerializer(TurtleSerializer):
             if self.default_context and store.identifier == self.default_context:
                 self.write(self.indent() + "\n{")
             else:
+                print("asdadsdasd", store.identifier)
                 iri: Optional[str]
                 if isinstance(store.identifier, BNode):
                     iri = store.identifier.n3()

@@ -40,6 +40,13 @@ register(
     "TurtlestarSerializer"
 )
 
+register(
+    "ntstar",
+    Parser,
+    "rdflib.plugins.parsers.ntriples-star",
+    "NtriplesStarParser",
+)
+
 # g = Graph()
 # g.parse(data="test/turtle-star/test_rdfliteral.ttl", format = "ttl")
 # print(g.serialize(format = "ttl"))

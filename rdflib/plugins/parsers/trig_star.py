@@ -1,6 +1,6 @@
 from rdflib import ConjunctiveGraph
 from rdflib.parser import Parser
-from .notation3 import SinkParser, RDFSink
+from .trigstar import SinkParser, RDFSink, RDFstarParsings
 
 
 def becauseSubGraph(*args, **kwargs):
@@ -115,6 +115,7 @@ class TrigSinkParser(SinkParser):
         self._context = self._parentContext
         self._reason2 = reason2
         self._parentContext = oldParentContext
+        print("ASdasdasd", self._context, self._reason2, self._parentContext )
         # res.append(subj.close())    # No use until closed
         return j
 
@@ -150,14 +151,27 @@ class TrigParser(Parser):
             source.getPublicId() or source.getSystemId() or ""
         )
         p = TrigSinkParser(sink, baseURI=baseURI, turtle=True)
+        # stream = source.getCharacterStream()  # try to get str stream first
+        # if not stream:
+        #     # fallback to get the bytes stream
+        #     stream = source.getByteStream()
+        # p.loadStream(stream)
+        if hasattr(source, "file"):
+            f = open(source.file.name, "rb")
+            rdbytes = f.read()
+            f.close()
+        elif hasattr(source, "_InputSource__bytefile"):
+            if hasattr(source._InputSource__bytefile, "wrapped"):
+                f = open((source._InputSource__bytefile.wrapped.strip().splitlines())[0], "rb") # what if multiple files
+                rdbytes = f.read()
+                f.close()
+        bp = rdbytes.decode("utf-8")
+        ou = RDFstarParsings(bp)
 
-        stream = source.getCharacterStream()  # try to get str stream first
-        if not stream:
-            # fallback to get the bytes stream
-            stream = source.getByteStream()
-        p.loadStream(stream)
-
+        # print(ou)
+        p.feed(ou)
+        p.endDoc()
         for prefix, namespace in p._bindings.items():
-            conj_graph.bind(prefix, namespace)
-        # return conj_graph
+            graph.bind(prefix, namespace)
+
         # return ???

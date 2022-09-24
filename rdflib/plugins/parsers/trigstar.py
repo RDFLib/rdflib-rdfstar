@@ -484,6 +484,7 @@ object_annotation_list = []
 annotation_s_p_o = []
 annotation_dict = dict()
 to_remove = []
+trig_graph = []
 output = ""
 
 def myHash(text:str):
@@ -495,7 +496,8 @@ class Expandanotation(Visitor):
         # self.quotation_list = []
         self.variable_list = []
         # annotation_s_p_o = []
-
+    def label_or_subject(self,var):
+        print("ASdasdasdas\n\n\n\n\n\n\n", self)
     def triples(self, var):
         # print("\nannotationdict\n", annotation_dict)
         # print("arawrawraw", self, var)
@@ -632,6 +634,13 @@ class FindVariables(Visitor):
         # self.quotation_list = []
         self.variable_list = []
 
+    def labelorsubject(self, var):
+        print("ASdadasdasdasd123123123123\n\n\n\n\n\n", var)
+        try:
+            vr = Reconstructor(trig_lark).reconstruct(var)
+            trig_graph.append(vr)
+        except:
+            pass
     def quotation(self, var):
         qut = Reconstructor(trig_lark).reconstruct(var) # replace here or replace later
         qut = qut.replace(";", "") #####################
@@ -852,7 +861,7 @@ def RDFstarParsings(rdfstarstring):
     #         tree_after = tree_after[:(x+1)] + " " + tree_after[(x+1):] # from stackoverflow
     # print("ASdadasd", tree_after)
     def expand_to_rdfstar(x):
-        print("current expand \n\n\n\n",x)
+        # print("current expand \n\n\n\n",x)
         global output
         # for y in x:
         spo = "<<"+x[0] +" "+x[1] + " " + x[2]+">>"
@@ -879,15 +888,15 @@ def RDFstarParsings(rdfstarstring):
         except:
             # output += x[0] +" "+x[1] + " " + x[2]+ "." + "\n" # smart
             pass
-    print("ASdasdasdasdasd", annotation_s_p_o)
+    # print("ASdasdasdasdasd", annotation_s_p_o)
     output = ""
     for x in annotation_s_p_o:
         # global output
         # if len(x[3]) ==
         output +=x[0] +" "+ x[1] +" "+ x[2] + "." + "\n"
         expand_to_rdfstar(x)
-        print("adding to original", output)
-    print(";cuuirearerear", output)
+        # print("adding to original", output)
+    # print(";cuuirearerear", output)
     output_tree = tree_after+output
     if ":G {  }\n" in output_tree:
         output_tree = output_tree.replace(":G {  }\n", ":G {")
@@ -898,7 +907,7 @@ def RDFstarParsings(rdfstarstring):
     #     output_tree = output_tree.replace("PREFIX:", "PREFIX :")
     # print("output tree", output_tree, '\n', '\n', '\n', '\n', '\n')
     # rdfstarstring = rdfstarstring.replace()
-    print("output tree", output_tree, '\n', '\n', '\n', '\n', '\n', rdfstarstring)
+    # print("output tree", output_tree, '\n', '\n', '\n', '\n', '\n', rdfstarstring)
     tree = trig_lark.parse(output_tree)
     # print("fixing prefix" , tree)
     at = FindVariables().visit(tree)
@@ -920,9 +929,9 @@ def RDFstarParsings(rdfstarstring):
             result = result.replace("standard reification", "")
             constructors+=result
         else:
-            print("SAdasdasd\n\n\n\n\n","\n",assertedtriplelist,"\n","asdasdasdasddfsdfasfasfas", quotation_list)
+            # print("SAdasdasd\n\n\n\n\n","\n",assertedtriplelist,"\n","asdasdasdasddfsdfasfasfas", quotation_list)
             result = result.replace(" ", "")
-            print("testparserhash",print(quotation_dict), result)
+            # print("testparserhash",print(quotation_dict), result)
             if result in assertedtriplelist:
                 test1 = "<<"+result+">>"
                 if test1 in quotation_list:
@@ -931,7 +940,7 @@ def RDFstarParsings(rdfstarstring):
                     both_quoted_and_asserted = False
                     quoted_or_not = False
             else:
-                print("atattatatat\n\n\n\n\n\n", result)
+                # print("atattatatat\n\n\n\n\n\n", result)
                 test2 = "<<"+result+">>"
                 if test2 in quotation_list:
                     both_quoted_and_asserted = False
@@ -986,7 +995,8 @@ def RDFstarParsings(rdfstarstring):
                         next_rdf_object = "_:" + str(value) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n"
                         # next_rdf_object = "_:" + str(myvalue) + '\n' + "    a rdfstar:AssertedStatement ;\n"+"    rdf:subject "+subject+' ;\n'+"    rdf:predicate "+predicate+" ;\n"+"    rdf:object "+object+" ;\n"+".\n" "[a rdfstar:QutotedStatement;\n rdf:subject :a ;\n rdf:predicate :b ;\n rdf:object :c ; ] :q :z "+".\n"
                 constructors+=next_rdf_object
-
+    if len(trig_graph)!=0:
+        constructors=trig_graph[0]+"{\n"+constructors+"\n}"
     for x in range(0, len(prefix_list)):
         prefix_list[x] = Reconstructor(trig_lark).reconstruct(prefix_list[x])
         constructors = prefix_list[x]+"\n"+constructors
@@ -2677,7 +2687,7 @@ class RDFSink(object):
         return ":".join(repr(n) for n in args)
 
     def makeStatement(self, quadruple, why=None) -> None:
-        # print("testmakeStatement", quadruple)
+        print("testmakeStatement", quadruple)
         f, p, s, o = quadruple
 
         if hasattr(p, "formula"):
@@ -2687,13 +2697,18 @@ class RDFSink(object):
         p = self.normalise(f, p)
         o = self.normalise(f, o)
         if f == self.rootFormula:
+            # print()
             # print s, p, o, '.'
+            print("rot?")
             self.graph.add((s, p, o))
         elif isinstance(f, Formula):
-            # print("quotedgraph added")
+            print("quotedgraph added")
             f.quotedgraph.add((s, p, o))
         else:
+            print("add?")
             f.add((s, p, o))
+            for s, p ,o in f.triples((None, None, None)):
+                print("asdasdas", s , p ,o)
 
         # return str(quadruple)
 
@@ -2788,6 +2803,118 @@ def hexify(ustr):
         s = s + ch
     return s.encode("latin-1")
 
+class TrigSinkParser(SinkParser):
+    def directiveOrStatement(self, argstr, h):
+
+        # import pdb; pdb.set_trace()
+
+        i = self.skipSpace(argstr, h)
+        if i < 0:
+            return i  # EOF
+
+        j = self.graph(argstr, i)
+        if j >= 0:
+            return j
+
+        j = self.sparqlDirective(argstr, i)
+        if j >= 0:
+            return j
+
+        j = self.directive(argstr, i)
+        if j >= 0:
+            return self.checkDot(argstr, j)
+
+        j = self.statement(argstr, i)
+        if j >= 0:
+            return self.checkDot(argstr, j)
+
+        return j
+
+    def labelOrSubject(self, argstr, i, res):
+        j = self.skipSpace(argstr, i)
+        if j < 0:
+            return j  # eof
+        i = j
+
+        j = self.uri_ref2(argstr, i, res)
+        if j >= 0:
+            return j
+
+        if argstr[i] == "[":
+            j = self.skipSpace(argstr, i + 1)
+            if j < 0:
+                self.BadSyntax(argstr, i, "Expected ] got EOF")
+            if argstr[j] == "]":
+                res.append(self.blankNode())
+                return j + 1
+        return -1
+
+    def graph(self, argstr, i):
+        """
+        Parse trig graph, i.e.
+
+           <urn:graphname> = { .. triples .. }
+
+        return -1 if it doesn't look like a graph-decl
+        raise Exception if it looks like a graph, but isn't.
+        """
+
+        # import pdb; pdb.set_trace()
+        j = self.sparqlTok("GRAPH", argstr, i)  # optional GRAPH keyword
+        if j >= 0:
+            i = j
+
+        r = []
+        j = self.labelOrSubject(argstr, i, r)
+        if j >= 0:
+            graph = r[0]
+            i = j
+        else:
+            graph = self._store.graph.identifier  # hack
+
+        j = self.skipSpace(argstr, i)
+        if j < 0:
+            self.BadSyntax(argstr, i, "EOF found when expected graph")
+
+        if argstr[j : j + 1] == "=":  # optional = for legacy support
+
+            i = self.skipSpace(argstr, j + 1)
+            if i < 0:
+                self.BadSyntax(argstr, i, "EOF found when expecting '{'")
+        else:
+            i = j
+
+        if argstr[i : i + 1] != "{":
+            return -1  # the node wasn't part of a graph
+
+        j = i + 1
+
+        oldParentContext = self._parentContext
+        self._parentContext = self._context
+        reason2 = self._reason2
+        self._reason2 = becauseSubGraph
+        print("making graph", graph)
+        self._context = self._store.newGraph(graph)
+        print(self._context)
+        while 1:
+            i = self.skipSpace(argstr, j)
+            if i < 0:
+                self.BadSyntax(argstr, i, "needed '}', found end.")
+
+            if argstr[i : i + 1] == "}":
+                j = i + 1
+                break
+
+            j = self.directiveOrStatement(argstr, i)
+            if j < 0:
+                self.BadSyntax(argstr, i, "expected statement or '}'")
+
+        self._context = self._parentContext
+        self._reason2 = reason2
+        self._parentContext = oldParentContext
+        print("ASdasdasd", self._context, self._reason2, self._parentContext )
+        # res.append(subj.close())    # No use until closed
+        return j
 
 class TrigParser(Parser):
 
@@ -2798,6 +2925,7 @@ class TrigParser(Parser):
 
     def __init__(self):
         pass
+        # print("Contextawareasdasdasdasd\n\n\n\n")
 
     def parse(
         self,
@@ -2806,21 +2934,43 @@ class TrigParser(Parser):
         encoding: Optional[str] = "utf-8",
         turtle: bool = True,
     ):
+        # if encoding not in [None, "utf-8"]:
+        #     raise ParserError(
+        #         "N3/Turtle files are always utf-8 encoded, I was passed: %s" % encoding
+        #     )
         if encoding not in [None, "utf-8"]:
-            raise ParserError(
-                "N3/Turtle files are always utf-8 encoded, I was passed: %s" % encoding
+            raise Exception(
+                ("TriG files are always utf-8 encoded, ", "I was passed: %s") % encoding
             )
 
-        sink = RDFSink(graph)
+        # we're currently being handed a Graph, not a ConjunctiveGraph
+        print("Contextawareasdasdasdasd\n\n\n\n", graph.store.context_aware)
+        assert graph.store.context_aware, "TriG Parser needs a context-aware store!"
 
-        baseURI = graph.absolutize(source.getPublicId() or source.getSystemId() or "")
-        p = SinkParser(sink, baseURI=baseURI, turtle=turtle)
+        conj_graph = ConjunctiveGraph(store=graph.store, identifier=graph.identifier)
+        conj_graph.default_context = graph  # TODO: CG __init__ should have a
+        # default_context arg
+        # TODO: update N3Processor so that it can use conj_graph as the sink
+        conj_graph.namespace_manager = graph.namespace_manager
+
+        sink = RDFSink(conj_graph)
+
+        baseURI = conj_graph.absolutize(
+            source.getPublicId() or source.getSystemId() or ""
+        )
+        p = TrigSinkParser(sink, baseURI=baseURI, turtle=True)
+
+        # return ???
+        # sink = RDFSink(graph)
+
+        # baseURI = graph.absolutize(source.getPublicId() or source.getSystemId() or "")
+        # p = SinkParser(sink, baseURI=baseURI, turtle=turtle)
         # N3 parser prefers str stream
         # stream = source.getCharacterStream()
         # if not stream:
         #     stream = source.getByteStream()
         # p.loadStream(stream)
-
+        print("store", graph.store)
         # print("tests", source)
         if hasattr(source, "file"):
             f = open(source.file.name, "rb")
@@ -2835,7 +2985,14 @@ class TrigParser(Parser):
         bp = rdbytes.decode("utf-8")
         ou = RDFstarParsings(bp)
         # print(ou)
+        # graph = conj_graph
+
         p.feed(ou)
         p.endDoc()
+        print("whatnow?", "conj_graph","graph")
+        # for s,p, o in conj_graph.triples((None, None, None)):
+        #     print("cg", s, p , o)
+        # for s,p, o in graph.triples((None, None, None)):
+        #     print(s, p , o)
         for prefix, namespace in p._bindings.items():
-            graph.bind(prefix, namespace)
+            conj_graph.bind(prefix, namespace)
