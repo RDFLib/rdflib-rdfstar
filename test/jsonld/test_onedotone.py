@@ -1,20 +1,19 @@
-from os import environ, chdir, getcwd, path as p
 import json
 import os
+from os import chdir, environ, getcwd
+from os import path as p
 from typing import Tuple
-
 
 import pytest
 
 from rdflib.term import URIRef
-from . import runner
 
+from . import runner
 
 TC_BASE = "https://w3c.github.io/json-ld-api/tests/toRdf/"
 
 
 testsuite_dir = p.join(p.abspath(p.dirname(__file__)), "1.1")
-
 
 unsupported_tests: Tuple[str, ...] = ("frame", "normalize")
 unsupported_tests += (
@@ -137,11 +136,18 @@ known_bugs: Tuple[str, ...] = (
     "toRdf/tn02-in",
     # TODO: Rdflib should silently reject bad predicate URIs
     "toRdf/wf02-in",
+    # TODO: we don't extract context or json-ld that's embedded in HTML
+    "remote-doc/0013-in",
+    "remote-doc/la01-in",
+    "remote-doc/la02-in",
+    "remote-doc/la03-in",
+    "remote-doc/la04-in",
+    "remote-doc/la05-in",
 )
 
 if os.name == "nt":
     # nquad parser does not correctly handle unnormalized unicode on windows.
-    known_bugs += ("toRdf/js11-in", )
+    known_bugs += ("toRdf/js11-in",)
 
 TC_BASE = "https://w3c.github.io/json-ld-api/tests/"
 allow_lists_of_lists = True
@@ -197,9 +203,7 @@ def get_test_suite_cases():
     if SKIP_KNOWN_BUGS:
         skiptests += known_bugs
 
-    for cat, num, inputpath, expectedpath, context, options in read_manifest(
-        skiptests
-    ):
+    for cat, num, inputpath, expectedpath, context, options in read_manifest(skiptests):
         if options:
             if (
                 SKIP_1_0_TESTS
@@ -208,16 +212,14 @@ def get_test_suite_cases():
             ):
                 # Skip the JSON v1.0 tests
                 continue
-        if inputpath.endswith(".jsonld"):  # toRdf
+        if inputpath.endswith((".jldt", ".json", ".jsonld")):  # toRdf
             if expectedpath.endswith(".jsonld"):  # compact/expand/flatten
                 func = runner.do_test_json
             else:  # toRdf
                 func = runner.do_test_parser
         else:  # fromRdf
             func = runner.do_test_serializer
-        rdf_test_uri = URIRef("{0}{1}-manifest#t{2}".format(
-            TC_BASE, cat, num
-        ))
+        rdf_test_uri = URIRef("{0}{1}-manifest#t{2}".format(TC_BASE, cat, num))
         yield rdf_test_uri, func, TC_BASE, cat, num, inputpath, expectedpath, context, options
 
 
@@ -233,5 +235,15 @@ def global_state():
     "rdf_test_uri, func, suite_base, cat, num, inputpath, expectedpath, context, options",
     get_test_suite_cases(),
 )
-def test_suite(rdf_test_uri: URIRef, func, suite_base, cat, num, inputpath, expectedpath, context, options):
+def test_suite(
+    rdf_test_uri: URIRef,
+    func,
+    suite_base,
+    cat,
+    num,
+    inputpath,
+    expectedpath,
+    context,
+    options,
+):
     func(suite_base, cat, num, inputpath, expectedpath, context, options)

@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING, Set, Tuple
+
 from rdflib.parser import Parser
 
-
 if TYPE_CHECKING:
-    from rdflib.parser import InputSource
     from rdflib.graph import Graph
     from rdflib.namespace import Namespace
-    from rdflib.term import Identifier
+    from rdflib.parser import InputSource
+    from rdflib.term import URIRef
 
 
 class ExampleParser(Parser):
@@ -22,7 +22,10 @@ class ExampleParser(Parser):
         return Namespace("example:rdflib:plugin:parser:")
 
     @classmethod
-    def constant_output(cls) -> Set[Tuple["Identifier", "Identifier", "Identifier"]]:
+    def constant_output(
+        cls,
+    ) -> Set[Tuple["URIRef", "URIRef", "URIRef"]]:
         return {(cls.namespace().subj, cls.namespace().pred, cls.namespace().obj)}
+
 
 from rdflib.namespace import Namespace

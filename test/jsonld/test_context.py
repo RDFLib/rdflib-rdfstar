@@ -4,9 +4,9 @@ JSON-LD Context Spec
 
 from functools import wraps
 from typing import Any, Dict
-from rdflib.plugins.shared.jsonld.context import Context, Term
-from rdflib.plugins.shared.jsonld import context
-from rdflib.plugins.shared.jsonld import errors
+
+from rdflib.plugins.shared.jsonld import context, errors
+from rdflib.plugins.shared.jsonld.context import Context
 
 
 # exception utility (see also nose.tools.raises)
@@ -196,7 +196,7 @@ def test_ignore_base_remote_context():
     ctx_url = "http://example.org/remote-base.jsonld"
     SOURCES[ctx_url] = {"@context": {"@base": "/remote"}}
     ctx = Context(ctx_url)
-    assert ctx.base == None
+    assert ctx.base is None
 
 
 @_expect_exception(errors.RECURSIVE_CONTEXT_INCLUSION)

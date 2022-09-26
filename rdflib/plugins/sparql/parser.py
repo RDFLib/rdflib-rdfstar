@@ -530,6 +530,7 @@ def EmbTPparseAction():
         newreturnrdfstartriple.setSubject(x0value)
         newreturnrdfstartriple.setPredicate(x1value)
         newreturnrdfstartriple.setObject(x2value)
+        # print(x0value, x)
         return newreturnrdfstartriple
         # else:
         #     return RdfstarTriple(myHash("<<"+str(x[0]["prefix"])+":"+str(x[0]["localname"])+str(x[0]["prefix"])+":"+str(x[1]["localname"])+str(x[0]["prefix"])+":"+str(x[2]["localname"])+">>") + "RdfstarTriple")
